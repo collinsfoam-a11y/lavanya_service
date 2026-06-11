@@ -85,6 +85,10 @@ app_license = "mit"
 # before_install = "lavanya_service.install.before_install"
 # after_install = "lavanya_service.install.after_install"
 
+# Keep the HD Ticket "All" permission override restricted after every migrate.
+# Idempotent: only writes when the stored values drift from the approved target.
+after_migrate = "lavanya_service.setup.permission_fixes.restrict_hd_ticket_all_permission"
+
 # Uninstallation
 # ------------
 
