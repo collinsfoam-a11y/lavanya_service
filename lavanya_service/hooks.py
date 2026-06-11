@@ -87,7 +87,14 @@ required_apps = ["helpdesk"]
 
 # Keep the HD Ticket "All" permission override restricted after every migrate.
 # Idempotent: only writes when the stored values drift from the approved target.
-after_migrate = "lavanya_service.setup.permission_fixes.restrict_hd_ticket_all_permission"
+after_install = [
+	"lavanya_service.setup.permission_fixes.restrict_hd_ticket_all_permission",
+	"lavanya_service.setup.sla_fixes.ensure_helpdesk_sla_defaults",
+]
+after_migrate = [
+	"lavanya_service.setup.permission_fixes.restrict_hd_ticket_all_permission",
+	"lavanya_service.setup.sla_fixes.ensure_helpdesk_sla_defaults",
+]
 
 # Uninstallation
 # ------------
@@ -370,7 +377,7 @@ fixtures = [
 	{
 		"dt": "HD Service Level Agreement",
 		"filters": [
-			["name", "in", ["Lavanya Default", "Default"]],
+			["name", "in", ["Lavanya Default"]],
 		],
 	},
 	{
