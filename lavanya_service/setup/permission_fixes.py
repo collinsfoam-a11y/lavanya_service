@@ -35,8 +35,8 @@ HD_TICKET_ALL_TARGET = {
 }
 
 
-def _get_existing_custom_docperm(parent, role, permlevel=0):
-    rows = frappe.get_all(
+def _get_existing_custom_docperms(parent, role, permlevel=0):
+    return frappe.get_all(
         "Custom DocPerm",
         filters={
             "parent": parent,
@@ -44,19 +44,31 @@ def _get_existing_custom_docperm(parent, role, permlevel=0):
             "permlevel": permlevel,
         },
         fields=["name"],
-        limit=1,
+        order_by="creation asc",
+        pluck="name",
     )
-
-    return rows[0].name if rows else None
 
 
 def restrict_hd_ticket_all_permission():
-    """Restrict broad HD Ticket All permission without touching role-specific rows."""
+    """Restrict broad HD Ticket All permission without touching role-specific rows.
 
-    existing_name = _get_existing_custom_docperm("HD Ticket", "All", 0)
+    Handles duplicate rows: fresh installs get one broad All row from the
+    helpdesk install plus the restricted row from the lavanya fixture. The
+    first row (by creation) is kept and forced to the restricted target;
+    every additional row is deleted.
+    """
 
-    if existing_name:
-        doc = frappe.get_doc("Custom DocPerm", existing_name)
+    existing = _get_existing_custom_docperms("HD Ticket", "All", 0)
+
+    deleted = []
+    for duplicate in existing[1:]:
+        frappe.delete_doc(
+            "Custom DocPerm", duplicate, force=True, ignore_permissions=True
+        )
+        deleted.append(duplicate)
+
+    if existing:
+        doc = frappe.get_doc("Custom DocPerm", existing[0])
         created = False
     else:
         doc = frappe.new_doc("Custom DocPerm")
@@ -87,6 +99,7 @@ def restrict_hd_ticket_all_permission():
     return {
         "created": created,
         "changed": changed,
+        "deleted_duplicates": deleted,
         "name": doc.name,
         "target": HD_TICKET_ALL_TARGET,
     }
