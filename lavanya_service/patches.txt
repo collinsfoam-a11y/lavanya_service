@@ -4,3 +4,4 @@
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
+lavanya_service.patches.v1_0.rename_customer_profiles_to_series

@@ -1,6 +1,6 @@
-import re
-
 import frappe
+
+from lavanya_service.utils.phone import normalize_phone
 
 
 FOLLOW_UP_REQUIRED_STATUSES = {
@@ -115,37 +115,28 @@ def _field_changed(doc, fieldname):
 	return frappe.utils.cstr(current_value) != frappe.utils.cstr(stored_value)
 
 
-def _clean_phone(value):
-	if not value:
-		return value
-
-	digits = re.sub(r"\D+", "", str(value))
-
-	if digits.startswith("91") and len(digits) == 12:
-		digits = digits[2:]
-
-	if digits.startswith("0") and len(digits) == 11:
-		digits = digits[1:]
-
-	return digits
-
-
-def _validate_phone(fieldname, value):
-	if not value:
-		return
-
-	if not re.fullmatch(r"\d{10}", str(value)):
-		frappe.throw(
-			f'{fieldname.replace("_", " ").title()} must be a valid 10 digit phone number.'
-		)
-
-
 def normalize_ticket_phone_numbers(doc, method=None):
 	for fieldname in ["phone_1", "phone_2"]:
 		if hasattr(doc, fieldname):
-			cleaned = _clean_phone(_value(doc, fieldname))
-			if cleaned != _value(doc, fieldname):
-				doc.set(fieldname, cleaned)
+			raw_field = f"{fieldname}_raw"
+			normalized_field = f"{fieldname}_normalized"
+			current_value = _value(doc, fieldname)
+			phone = normalize_phone(current_value)
+
+			if hasattr(doc, raw_field):
+				existing_raw = _value(doc, raw_field)
+				if phone["raw"] and (not existing_raw or phone["raw"] != phone["normalized"]):
+					doc.set(raw_field, phone["raw"])
+				elif not phone["raw"]:
+					doc.set(raw_field, "")
+
+			if hasattr(doc, normalized_field):
+				doc.set(normalized_field, phone["normalized"] or "")
+
+			if phone["is_valid_mobile"]:
+				doc.set(fieldname, phone["normalized"])
+			else:
+				doc.set(fieldname, phone["raw"])
 
 
 def validate_ticket(doc, method=None):
@@ -158,9 +149,9 @@ def validate_ticket(doc, method=None):
 
 
 def validate_phone_numbers(doc):
-	for fieldname in ["phone_1", "phone_2"]:
-		if hasattr(doc, fieldname):
-			_validate_phone(fieldname, _value(doc, fieldname))
+	# Invalid or raw-only contact numbers are intentionally allowed for ticket intake.
+	# They are preserved in *_raw fields and skipped for customer-profile uniqueness.
+	return
 
 
 def validate_protected_field_permissions(doc):

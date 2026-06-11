@@ -13,16 +13,64 @@ CUSTOMER_AUTOFILL_FORM_SCRIPT = """
 function setupForm({ doc, updateField, call, toast, createToast }) {
   let lastLookupMobile = "";
 
+  // Python source of truth: lavanya_service.utils.phone.normalize_phone.
+  // Keep this JS mirror synchronized.
   function normalizeMobile(value) {
-    if (!value) return "";
-    let digits = String(value).replace(/\\D+/g, "");
-    if (digits.startsWith("91") && digits.length === 12) {
-      digits = digits.slice(2);
+    const raw = value == null ? "" : String(value);
+    const cleanRaw = raw.trim();
+    const result = {
+      raw,
+      normalized: null,
+      is_valid_mobile: false,
+      reason: "blank",
+    };
+
+    if (!cleanRaw) {
+      result.raw = "";
+      return result;
     }
-    if (digits.startsWith("0") && digits.length === 11) {
-      digits = digits.slice(1);
+
+    const digits = cleanRaw.replace(/\\D+/g, "");
+    if (!digits) {
+      result.reason = "too_short";
+      return result;
     }
-    return /^\\d{10}$/.test(digits) ? digits : "";
+
+    let candidate = null;
+    let prefixedWithZero = false;
+
+    if (digits.length === 10) {
+      candidate = digits;
+    } else if (digits.length === 12 && digits.startsWith("91")) {
+      candidate = digits.slice(2);
+    } else if (digits.length === 11 && digits.startsWith("0")) {
+      candidate = digits.slice(1);
+      prefixedWithZero = true;
+    } else {
+      if (digits.length < 10) {
+        result.reason = "too_short";
+      } else if ([11, 12].includes(digits.length)) {
+        result.reason = "not_indian_mobile";
+      } else {
+        result.reason = "too_long";
+      }
+      return result;
+    }
+
+    if (new Set(candidate.split("")).size === 1) {
+      result.reason = "repeated_junk";
+      return result;
+    }
+
+    if (!["6", "7", "8", "9"].includes(candidate[0])) {
+      result.reason = prefixedWithZero ? "not_indian_mobile" : "invalid_mobile_range";
+      return result;
+    }
+
+    result.normalized = candidate;
+    result.is_valid_mobile = true;
+    result.reason = "valid";
+    return result;
   }
 
   function currentValue(fieldname) {
@@ -40,12 +88,12 @@ function setupForm({ doc, updateField, call, toast, createToast }) {
 
   async function lookupAndFill(value) {
     const mobile = normalizeMobile(value);
-    if (!mobile || mobile === lastLookupMobile) return;
+    if (!mobile.is_valid_mobile || mobile.normalized === lastLookupMobile) return;
 
-    lastLookupMobile = mobile;
+    lastLookupMobile = mobile.normalized;
 
     let result = await call("lavanya_service.api.customer_intake.lookup_customer_by_mobile", {
-      mobile,
+      mobile: mobile.normalized,
     });
 
     if (result && result.message) {
@@ -98,52 +146,83 @@ def _permission(role="System Manager"):
 	}
 
 
+CUSTOMER_PROFILE_FIELDS = [
+	_field("customer_name", "Customer Name", "Data", reqd=1, in_list_view=1),
+	_field(
+		"primary_mobile",
+		"Primary Mobile",
+		"Data",
+		reqd=1,
+		unique=1,
+		search_index=1,
+		in_list_view=1,
+		in_standard_filter=1,
+	),
+	_field(
+		"primary_mobile_raw",
+		"Primary Mobile Raw",
+		"Data",
+		hidden=1,
+		read_only=1,
+	),
+	_field("alternate_mobile", "Alternate Mobile", "Data", in_list_view=1),
+	_field(
+		"alternate_mobile_raw",
+		"Alternate Mobile Raw",
+		"Data",
+		hidden=1,
+		read_only=1,
+	),
+	_field("address", "Address", "Small Text"),
+	_field("pincode", "Pincode", "Data", in_list_view=1),
+	_field("last_ticket", "Last Ticket", "Link", options="HD Ticket", in_list_view=1),
+	_field("ticket_count", "Ticket Count", "Int", default="0", in_list_view=1),
+	_field("last_product_type", "Last Product Type", "Data"),
+	_field("last_brand", "Last Brand", "Link", options="Brand Service Master"),
+	_field("disabled", "Disabled", "Check", default="0", in_standard_filter=1),
+]
+
+
+def _apply_customer_profile_config(doc):
+	doc.module = "Lavanya Service"
+	doc.custom = 1
+	doc.istable = 0
+	doc.editable_grid = 1
+	doc.track_changes = 1
+	doc.allow_rename = 0
+	doc.autoname = "LV-CUST-.#####"
+	doc.title_field = "customer_name"
+	doc.search_fields = "customer_name, primary_mobile, alternate_mobile"
+	doc.sort_field = "modified"
+	doc.sort_order = "DESC"
+
+	doc.set("fields", [])
+	for field in CUSTOMER_PROFILE_FIELDS:
+		doc.append("fields", field)
+
+	doc.set("permissions", [])
+	doc.append("permissions", _permission())
+
+
 def ensure_lavanya_customer_profile():
 	if frappe.db.exists("DocType", CUSTOMER_PROFILE_DOCTYPE):
-		return "exists"
+		doc = frappe.get_doc("DocType", CUSTOMER_PROFILE_DOCTYPE)
+		action = "updated"
+	else:
+		doc = frappe.new_doc("DocType")
+		doc.name = CUSTOMER_PROFILE_DOCTYPE
+		action = "created"
 
-	doc = frappe.get_doc(
-		{
-			"doctype": "DocType",
-			"name": CUSTOMER_PROFILE_DOCTYPE,
-			"module": "Lavanya Service",
-			"custom": 1,
-			"istable": 0,
-			"editable_grid": 1,
-			"track_changes": 1,
-			"allow_rename": 0,
-			"autoname": "field:primary_mobile",
-			"title_field": "customer_name",
-			"search_fields": "customer_name, primary_mobile, alternate_mobile",
-			"sort_field": "modified",
-			"sort_order": "DESC",
-			"fields": [
-				_field("customer_name", "Customer Name", "Data", reqd=1, in_list_view=1),
-				_field(
-					"primary_mobile",
-					"Primary Mobile",
-					"Data",
-					reqd=1,
-					unique=1,
-					in_list_view=1,
-					in_standard_filter=1,
-				),
-				_field("alternate_mobile", "Alternate Mobile", "Data", in_list_view=1),
-				_field("address", "Address", "Small Text"),
-				_field("pincode", "Pincode", "Data", in_list_view=1),
-				_field("last_ticket", "Last Ticket", "Link", options="HD Ticket", in_list_view=1),
-				_field("ticket_count", "Ticket Count", "Int", default="0", in_list_view=1),
-				_field("last_product_type", "Last Product Type", "Data"),
-				_field("last_brand", "Last Brand", "Link", options="Brand Service Master"),
-				_field("disabled", "Disabled", "Check", default="0", in_standard_filter=1),
-			],
-			"permissions": [_permission()],
-		}
-	)
-	doc.insert(ignore_permissions=True)
+	_apply_customer_profile_config(doc)
+
+	if doc.is_new():
+		doc.insert(ignore_permissions=True)
+	else:
+		doc.save(ignore_permissions=True)
+
 	frappe.db.commit()
 	frappe.clear_cache(doctype=CUSTOMER_PROFILE_DOCTYPE)
-	return "created"
+	return action
 
 
 def _upsert_hd_form_script(name, apply_on_new_page):

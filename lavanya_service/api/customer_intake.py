@@ -1,6 +1,6 @@
-import re
-
 import frappe
+
+from lavanya_service.utils.phone import normalize_phone, normalized_mobile
 
 
 PROFILE_DOCTYPE = "Lavanya Customer Profile"
@@ -8,21 +8,9 @@ TICKET_DOCTYPE = "HD Ticket"
 
 
 def normalize_mobile(value):
-	if not value:
-		return ""
+	"""Backward-compatible wrapper for older callers."""
 
-	digits = re.sub(r"\D+", "", str(value))
-
-	if digits.startswith("91") and len(digits) == 12:
-		digits = digits[2:]
-
-	if digits.startswith("0") and len(digits) == 11:
-		digits = digits[1:]
-
-	if not re.fullmatch(r"\d{10}", digits):
-		return ""
-
-	return digits
+	return normalized_mobile(value)
 
 
 def _get_value(doc, fieldname):
@@ -35,6 +23,17 @@ def _clean_text(value):
 	if value is None:
 		return ""
 	return str(value).strip()
+
+
+def _has_field(doctype, fieldname):
+	return bool(frappe.get_meta(doctype).get_field(fieldname))
+
+
+def _set_if_has_field(doc, fieldname, value):
+	if doc.meta.has_field(fieldname):
+		doc.set(fieldname, value)
+		return True
+	return False
 
 
 def _profile_payload(profile, source=PROFILE_DOCTYPE):
@@ -55,41 +54,70 @@ def _profile_payload(profile, source=PROFILE_DOCTYPE):
 
 
 def _ticket_payload(ticket):
+	phone_1 = ticket.get("phone_1_normalized") or normalize_mobile(ticket.phone_1)
+	phone_2 = ticket.get("phone_2_normalized") or normalize_mobile(ticket.phone_2)
 	return {
 		"found": True,
 		"source": TICKET_DOCTYPE,
 		"name": ticket.name,
 		"customer_name": ticket.customer_name,
-		"primary_mobile": ticket.phone_1,
-		"alternate_mobile": ticket.phone_2,
+		"primary_mobile": phone_1 or ticket.phone_1,
+		"alternate_mobile": phone_2 or ticket.phone_2,
 		"address": ticket.address,
 		"pincode": ticket.pincode,
 		"last_ticket": ticket.name,
-		"ticket_count": _ticket_count_for_numbers([ticket.phone_1, ticket.phone_2]),
+		"ticket_count": _ticket_count_for_numbers([phone_1, phone_2]),
 		"last_product_type": ticket.product_type,
 		"last_brand": ticket.brand,
 	}
 
 
-def _find_profile_by_mobile(mobile, include_disabled=False):
+def _profile_rows_by_mobile(mobile, include_disabled=False):
 	if not frappe.db.exists("DocType", PROFILE_DOCTYPE):
-		return None
+		return []
 
 	base_filters = {} if include_disabled else {"disabled": 0}
+	matches = {}
 
 	for fieldname in ["primary_mobile", "alternate_mobile"]:
 		filters = dict(base_filters)
 		filters[fieldname] = mobile
-		name = frappe.db.exists(PROFILE_DOCTYPE, filters)
-		if name:
-			return frappe.get_doc(PROFILE_DOCTYPE, name)
+		for row in frappe.get_all(PROFILE_DOCTYPE, filters=filters, fields=["name"]):
+			matches[row.name] = fieldname
 
-	return None
+	return [{"name": name, "matched_field": fieldname} for name, fieldname in matches.items()]
+
+
+def _find_profile_by_mobile(mobile, include_disabled=False):
+	rows = _profile_rows_by_mobile(mobile, include_disabled=include_disabled)
+	if not rows:
+		return None
+
+	if len(rows) > 1:
+		frappe.throw(
+			"Ambiguous customer profile conflict for mobile "
+			+ mobile
+			+ ": "
+			+ ", ".join(sorted(row["name"] for row in rows))
+			+ ".",
+			frappe.ValidationError,
+		)
+
+	return frappe.get_doc(PROFILE_DOCTYPE, rows[0]["name"])
+
+
+def _ticket_search_fields():
+	fields = []
+	meta = frappe.get_meta(TICKET_DOCTYPE)
+	for fieldname in ["phone_1_normalized", "phone_2_normalized", "phone_1", "phone_2"]:
+		if meta.has_field(fieldname):
+			fields.append(fieldname)
+	return fields
 
 
 def _latest_ticket_for_mobile(mobile):
 	rows = []
-	for fieldname in ["phone_1", "phone_2"]:
+	for fieldname in _ticket_search_fields():
 		rows.extend(
 			frappe.get_all(
 				TICKET_DOCTYPE,
@@ -99,6 +127,8 @@ def _latest_ticket_for_mobile(mobile):
 					"customer_name",
 					"phone_1",
 					"phone_2",
+					"phone_1_normalized",
+					"phone_2_normalized",
 					"address",
 					"pincode",
 					"product_type",
@@ -113,7 +143,8 @@ def _latest_ticket_for_mobile(mobile):
 	if not rows:
 		return None
 
-	return sorted(rows, key=lambda row: row.modified, reverse=True)[0]
+	by_name = {row.name: row for row in rows}
+	return sorted(by_name.values(), key=lambda row: row.modified, reverse=True)[0]
 
 
 def _ticket_count_for_numbers(numbers):
@@ -122,7 +153,7 @@ def _ticket_count_for_numbers(numbers):
 		return 0
 
 	ticket_names = set()
-	for fieldname in ["phone_1", "phone_2"]:
+	for fieldname in _ticket_search_fields():
 		for number in clean_numbers:
 			for row in frappe.get_all(TICKET_DOCTYPE, filters={fieldname: number}, fields=["name"]):
 				ticket_names.add(row.name)
@@ -132,15 +163,17 @@ def _ticket_count_for_numbers(numbers):
 
 @frappe.whitelist()
 def lookup_customer_by_mobile(mobile):
-	normalized = normalize_mobile(mobile)
+	phone = normalize_phone(mobile)
 
-	if not normalized:
+	if not phone["is_valid_mobile"]:
 		return {
 			"found": False,
 			"invalid_mobile": bool(_clean_text(mobile)),
 			"mobile": _clean_text(mobile),
+			"reason": phone["reason"],
 		}
 
+	normalized = phone["normalized"]
 	profile = _find_profile_by_mobile(normalized)
 	if profile:
 		return _profile_payload(profile)
@@ -153,6 +186,7 @@ def lookup_customer_by_mobile(mobile):
 		"found": False,
 		"invalid_mobile": False,
 		"mobile": normalized,
+		"reason": "valid",
 	}
 
 
@@ -181,6 +215,29 @@ def _set_last_value(profile, profile_field, ticket_value):
 	return True
 
 
+def normalize_customer_profile_phone_numbers(doc, method=None):
+	primary = normalize_phone(_get_value(doc, "primary_mobile"))
+	if doc.meta.has_field("primary_mobile_raw"):
+		doc.primary_mobile_raw = primary["raw"]
+
+	if not primary["is_valid_mobile"]:
+		frappe.throw(
+			"Primary Mobile must be a valid 10 digit Indian mobile number.",
+			frappe.ValidationError,
+		)
+
+	doc.primary_mobile = primary["normalized"]
+
+	alternate = normalize_phone(_get_value(doc, "alternate_mobile"))
+	if doc.meta.has_field("alternate_mobile_raw"):
+		doc.alternate_mobile_raw = alternate["raw"]
+
+	if alternate["is_valid_mobile"]:
+		doc.alternate_mobile = alternate["normalized"]
+	else:
+		doc.alternate_mobile = None
+
+
 def sync_customer_profile_from_ticket(doc, method=None):
 	if getattr(frappe.flags, "skip_lavanya_customer_profile_sync", False):
 		return None
@@ -188,18 +245,19 @@ def sync_customer_profile_from_ticket(doc, method=None):
 	if not frappe.db.exists("DocType", PROFILE_DOCTYPE):
 		return None
 
-	primary_mobile = normalize_mobile(_get_value(doc, "phone_1"))
-	if not primary_mobile:
+	primary = normalize_phone(_get_value(doc, "phone_1"))
+	if not primary["is_valid_mobile"]:
 		return None
 
-	alternate_mobile = normalize_mobile(_get_value(doc, "phone_2"))
-	profile = _find_profile_by_mobile(primary_mobile, include_disabled=True)
+	alternate = normalize_phone(_get_value(doc, "phone_2"))
+	profile = _find_profile_by_mobile(primary["normalized"], include_disabled=True)
 	created = False
 
 	if not profile:
 		profile = frappe.new_doc(PROFILE_DOCTYPE)
-		profile.primary_mobile = primary_mobile
-		profile.customer_name = _clean_text(_get_value(doc, "customer_name")) or primary_mobile
+		profile.primary_mobile = primary["normalized"]
+		profile.customer_name = _clean_text(_get_value(doc, "customer_name")) or primary["normalized"]
+		_set_if_has_field(profile, "primary_mobile_raw", primary["raw"])
 		created = True
 
 	changed = created
@@ -213,8 +271,22 @@ def sync_customer_profile_from_ticket(doc, method=None):
 			profile.customer_name = incoming_customer_name
 			changed = True
 
-	if alternate_mobile and alternate_mobile != primary_mobile and not profile.alternate_mobile:
-		profile.alternate_mobile = alternate_mobile
+		if profile.meta.has_field("primary_mobile_raw") and primary["raw"]:
+			if profile.primary_mobile_raw != primary["raw"]:
+				profile.primary_mobile_raw = primary["raw"]
+				changed = True
+
+	if alternate["raw"] and profile.meta.has_field("alternate_mobile_raw"):
+		if profile.alternate_mobile_raw != alternate["raw"]:
+			profile.alternate_mobile_raw = alternate["raw"]
+			changed = True
+
+	if (
+		alternate["is_valid_mobile"]
+		and alternate["normalized"] != primary["normalized"]
+		and not profile.alternate_mobile
+	):
+		profile.alternate_mobile = alternate["normalized"]
 		changed = True
 
 	for profile_field, ticket_field in [

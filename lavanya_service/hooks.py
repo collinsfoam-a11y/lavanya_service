@@ -297,6 +297,10 @@ fixtures = [
 					"customer_name",
 					"phone_1",
 					"phone_2",
+					"phone_1_raw",
+					"phone_1_normalized",
+					"phone_2_raw",
+					"phone_2_normalized",
 					"address",
 					"pincode",
 					"lavanya_product_section",
@@ -416,6 +420,9 @@ doc_events = {
 	"HD Ticket": {
 		"before_validate": "lavanya_service.validations.hd_ticket.normalize_ticket_phone_numbers",
 		"validate": "lavanya_service.validations.hd_ticket.validate_ticket",
+	},
+	"Lavanya Customer Profile": {
+		"before_validate": "lavanya_service.api.customer_intake.normalize_customer_profile_phone_numbers",
 	},
 	"Service Product Receipt": {
 		"validate": "lavanya_service.validations.service_receipt.validate_service_product_receipt",

@@ -205,12 +205,30 @@ def _run_all():
 	if normalized:
 		ok = normalized.phone_1 == "9876543210"
 		_record("TC-PH2", "normalized phone equals 9876543210", ok, f"value={normalized.phone_1}")
-	_expect_block(
+	raw_only_profiles = frappe.db.count("Lavanya Customer Profile")
+	raw_only = _expect_save(
 		"TC-PH3",
-		"phone_1 with 5 digits is blocked",
+		"phone_1 with 5 digits saves raw-only",
 		_base_ticket(phone_1="12345"),
-		expect_text="valid 10 digit",
 	)
+	if raw_only:
+		ok = (
+			raw_only.phone_1 == "12345"
+			and raw_only.phone_1_raw == "12345"
+			and not raw_only.phone_1_normalized
+			and frappe.db.count("Lavanya Customer Profile") == raw_only_profiles
+		)
+		_record(
+			"TC-PH4",
+			"raw-only invalid phone does not create customer profile",
+			ok,
+			{
+				"phone_1": raw_only.phone_1,
+				"phone_1_raw": raw_only.phone_1_raw,
+				"phone_1_normalized": raw_only.phone_1_normalized,
+				"profile_count": frappe.db.count("Lavanya Customer Profile"),
+			},
+		)
 
 	# TC-004 Service Product Receipt + custody log
 	host_ticket = _make_saved_ticket(

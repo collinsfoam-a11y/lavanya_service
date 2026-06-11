@@ -111,10 +111,42 @@ FIELDS = [
         "insert_after": "phone_1",
     },
     {
+        "fieldname": "phone_1_raw",
+        "label": "Phone 1 Raw",
+        "fieldtype": "Data",
+        "insert_after": "phone_2",
+        "hidden": 1,
+        "read_only": 1,
+    },
+    {
+        "fieldname": "phone_1_normalized",
+        "label": "Phone 1 Normalized",
+        "fieldtype": "Data",
+        "insert_after": "phone_1_raw",
+        "hidden": 1,
+        "read_only": 1,
+    },
+    {
+        "fieldname": "phone_2_raw",
+        "label": "Phone 2 Raw",
+        "fieldtype": "Data",
+        "insert_after": "phone_1_normalized",
+        "hidden": 1,
+        "read_only": 1,
+    },
+    {
+        "fieldname": "phone_2_normalized",
+        "label": "Phone 2 Normalized",
+        "fieldtype": "Data",
+        "insert_after": "phone_2_raw",
+        "hidden": 1,
+        "read_only": 1,
+    },
+    {
         "fieldname": "address",
         "label": "Address",
         "fieldtype": "Small Text",
-        "insert_after": "phone_2",
+        "insert_after": "phone_2_normalized",
     },
     {
         "fieldname": "pincode",
@@ -374,13 +406,6 @@ def _validate_dependencies():
     ]:
         if not frappe.db.exists("DocType", doctype):
             frappe.throw(f"Missing required DocType: {doctype}")
-
-    if frappe.db.exists("DocType", "Service Product Receipt"):
-        frappe.throw("Service Product Receipt should not exist before Phase 1E.")
-
-    if frappe.db.exists("DocType", "Custody Log Entry"):
-        frappe.throw("Custody Log Entry should not exist before Phase 1E.")
-
 
 def ensure_custom_field(config):
     fieldname = config["fieldname"]

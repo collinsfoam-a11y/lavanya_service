@@ -23,7 +23,8 @@ def _assert(test_id, description, condition, detail=""):
 def _base_ticket(phone, **overrides):
 	doc = frappe.new_doc("HD Ticket")
 	doc.subject = overrides.pop("subject", f"Customer intake test {phone or 'blank'}")
-	doc.raised_by = overrides.pop("raised_by", f"intake-{phone or 'blank'}@example.com")
+	email_token = "".join(ch for ch in str(phone or "blank").lower() if ch.isalnum()) or "blank"
+	doc.raised_by = overrides.pop("raised_by", f"intake-{email_token}@example.com")
 	doc.ticket_type = overrides.pop("ticket_type", "Customer Complaint - Site")
 	doc.priority = overrides.pop("priority", "Medium")
 	doc.complaint_source = overrides.pop("complaint_source", "Phone Call")
@@ -42,6 +43,11 @@ def _base_ticket(phone, **overrides):
 
 def _profile_count(mobile):
 	return frappe.db.count("Lavanya Customer Profile", {"primary_mobile": mobile})
+
+
+def _profile_by_primary_mobile(mobile):
+	name = frappe.db.get_value("Lavanya Customer Profile", {"primary_mobile": mobile}, "name")
+	return frappe.get_doc("Lavanya Customer Profile", name) if name else None
 
 
 def _make_user(role):
@@ -98,9 +104,22 @@ def _run_all(lookup_customer_by_mobile, sync_customer_profile_from_ticket, basel
 	phone = "9999100001"
 	ticket = _base_ticket(phone, customer_name="Primary Customer", phone_2="9999100002")
 	ticket.insert(ignore_permissions=True)
-	profile = frappe.get_doc("Lavanya Customer Profile", phone)
-	_assert("CI-001", "new phone creates profile", profile.primary_mobile == phone, profile.as_dict())
-	_assert("CI-001b", "new profile stores ticket link", profile.last_ticket == ticket.name, profile.last_ticket)
+	profile = _profile_by_primary_mobile(phone)
+	_assert(
+		"CI-001",
+		"new phone creates profile with generated identity",
+		profile
+		and profile.primary_mobile == phone
+		and profile.name != phone
+		and profile.primary_mobile_raw == phone,
+		profile.as_dict() if profile else {},
+	)
+	_assert(
+		"CI-001b",
+		"new profile stores ticket link",
+		profile and profile.last_ticket == ticket.name,
+		profile.last_ticket if profile else "",
+	)
 
 	second = _base_ticket(phone, customer_name="Primary Customer Updated")
 	second.insert(ignore_permissions=True)
@@ -140,6 +159,25 @@ def _run_all(lookup_customer_by_mobile, sync_customer_profile_from_ticket, basel
 		"invalid phone does not create profile",
 		frappe.db.count("Lavanya Customer Profile") == before_invalid,
 		frappe.db.count("Lavanya Customer Profile"),
+	)
+
+	before_raw_ticket = frappe.db.count("Lavanya Customer Profile")
+	raw_ticket = _base_ticket("0495-2222222 ext 4", customer_name="Raw Only Customer")
+	raw_ticket.insert(ignore_permissions=True)
+	raw_ticket.reload()
+	_assert(
+		"CI-006b",
+		"raw-only phone ticket saves without creating profile",
+		raw_ticket.phone_1 == "0495-2222222 ext 4"
+		and raw_ticket.phone_1_raw == "0495-2222222 ext 4"
+		and not raw_ticket.phone_1_normalized
+		and frappe.db.count("Lavanya Customer Profile") == before_raw_ticket,
+		{
+			"phone_1": raw_ticket.phone_1,
+			"phone_1_raw": raw_ticket.phone_1_raw,
+			"phone_1_normalized": raw_ticket.phone_1_normalized,
+			"profile_count": frappe.db.count("Lavanya Customer Profile"),
+		},
 	)
 
 	profile.reload()
@@ -224,7 +262,7 @@ def _test_front_desk_create_and_autosave():
 	finally:
 		frappe.set_user("Administrator")
 
-	profile_exists = bool(frappe.db.exists("Lavanya Customer Profile", phone))
+	profile_exists = bool(frappe.db.exists("Lavanya Customer Profile", {"primary_mobile": phone}))
 	_assert(
 		"CI-011",
 		"front desk can create ticket and auto-save customer",
