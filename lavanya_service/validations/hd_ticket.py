@@ -93,7 +93,20 @@ def _field_changed(doc, fieldname):
 	current_value = _value(doc, fieldname)
 
 	if doc.is_new():
-		return current_value is not None and str(current_value).strip() != ""
+		if current_value in (None, "", 0, False):
+			return False
+		if str(current_value).strip() in {"", "0"}:
+			return False
+
+		df = frappe.get_meta(doc.doctype).get_field(fieldname)
+		if df and frappe.utils.cstr(current_value) == frappe.utils.cstr(df.default):
+			return False
+		if df and df.fieldtype == "Select" and not df.default:
+			first_option = next((option for option in (df.options or "").split("\n") if option), "")
+			if first_option and frappe.utils.cstr(current_value) == frappe.utils.cstr(first_option):
+				return False
+
+		return True
 
 	if not doc.name or not frappe.db.exists("HD Ticket", doc.name):
 		return False

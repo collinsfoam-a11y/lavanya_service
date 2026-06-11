@@ -1,0 +1,28 @@
+[
+ {
+  "apply_on_new_page": 0,
+  "apply_to": "Form",
+  "apply_to_customer_portal": 0,
+  "docstatus": 0,
+  "doctype": "HD Form Script",
+  "dt": "HD Ticket",
+  "enabled": 1,
+  "is_standard": 0,
+  "modified": "2026-06-11 21:47:58.982266",
+  "name": "Lavanya Customer Mobile Autofill - Ticket Form",
+  "script": "function setupForm({ doc, updateField, call, toast, createToast }) {\n  let lastLookupMobile = \"\";\n\n  function normalizeMobile(value) {\n    if (!value) return \"\";\n    let digits = String(value).replace(/\\D+/g, \"\");\n    if (digits.startsWith(\"91\") && digits.length === 12) {\n      digits = digits.slice(2);\n    }\n    if (digits.startsWith(\"0\") && digits.length === 11) {\n      digits = digits.slice(1);\n    }\n    return /^\\d{10}$/.test(digits) ? digits : \"\";\n  }\n\n  function currentValue(fieldname) {\n    return doc && doc[fieldname] ? String(doc[fieldname]).trim() : \"\";\n  }\n\n  function setIfBlank(fieldname, value) {\n    if (!value || currentValue(fieldname)) return;\n    if (typeof updateField === \"function\") {\n      updateField(fieldname, value);\n    } else if (doc) {\n      doc[fieldname] = value;\n    }\n  }\n\n  async function lookupAndFill(value) {\n    const mobile = normalizeMobile(value);\n    if (!mobile || mobile === lastLookupMobile) return;\n\n    lastLookupMobile = mobile;\n\n    let result = await call(\"lavanya_service.api.customer_intake.lookup_customer_by_mobile\", {\n      mobile,\n    });\n\n    if (result && result.message) {\n      result = result.message;\n    }\n\n    if (!result || !result.found) return;\n\n    setIfBlank(\"customer_name\", result.customer_name);\n    setIfBlank(\"phone_2\", result.alternate_mobile);\n    setIfBlank(\"address\", result.address);\n    setIfBlank(\"pincode\", result.pincode);\n  }\n\n  return {\n    actions: [],\n    onChange: {\n      phone_1: lookupAndFill,\n    },\n  };\n}"
+ },
+ {
+  "apply_on_new_page": 1,
+  "apply_to": "Form",
+  "apply_to_customer_portal": 0,
+  "docstatus": 0,
+  "doctype": "HD Form Script",
+  "dt": "HD Ticket",
+  "enabled": 1,
+  "is_standard": 0,
+  "modified": "2026-06-11 21:47:59.009857",
+  "name": "Lavanya Customer Mobile Autofill - New Ticket",
+  "script": "function setupForm({ doc, updateField, call, toast, createToast }) {\n  let lastLookupMobile = \"\";\n\n  function normalizeMobile(value) {\n    if (!value) return \"\";\n    let digits = String(value).replace(/\\D+/g, \"\");\n    if (digits.startsWith(\"91\") && digits.length === 12) {\n      digits = digits.slice(2);\n    }\n    if (digits.startsWith(\"0\") && digits.length === 11) {\n      digits = digits.slice(1);\n    }\n    return /^\\d{10}$/.test(digits) ? digits : \"\";\n  }\n\n  function currentValue(fieldname) {\n    return doc && doc[fieldname] ? String(doc[fieldname]).trim() : \"\";\n  }\n\n  function setIfBlank(fieldname, value) {\n    if (!value || currentValue(fieldname)) return;\n    if (typeof updateField === \"function\") {\n      updateField(fieldname, value);\n    } else if (doc) {\n      doc[fieldname] = value;\n    }\n  }\n\n  async function lookupAndFill(value) {\n    const mobile = normalizeMobile(value);\n    if (!mobile || mobile === lastLookupMobile) return;\n\n    lastLookupMobile = mobile;\n\n    let result = await call(\"lavanya_service.api.customer_intake.lookup_customer_by_mobile\", {\n      mobile,\n    });\n\n    if (result && result.message) {\n      result = result.message;\n    }\n\n    if (!result || !result.found) return;\n\n    setIfBlank(\"customer_name\", result.customer_name);\n    setIfBlank(\"phone_2\", result.alternate_mobile);\n    setIfBlank(\"address\", result.address);\n    setIfBlank(\"pincode\", result.pincode);\n  }\n\n  return {\n    actions: [],\n    onChange: {\n      phone_1: lookupAndFill,\n    },\n  };\n}"
+ }
+]

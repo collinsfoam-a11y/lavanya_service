@@ -1,5 +1,6 @@
 from helpdesk.helpdesk.doctype.hd_ticket.hd_ticket import HDTicket
 
+from lavanya_service.api.customer_intake import sync_customer_profile_from_ticket
 from lavanya_service.validations.hd_ticket import (
 	normalize_ticket_phone_numbers,
 	validate_protected_field_permissions,
@@ -15,6 +16,10 @@ class LavanyaHDTicket(HDTicket):
 	def validate(self):
 		super().validate()
 		validate_ticket(self)
+
+	def on_update(self):
+		super().on_update()
+		sync_customer_profile_from_ticket(self)
 
 	def validate_higher_perm_levels(self):
 		validate_protected_field_permissions(self)

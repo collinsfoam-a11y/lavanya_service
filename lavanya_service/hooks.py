@@ -277,6 +277,7 @@ fixtures = [
 					"Free Service Rule",
 					"Service Product Receipt",
 					"Custody Log Entry",
+					"Lavanya Customer Profile",
 				],
 			],
 		],
@@ -599,6 +600,26 @@ fixtures.extend(
 			"dt": "Print Format",
 			"filters": [
 				["name", "in", ["Lavanya Service Product Receipt Token"]],
+			],
+		},
+	]
+)
+
+
+# Lavanya Service customer intake form script fixtures
+fixtures.extend(
+	[
+		{
+			"dt": "HD Form Script",
+			"filters": [
+				[
+					"name",
+					"in",
+					[
+						"Lavanya Customer Mobile Autofill - Ticket Form",
+						"Lavanya Customer Mobile Autofill - New Ticket",
+					],
+				],
 			],
 		},
 	]
