@@ -513,6 +513,45 @@ fixtures.extend(
 )
 
 
+# Lavanya Service permission fixtures
+fixtures.extend(
+	[
+		{
+			"dt": "Custom DocPerm",
+			"filters": [
+				[
+					"role",
+					"in",
+					[
+						"Lavanya Manager",
+						"Lavanya Helpdesk Agent",
+						"Lavanya Front Desk",
+						"Lavanya Service Coordinator",
+						"Lavanya Viewer",
+					],
+				],
+				[
+					"parent",
+					"in",
+					[
+						"HD Ticket",
+						"HD View",
+						"HD Notification",
+						"Brand Service Master",
+						"Service Center Master",
+						"Local Technician Master",
+						"Free Service Rule",
+						"Service Product Receipt",
+						"Custody Log Entry",
+					],
+				],
+				["permlevel", "=", 0],
+			],
+		},
+	]
+)
+
+
 # Lavanya Service scheduler events
 scheduler_events = {
 	"daily": [
