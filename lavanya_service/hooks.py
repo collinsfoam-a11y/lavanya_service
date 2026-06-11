@@ -247,3 +247,147 @@ app_license = "mit"
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
+
+# Lavanya Service fixtures
+# Export only explicitly approved metadata/config records.
+fixtures = [
+	{
+		"dt": "DocType",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"Brand Service Master",
+					"Service Center Master",
+					"Local Technician Master",
+					"Free Service Rule",
+					"Service Product Receipt",
+					"Custody Log Entry",
+				],
+			],
+		],
+	},
+	{
+		"dt": "Custom Field",
+		"filters": [
+			["dt", "=", "HD Ticket"],
+			[
+				"fieldname",
+				"in",
+				[
+					"lavanya_customer_section",
+					"complaint_source",
+					"customer_name",
+					"phone_1",
+					"phone_2",
+					"address",
+					"pincode",
+					"lavanya_product_section",
+					"product_type",
+					"product_subtype",
+					"brand",
+					"model_no",
+					"serial_no",
+					"lavanya_purchase_section",
+					"purchased_from_lavanya",
+					"invoice_source",
+					"old_erp_reference",
+					"purchase_date",
+					"warranty_status",
+					"lavanya_brand_service_section",
+					"manufacturer_registration_required",
+					"manufacturer_registered",
+					"brand_ticket_number",
+					"registration_date",
+					"registration_pending_reason",
+					"service_center",
+					"local_technician",
+					"lavanya_followup_section",
+					"is_repeated_complaint",
+					"previous_ticket_link",
+					"pending_reason",
+					"next_follow_up_date",
+					"closure_type",
+					"service_product_receipt",
+					"work_narration",
+					"customer_confirmation_received",
+					"closed_by",
+					"closure_date",
+				],
+			],
+		],
+	},
+	{
+		"dt": "HD Ticket Status",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"New",
+					"Registration Pending",
+					"Brand Registered",
+					"In Progress",
+					"Waiting on Customer",
+					"Waiting on Part / Approval",
+					"Ready for Pickup",
+					"Resolved",
+					"Closed",
+					"Cancelled",
+				],
+			],
+		],
+	},
+	{
+		"dt": "HD Ticket Priority",
+		"filters": [
+			["name", "in", ["Urgent", "High", "Medium", "Low"]],
+		],
+	},
+	{
+		"dt": "HD Ticket Type",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"Customer Complaint - Site",
+					"Customer Product at Store",
+					"Stock Complaint",
+					"Installation / Demo",
+					"Replacement / DOA",
+					"Out of Warranty Local Service",
+					"Free Service",
+				],
+			],
+		],
+	},
+	{
+		"dt": "HD Service Level Agreement",
+		"filters": [
+			["name", "in", ["Lavanya Default", "Default"]],
+		],
+	},
+	{
+		"dt": "Brand Service Master",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"LG",
+					"Samsung",
+					"Whirlpool",
+					"Voltas",
+					"Preethi",
+					"Bajaj",
+					"Prestige",
+					"Crompton",
+					"Kent",
+					"Faber",
+				],
+			],
+		],
+	},
+]

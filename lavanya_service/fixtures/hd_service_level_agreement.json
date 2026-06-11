@@ -1,0 +1,208 @@
+[
+ {
+  "apply_sla_for_resolution": 1,
+  "condition": null,
+  "condition_json": null,
+  "default_priority": "Medium",
+  "default_sla": 0,
+  "default_ticket_status": null,
+  "description": null,
+  "docstatus": 0,
+  "doctype": "HD Service Level Agreement",
+  "enabled": 1,
+  "end_date": null,
+  "holiday_list": "Default",
+  "modified": "2026-06-11 07:47:03.804953",
+  "name": "Default",
+  "priorities": [
+   {
+    "default_priority": 0,
+    "parent": "Default",
+    "parentfield": "priorities",
+    "parenttype": "HD Service Level Agreement",
+    "priority": "Low",
+    "resolution_time": 259200.0,
+    "response_time": 86400.0
+   },
+   {
+    "default_priority": 1,
+    "parent": "Default",
+    "parentfield": "priorities",
+    "parenttype": "HD Service Level Agreement",
+    "priority": "Medium",
+    "resolution_time": 86400.0,
+    "response_time": 28800.0
+   },
+   {
+    "default_priority": 0,
+    "parent": "Default",
+    "parentfield": "priorities",
+    "parenttype": "HD Service Level Agreement",
+    "priority": "High",
+    "resolution_time": 14400.0,
+    "response_time": 3600.0
+   },
+   {
+    "default_priority": 0,
+    "parent": "Default",
+    "parentfield": "priorities",
+    "parenttype": "HD Service Level Agreement",
+    "priority": "Urgent",
+    "resolution_time": 7200.0,
+    "response_time": 1800.0
+   }
+  ],
+  "service_level": "Default",
+  "start_date": null,
+  "support_and_resolution": [
+   {
+    "end_time": "18:00:00",
+    "parent": "Default",
+    "parentfield": "support_and_resolution",
+    "parenttype": "HD Service Level Agreement",
+    "start_time": "10:00:00",
+    "workday": "Monday"
+   },
+   {
+    "end_time": "18:00:00",
+    "parent": "Default",
+    "parentfield": "support_and_resolution",
+    "parenttype": "HD Service Level Agreement",
+    "start_time": "10:00:00",
+    "workday": "Tuesday"
+   },
+   {
+    "end_time": "18:00:00",
+    "parent": "Default",
+    "parentfield": "support_and_resolution",
+    "parenttype": "HD Service Level Agreement",
+    "start_time": "10:00:00",
+    "workday": "Wednesday"
+   },
+   {
+    "end_time": "18:00:00",
+    "parent": "Default",
+    "parentfield": "support_and_resolution",
+    "parenttype": "HD Service Level Agreement",
+    "start_time": "10:00:00",
+    "workday": "Thursday"
+   },
+   {
+    "end_time": "18:00:00",
+    "parent": "Default",
+    "parentfield": "support_and_resolution",
+    "parenttype": "HD Service Level Agreement",
+    "start_time": "10:00:00",
+    "workday": "Friday"
+   }
+  ],
+  "ticket_reopen_status": null
+ },
+ {
+  "apply_sla_for_resolution": 1,
+  "condition": null,
+  "condition_json": null,
+  "default_priority": "Medium",
+  "default_sla": 1,
+  "default_ticket_status": "New",
+  "description": null,
+  "docstatus": 0,
+  "doctype": "HD Service Level Agreement",
+  "enabled": 1,
+  "end_date": null,
+  "holiday_list": "Default",
+  "modified": "2026-06-11 07:47:03.048925",
+  "name": "Lavanya Default",
+  "priorities": [
+   {
+    "default_priority": 0,
+    "parent": "Lavanya Default",
+    "parentfield": "priorities",
+    "parenttype": "HD Service Level Agreement",
+    "priority": "Urgent",
+    "resolution_time": 86400.0,
+    "response_time": 7200.0
+   },
+   {
+    "default_priority": 0,
+    "parent": "Lavanya Default",
+    "parentfield": "priorities",
+    "parenttype": "HD Service Level Agreement",
+    "priority": "High",
+    "resolution_time": 172800.0,
+    "response_time": 14400.0
+   },
+   {
+    "default_priority": 1,
+    "parent": "Lavanya Default",
+    "parentfield": "priorities",
+    "parenttype": "HD Service Level Agreement",
+    "priority": "Medium",
+    "resolution_time": 259200.0,
+    "response_time": 28800.0
+   },
+   {
+    "default_priority": 0,
+    "parent": "Lavanya Default",
+    "parentfield": "priorities",
+    "parenttype": "HD Service Level Agreement",
+    "priority": "Low",
+    "resolution_time": 432000.0,
+    "response_time": 86400.0
+   }
+  ],
+  "service_level": "Lavanya Default",
+  "start_date": null,
+  "support_and_resolution": [
+   {
+    "end_time": "20:30:00",
+    "parent": "Lavanya Default",
+    "parentfield": "support_and_resolution",
+    "parenttype": "HD Service Level Agreement",
+    "start_time": "9:30:00",
+    "workday": "Monday"
+   },
+   {
+    "end_time": "20:30:00",
+    "parent": "Lavanya Default",
+    "parentfield": "support_and_resolution",
+    "parenttype": "HD Service Level Agreement",
+    "start_time": "9:30:00",
+    "workday": "Tuesday"
+   },
+   {
+    "end_time": "20:30:00",
+    "parent": "Lavanya Default",
+    "parentfield": "support_and_resolution",
+    "parenttype": "HD Service Level Agreement",
+    "start_time": "9:30:00",
+    "workday": "Wednesday"
+   },
+   {
+    "end_time": "20:30:00",
+    "parent": "Lavanya Default",
+    "parentfield": "support_and_resolution",
+    "parenttype": "HD Service Level Agreement",
+    "start_time": "9:30:00",
+    "workday": "Thursday"
+   },
+   {
+    "end_time": "20:30:00",
+    "parent": "Lavanya Default",
+    "parentfield": "support_and_resolution",
+    "parenttype": "HD Service Level Agreement",
+    "start_time": "9:30:00",
+    "workday": "Friday"
+   },
+   {
+    "end_time": "20:30:00",
+    "parent": "Lavanya Default",
+    "parentfield": "support_and_resolution",
+    "parenttype": "HD Service Level Agreement",
+    "start_time": "9:30:00",
+    "workday": "Saturday"
+   }
+  ],
+  "ticket_reopen_status": "In Progress"
+ }
+]

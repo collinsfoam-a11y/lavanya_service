@@ -1,0 +1,72 @@
+[
+ {
+  "description": "Customer complaint where service is expected at customer location.",
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "HD Ticket Type",
+  "is_system": 0,
+  "modified": "2026-06-10 23:29:19.356344",
+  "name": "Customer Complaint - Site",
+  "priority": "Medium"
+ },
+ {
+  "description": "Customer product physically received at showroom/store for service.",
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "HD Ticket Type",
+  "is_system": 0,
+  "modified": "2026-06-10 23:29:19.379887",
+  "name": "Customer Product at Store",
+  "priority": "Medium"
+ },
+ {
+  "description": "Issue found in showroom or warehouse stock item.",
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "HD Ticket Type",
+  "is_system": 0,
+  "modified": "2026-06-10 23:29:19.396216",
+  "name": "Stock Complaint",
+  "priority": "High"
+ },
+ {
+  "description": "Installation or product demo follow-up.",
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "HD Ticket Type",
+  "is_system": 0,
+  "modified": "2026-06-10 23:29:19.413726",
+  "name": "Installation / Demo",
+  "priority": "Medium"
+ },
+ {
+  "description": "Replacement or dead-on-arrival product case.",
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "HD Ticket Type",
+  "is_system": 0,
+  "modified": "2026-06-10 23:29:19.430272",
+  "name": "Replacement / DOA",
+  "priority": "High"
+ },
+ {
+  "description": "Out-of-warranty service handled or coordinated locally.",
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "HD Ticket Type",
+  "is_system": 0,
+  "modified": "2026-06-10 23:29:19.447157",
+  "name": "Out of Warranty Local Service",
+  "priority": "Medium"
+ },
+ {
+  "description": "Scheduled free service reminder or follow-up.",
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "HD Ticket Type",
+  "is_system": 0,
+  "modified": "2026-06-10 23:29:19.463515",
+  "name": "Free Service",
+  "priority": "Low"
+ }
+]
