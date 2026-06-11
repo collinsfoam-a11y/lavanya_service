@@ -445,3 +445,16 @@ fixtures.extend(
 		},
 	]
 )
+
+
+# Lavanya Service runtime settings fixtures
+fixtures.extend(
+	[
+		{
+			"dt": "HD Settings",
+			"filters": [
+				["name", "=", "HD Settings"],
+			],
+		},
+	]
+)
