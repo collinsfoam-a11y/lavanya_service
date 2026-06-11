@@ -458,3 +458,33 @@ fixtures.extend(
 		},
 	]
 )
+
+
+# Lavanya Service staff queue fixtures
+fixtures.extend(
+	[
+		{
+			"dt": "HD View",
+			"filters": [
+				[
+					"label",
+					"in",
+					[
+						"Lavanya - New Complaints",
+						"Lavanya - Registration Pending",
+						"Lavanya - Brand Registered",
+						"Lavanya - In Progress",
+						"Lavanya - Waiting on Customer",
+						"Lavanya - Waiting on Part / Approval",
+						"Lavanya - Ready for Pickup",
+						"Lavanya - Customer Product at Store",
+						"Lavanya - Stock Complaint",
+						"Lavanya - Installation / Demo",
+						"Lavanya - Repeated Complaints",
+						"Lavanya - Closed / Resolved",
+					],
+				],
+			],
+		},
+	]
+)
