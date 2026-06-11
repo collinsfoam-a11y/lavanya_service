@@ -391,3 +391,15 @@ fixtures = [
 		],
 	},
 ]
+
+
+# Lavanya Service validation hooks
+doc_events = {
+	"HD Ticket": {
+		"before_validate": "lavanya_service.validations.hd_ticket.normalize_ticket_phone_numbers",
+		"validate": "lavanya_service.validations.hd_ticket.validate_ticket",
+	},
+	"Service Product Receipt": {
+		"validate": "lavanya_service.validations.service_receipt.validate_service_product_receipt",
+	},
+}
