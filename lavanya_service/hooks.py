@@ -563,3 +563,14 @@ scheduler_events = {
 		"lavanya_service.reminders.notification_output.run_daily_reminder_notifications_dry_safe",
 	],
 }
+# Lavanya Service print format fixtures
+fixtures.extend(
+	[
+		{
+			"dt": "Print Format",
+			"filters": [
+				["name", "in", ["Lavanya Service Product Receipt Token"]],
+			],
+		},
+	]
+)
