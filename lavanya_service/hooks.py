@@ -488,3 +488,11 @@ fixtures.extend(
 		},
 	]
 )
+
+
+# Lavanya Service scheduler events
+scheduler_events = {
+	"daily": [
+		"lavanya_service.reminders.ticket_reminders.run_daily_reminder_scan_dry_run",
+	],
+}

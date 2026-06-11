@@ -126,3 +126,26 @@ def print_reminder_snapshot(limit=100):
             print(dict(row))
 
     return snapshot
+
+
+def run_daily_reminder_scan_dry_run():
+    """Daily scheduler entrypoint.
+
+    Safe dry-run only:
+    - scans reminder categories
+    - logs counts
+    - does not create notifications
+    - does not enqueue emails
+    - does not mutate tickets
+    """
+    snapshot = get_reminder_snapshot(limit=500)
+
+    frappe.logger("lavanya_service.reminders").info(
+        {
+            "event": "daily_reminder_scan_dry_run",
+            "generated_at": snapshot["generated_at"],
+            "counts": snapshot["counts"],
+        }
+    )
+
+    return snapshot
