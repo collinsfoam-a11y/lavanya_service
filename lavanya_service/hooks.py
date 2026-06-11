@@ -403,3 +403,45 @@ doc_events = {
 		"validate": "lavanya_service.validations.service_receipt.validate_service_product_receipt",
 	},
 }
+
+
+# Lavanya Service ticket template fixtures
+fixtures.extend(
+	[
+		{
+			"dt": "HD Ticket Template",
+			"filters": [
+				["name", "=", "Default"],
+			],
+		},
+		{
+			"dt": "HD Ticket Template Field",
+			"filters": [
+				["parenttype", "=", "HD Ticket Template"],
+				["parent", "=", "Default"],
+				[
+					"fieldname",
+					"in",
+					[
+						"complaint_source",
+						"customer_name",
+						"phone_1",
+						"phone_2",
+						"address",
+						"pincode",
+						"product_type",
+						"product_subtype",
+						"brand",
+						"model_no",
+						"serial_no",
+						"purchased_from_lavanya",
+						"invoice_source",
+						"old_erp_reference",
+						"purchase_date",
+						"warranty_status",
+					],
+				],
+			],
+		},
+	]
+)
