@@ -545,7 +545,7 @@ fixtures.extend(
 						"Custody Log Entry",
 					],
 				],
-				["permlevel", "=", 0],
+				["permlevel", "in", [0, 1, 2]],
 			],
 		},
 	]
