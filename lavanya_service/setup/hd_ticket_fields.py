@@ -139,11 +139,29 @@ FIELDS = [
         "in_standard_filter": 1,
     },
     {
+        "fieldname": "product_category",
+        "label": "Product Category",
+        "fieldtype": "Link",
+        "options": "Lavanya Product Category",
+        "insert_after": "product_type",
+        "in_list_view": 1,
+        "in_standard_filter": 1,
+    },
+    {
+        "fieldname": "product_item",
+        "label": "Product Item",
+        "fieldtype": "Link",
+        "options": "Lavanya Product Item",
+        "insert_after": "product_category",
+        "in_list_view": 1,
+        "in_standard_filter": 1,
+    },
+    {
         "fieldname": "product_subtype",
         "label": "Product Subtype",
         "fieldtype": "Select",
         "options": PRODUCT_SUBTYPE_OPTIONS,
-        "insert_after": "product_type",
+        "insert_after": "product_item",
     },
     {
         "fieldname": "brand",
@@ -349,6 +367,8 @@ def _validate_dependencies():
     for doctype in [
         "HD Ticket",
         "Brand Service Master",
+        "Lavanya Product Category",
+        "Lavanya Product Item",
         "Service Center Master",
         "Local Technician Master",
     ]:

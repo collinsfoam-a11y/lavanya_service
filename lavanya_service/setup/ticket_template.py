@@ -48,6 +48,18 @@ TEMPLATE_FIELDS = [
 		"placeholder": "Select product type",
 	},
 	{
+		"fieldname": "product_category",
+		"required": 0,
+		"hide_from_customer": 0,
+		"placeholder": "Product category",
+	},
+	{
+		"fieldname": "product_item",
+		"required": 0,
+		"hide_from_customer": 0,
+		"placeholder": "Product item",
+	},
+	{
 		"fieldname": "product_subtype",
 		"required": 0,
 		"hide_from_customer": 0,

@@ -18,6 +18,8 @@ INTAKE_FIELDS = {
 	"address",
 	"pincode",
 	"product_type",
+	"product_category",
+	"product_item",
 	"product_subtype",
 	"brand",
 	"model_no",

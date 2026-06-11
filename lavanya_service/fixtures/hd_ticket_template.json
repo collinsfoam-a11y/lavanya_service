@@ -76,6 +76,26 @@
     "url_method": null
    },
    {
+    "fieldname": "product_category",
+    "hide_from_customer": 0,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Product category",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "product_item",
+    "hide_from_customer": 0,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Product item",
+    "required": 0,
+    "url_method": null
+   },
+   {
     "fieldname": "product_subtype",
     "hide_from_customer": 0,
     "parent": "Default",
@@ -336,7 +356,7 @@
     "url_method": null
    }
   ],
-  "modified": "2026-06-11 20:09:40.414811",
+  "modified": "2026-06-11 22:53:12.152737",
   "name": "Default",
   "template_name": "Default"
  }
