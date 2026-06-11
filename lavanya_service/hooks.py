@@ -528,6 +528,7 @@ fixtures.extend(
 						"Lavanya Front Desk",
 						"Lavanya Service Coordinator",
 						"Lavanya Viewer",
+						"All",
 					],
 				],
 				[
