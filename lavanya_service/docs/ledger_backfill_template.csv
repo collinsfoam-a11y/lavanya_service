@@ -1,0 +1,2 @@
+customer_name,phone_1,phone_2,address,pincode,product_type,product_subtype,brand,model_no,serial_no,purchased_from_lavanya,invoice_source,old_erp_reference,purchase_date,warranty_status,ticket_type,status,brand_ticket_number,registration_date,pending_reason,next_follow_up_date,notes
+"Example Customer","9876543210","","12/345 Sample Street, Kochi","682001","Mixer","","Preethi","MX-123","SN-0001","Yes","Old ERP","INV-2024-0042","2024-11-15","In Warranty","Customer Complaint - Site","In Progress","","","Waiting for technician visit","2026-06-15","Imported from old register"
