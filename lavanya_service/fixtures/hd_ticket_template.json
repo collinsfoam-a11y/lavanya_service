@@ -6,166 +6,6 @@
   "doctype": "HD Ticket Template",
   "fields": [
    {
-    "fieldname": "brand",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Select brand",
-    "required": 1,
-    "url_method": null
-   },
-   {
-    "fieldname": "phone_1",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Primary 10 digit phone number",
-    "required": 1,
-    "url_method": null
-   },
-   {
-    "fieldname": "old_erp_reference",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Old ERP reference / bill number",
-    "required": 0,
-    "url_method": null
-   },
-   {
-    "fieldname": "phone_2",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Alternate phone number",
-    "required": 0,
-    "url_method": null
-   },
-   {
-    "fieldname": "purchased_from_lavanya",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Purchased from Lavanya?",
-    "required": 0,
-    "url_method": null
-   },
-   {
-    "fieldname": "product_subtype",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Select subtype if applicable",
-    "required": 0,
-    "url_method": null
-   },
-   {
-    "fieldname": "serial_no",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Serial number",
-    "required": 0,
-    "url_method": null
-   },
-   {
-    "fieldname": "address",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Customer address",
-    "required": 0,
-    "url_method": null
-   },
-   {
-    "fieldname": "customer_name",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Customer full name",
-    "required": 1,
-    "url_method": null
-   },
-   {
-    "fieldname": "complaint_source",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "How did the complaint come in?",
-    "required": 1,
-    "url_method": null
-   },
-   {
-    "fieldname": "invoice_source",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Invoice source",
-    "required": 0,
-    "url_method": null
-   },
-   {
-    "fieldname": "warranty_status",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Warranty status",
-    "required": 0,
-    "url_method": null
-   },
-   {
-    "fieldname": "pincode",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Area pincode",
-    "required": 0,
-    "url_method": null
-   },
-   {
-    "fieldname": "purchase_date",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Purchase date",
-    "required": 0,
-    "url_method": null
-   },
-   {
-    "fieldname": "product_type",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Select product type",
-    "required": 1,
-    "url_method": null
-   },
-   {
-    "fieldname": "model_no",
-    "hide_from_customer": 0,
-    "parent": "Default",
-    "parentfield": "fields",
-    "parenttype": "HD Ticket Template",
-    "placeholder": "Model number",
-    "required": 0,
-    "url_method": null
-   },
-   {
     "fieldname": "complaint_source",
     "hide_from_customer": 0,
     "parent": "Default",
@@ -322,11 +162,181 @@
     "parentfield": "fields",
     "parenttype": "HD Ticket Template",
     "placeholder": "Warranty status",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "manufacturer_registration_required",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Registration required?",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "manufacturer_registered",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Registration status",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "brand_ticket_number",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Brand service ticket number",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "registration_date",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Registration date",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "registration_pending_reason",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Registration pending reason",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "service_center",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Service center",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "local_technician",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Local technician",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "is_repeated_complaint",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Repeated complaint?",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "previous_ticket_link",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Previous ticket",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "pending_reason",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Pending reason",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "next_follow_up_date",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Next follow-up date",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "service_product_receipt",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Service product receipt",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "work_narration",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Work narration",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "closure_type",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Closure type",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "customer_confirmation_received",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Customer confirmation",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "closed_by",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Closed by",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "closure_date",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Closure date",
     "required": 0,
     "url_method": null
    }
   ],
-  "modified": "2026-06-11 09:43:44.009815",
+  "modified": "2026-06-11 20:09:40.414811",
   "name": "Default",
   "template_name": "Default"
  }

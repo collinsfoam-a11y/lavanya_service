@@ -140,9 +140,9 @@ after_migrate = [
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+override_doctype_class = {
+	"HD Ticket": "lavanya_service.overrides.hd_ticket.LavanyaHDTicket",
+}
 
 # Document Events
 # ---------------
@@ -185,9 +185,11 @@ after_migrate = [
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "lavanya_service.event.get_events"
-# }
+override_whitelisted_methods = {
+	"frappe.client.get": "lavanya_service.overrides.client.get",
+	"helpdesk.helpdesk.doctype.hd_ticket.api.get_one": "lavanya_service.overrides.client.get_ticket",
+	"helpdesk.helpdesk.doctype.hd_ticket.api.get_ticket_customizations": "lavanya_service.overrides.client.get_ticket_customizations",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
@@ -450,6 +452,23 @@ fixtures.extend(
 						"old_erp_reference",
 						"purchase_date",
 						"warranty_status",
+						"manufacturer_registration_required",
+						"manufacturer_registered",
+						"brand_ticket_number",
+						"registration_date",
+						"registration_pending_reason",
+						"service_center",
+						"local_technician",
+						"is_repeated_complaint",
+						"previous_ticket_link",
+						"pending_reason",
+						"next_follow_up_date",
+						"service_product_receipt",
+						"work_narration",
+						"closure_type",
+						"customer_confirmation_received",
+						"closed_by",
+						"closure_date",
 					],
 				],
 			],
@@ -549,6 +568,9 @@ fixtures.extend(
 						"HD Ticket",
 						"HD View",
 						"HD Notification",
+						"HD Agent",
+						"HD Customer",
+						"HD Team",
 						"Brand Service Master",
 						"Service Center Master",
 						"Local Technician Master",

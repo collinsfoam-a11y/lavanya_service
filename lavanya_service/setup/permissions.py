@@ -68,6 +68,24 @@ PERMISSION_MATRIX = {
         "Lavanya Service Coordinator": _perm(read=1, write=1),
         "Lavanya Viewer": _perm(read=1),
     },
+    "HD Agent": {
+        "Lavanya Manager": _perm(read=1),
+        "Lavanya Helpdesk Agent": _perm(read=1),
+        "Lavanya Front Desk": _perm(read=1),
+        "Lavanya Service Coordinator": _perm(read=1),
+    },
+    "HD Customer": {
+        "Lavanya Manager": _perm(read=1),
+        "Lavanya Helpdesk Agent": _perm(read=1),
+        "Lavanya Front Desk": _perm(read=1),
+        "Lavanya Service Coordinator": _perm(read=1),
+    },
+    "HD Team": {
+        "Lavanya Manager": _perm(read=1),
+        "Lavanya Helpdesk Agent": _perm(read=1),
+        "Lavanya Front Desk": _perm(read=1),
+        "Lavanya Service Coordinator": _perm(read=1),
+    },
     "Brand Service Master": {
         "Lavanya Manager": _perm(
             read=1, write=1, create=1, report=1, export=1, import_=1, print=1

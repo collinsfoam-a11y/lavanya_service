@@ -101,6 +101,108 @@ TEMPLATE_FIELDS = [
 		"hide_from_customer": 0,
 		"placeholder": "Warranty status",
 	},
+	{
+		"fieldname": "manufacturer_registration_required",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Registration required?",
+	},
+	{
+		"fieldname": "manufacturer_registered",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Registration status",
+	},
+	{
+		"fieldname": "brand_ticket_number",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Brand service ticket number",
+	},
+	{
+		"fieldname": "registration_date",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Registration date",
+	},
+	{
+		"fieldname": "registration_pending_reason",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Registration pending reason",
+	},
+	{
+		"fieldname": "service_center",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Service center",
+	},
+	{
+		"fieldname": "local_technician",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Local technician",
+	},
+	{
+		"fieldname": "is_repeated_complaint",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Repeated complaint?",
+	},
+	{
+		"fieldname": "previous_ticket_link",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Previous ticket",
+	},
+	{
+		"fieldname": "pending_reason",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Pending reason",
+	},
+	{
+		"fieldname": "next_follow_up_date",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Next follow-up date",
+	},
+	{
+		"fieldname": "service_product_receipt",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Service product receipt",
+	},
+	{
+		"fieldname": "work_narration",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Work narration",
+	},
+	{
+		"fieldname": "closure_type",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Closure type",
+	},
+	{
+		"fieldname": "customer_confirmation_received",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Customer confirmation",
+	},
+	{
+		"fieldname": "closed_by",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Closed by",
+	},
+	{
+		"fieldname": "closure_date",
+		"required": 0,
+		"hide_from_customer": 1,
+		"placeholder": "Closure date",
+	},
 ]
 
 

@@ -264,8 +264,8 @@ FIELDS = [
         "fieldtype": "Link",
         "options": "Local Technician Master",
         "insert_after": "service_center",
-        "read_only": 1,
-        "hidden": 1,
+        "read_only": 0,
+        "hidden": 0,
     },
     {
         "fieldname": "lavanya_followup_section",
