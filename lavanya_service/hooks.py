@@ -490,6 +490,29 @@ fixtures.extend(
 )
 
 
+# Lavanya Service role fixtures
+fixtures.extend(
+	[
+		{
+			"dt": "Role",
+			"filters": [
+				[
+					"name",
+					"in",
+					[
+						"Lavanya Manager",
+						"Lavanya Helpdesk Agent",
+						"Lavanya Front Desk",
+						"Lavanya Service Coordinator",
+						"Lavanya Viewer",
+					],
+				],
+			],
+		},
+	]
+)
+
+
 # Lavanya Service scheduler events
 scheduler_events = {
 	"daily": [
