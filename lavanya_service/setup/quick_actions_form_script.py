@@ -192,6 +192,68 @@ function setupForm({ doc, call, toast, createToast }) {
         physical_condition: condition || "",
       });
     }),
+
+    action("Check Repeat Complaint", async function () {
+      const REPEAT_API = "lavanya_service.api.repeat_complaints";
+      const name = ticketName();
+      if (!name) {
+        notify("Save the ticket before checking repeat complaints.", true);
+        return;
+      }
+      try {
+        let result = await call(REPEAT_API + ".find_repeat_candidates", {
+          ticket_name: name,
+        });
+        if (result && result.message) result = result.message;
+        const candidates = (result && result.candidates) || [];
+        if (!candidates.length) {
+          notify("No likely repeat complaint found.", false);
+          return;
+        }
+        const lines = candidates.map(function (c, i) {
+          const product = [c.brand, c.product_item || c.product_type, c.model_no, c.serial_no]
+            .filter(Boolean)
+            .join(" / ");
+          return (
+            (i + 1) + ") " + c.ticket +
+            " [" + (c.status || "") + "] " +
+            String(c.creation || "").slice(0, 10) +
+            " | " + (c.customer_name || "") +
+            (product ? " | " + product : "") +
+            " | " + (c.match_reasons || []).join(", ")
+          );
+        });
+        // eslint-disable-next-line no-alert
+        const choice = window.prompt(
+          "Possible repeat complaints:\n\n" + lines.join("\n") +
+            "\n\nEnter a number to CONFIRM as repeat (Cancel to skip):",
+          ""
+        );
+        if (choice == null || !String(choice).trim()) return;
+        const index = parseInt(String(choice).trim(), 10);
+        if (!index || index < 1 || index > candidates.length) {
+          notify("Invalid selection.", true);
+          return;
+        }
+        await runAction(REPEAT_API + ".confirm_repeat_complaint", {
+          previous_ticket_link: candidates[index - 1].ticket,
+        });
+      } catch (error) {
+        const message =
+          (error && error.messages && error.messages.join(", ")) ||
+          (error && error.message) ||
+          "Repeat complaint check failed.";
+        notify(message, true);
+      }
+    }),
+
+    action("Clear Repeat Link", async function () {
+      // eslint-disable-next-line no-alert
+      if (!window.confirm("Clear the repeat complaint flag and previous ticket link?")) {
+        return;
+      }
+      await runAction("lavanya_service.api.repeat_complaints.clear_repeat_complaint", {});
+    }),
   ];
 
   return { actions };
