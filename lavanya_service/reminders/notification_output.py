@@ -1,7 +1,10 @@
 import frappe
-from frappe.utils import today
+from frappe.utils import now_datetime, today
 
-from lavanya_service.reminders.ticket_reminders import get_reminder_snapshot
+from lavanya_service.reminders.ticket_reminders import (
+    get_reminder_snapshot,
+    record_reminder_scan_heartbeat,
+)
 
 
 REMINDER_CATEGORIES = {
@@ -152,8 +155,15 @@ def create_reminder_notifications(snapshot=None, recipients=None, limit=100):
 def run_daily_reminder_notifications_dry_safe():
     """Create in-app HD Notification reminders without email or task side effects."""
 
+    started_at = now_datetime()
     snapshot = get_reminder_snapshot(limit=500)
     results = create_reminder_notifications(snapshot=snapshot)
+    heartbeat = record_reminder_scan_heartbeat(
+        snapshot=snapshot,
+        started_at=started_at,
+        finished_at=now_datetime(),
+        event="daily_reminder_notifications_hd_notification",
+    )
 
     frappe.logger("lavanya_service.reminders").info(
         {
@@ -167,6 +177,7 @@ def run_daily_reminder_notifications_dry_safe():
     )
 
     return {
+        "heartbeat": heartbeat,
         "snapshot_counts": snapshot.get("counts"),
         "results": results,
     }

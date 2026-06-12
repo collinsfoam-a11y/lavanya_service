@@ -2,7 +2,9 @@ import frappe
 from frappe.utils import now_datetime, today
 
 
+ACTIVE_STATUS_CATEGORY = "Open"
 RESOLVED_STATUS_CATEGORY = "Resolved"
+REMINDER_HEARTBEAT_CACHE_KEY = "lavanya_service:last_reminder_scan_heartbeat"
 
 
 DEFAULT_FIELDS = [
@@ -78,7 +80,7 @@ def get_sla_response_breach_candidates(limit=100):
         [
             ["response_by", "is", "set"],
             ["response_by", "<", now_datetime()],
-            ["status_category", "!=", RESOLVED_STATUS_CATEGORY],
+            ["status_category", "=", ACTIVE_STATUS_CATEGORY],
         ],
         limit=limit,
     )
@@ -89,7 +91,7 @@ def get_sla_resolution_breach_candidates(limit=100):
         [
             ["resolution_by", "is", "set"],
             ["resolution_by", "<", now_datetime()],
-            ["status_category", "!=", RESOLVED_STATUS_CATEGORY],
+            ["status_category", "=", ACTIVE_STATUS_CATEGORY],
         ],
         limit=limit,
     )
@@ -128,6 +130,37 @@ def print_reminder_snapshot(limit=100):
     return snapshot
 
 
+def record_reminder_scan_heartbeat(snapshot, started_at=None, finished_at=None, event=None):
+    started_at = started_at or now_datetime()
+    finished_at = finished_at or now_datetime()
+    duration_seconds = (finished_at - started_at).total_seconds()
+
+    heartbeat = {
+        "event": event or "daily_reminder_scan",
+        "site": frappe.local.site,
+        "started_at": str(started_at),
+        "finished_at": str(finished_at),
+        "duration_seconds": duration_seconds,
+        "counts": snapshot.get("counts", {}),
+    }
+
+    frappe.cache().set_value(REMINDER_HEARTBEAT_CACHE_KEY, frappe.as_json(heartbeat))
+    frappe.logger("lavanya_service.reminders").info(heartbeat)
+
+    return heartbeat
+
+
+def get_last_reminder_scan_heartbeat():
+    raw_value = frappe.cache().get_value(REMINDER_HEARTBEAT_CACHE_KEY)
+    if not raw_value:
+        return None
+
+    if isinstance(raw_value, bytes):
+        raw_value = raw_value.decode()
+
+    return frappe.parse_json(raw_value)
+
+
 def run_daily_reminder_scan_dry_run():
     """Daily scheduler entrypoint.
 
@@ -138,14 +171,13 @@ def run_daily_reminder_scan_dry_run():
     - does not enqueue emails
     - does not mutate tickets
     """
+    started_at = now_datetime()
     snapshot = get_reminder_snapshot(limit=500)
-
-    frappe.logger("lavanya_service.reminders").info(
-        {
-            "event": "daily_reminder_scan_dry_run",
-            "generated_at": snapshot["generated_at"],
-            "counts": snapshot["counts"],
-        }
+    record_reminder_scan_heartbeat(
+        snapshot=snapshot,
+        started_at=started_at,
+        finished_at=now_datetime(),
+        event="daily_reminder_scan_dry_run",
     )
 
     return snapshot
