@@ -5,6 +5,7 @@ from lavanya_service.reminders.ticket_reminders import (
     get_reminder_snapshot,
     record_reminder_scan_heartbeat,
 )
+from lavanya_service.workflow.today_work import get_today_work_data
 
 
 REMINDER_CATEGORIES = {
@@ -42,7 +43,7 @@ def get_staff_recipients():
                 if _is_enabled_user(user):
                     recipients.add(user)
 
-    for role in ["Agent", "Agent Manager"]:
+    for role in ["Agent", "Agent Manager", "Lavanya Manager", "Lavanya Helpdesk Agent", "Lavanya Front Desk", "Lavanya Service Coordinator"]:
         holders = frappe.get_all(
             "Has Role",
             filters={"role": role, "parenttype": "User"},
@@ -111,10 +112,9 @@ def create_hd_notification(user, ticket_name, category, message):
     }
 
 
-def create_reminder_notifications(snapshot=None, recipients=None, limit=100):
-    """Create HD Notification reminders from scanner output."""
+def create_today_work_notifications(recipients=None, limit=50):
+    """Create HD Notification reminders from Today's Work queues."""
 
-    snapshot = snapshot or get_reminder_snapshot(limit=limit)
     recipients = recipients or get_staff_recipients()
 
     results = {
@@ -128,21 +128,38 @@ def create_reminder_notifications(snapshot=None, recipients=None, limit=100):
         results["skipped"].append({"reason": "no_recipients"})
         return results
 
-    for category, rows in snapshot.get("tickets", {}).items():
-        if category not in REMINDER_CATEGORIES:
+    for user in recipients:
+        try:
+            work_data = get_today_work_data(user=user, include_counts=False, limit=limit)
+        except frappe.PermissionError:
+            results["skipped"].append({"user": user, "reason": "permission_error"})
+            continue
+        except Exception as e:
+            results["skipped"].append({"user": user, "reason": str(e)})
             continue
 
-        for row in rows:
-            ticket_name = _ticket_name(row)
-            if not ticket_name:
-                results["skipped"].append(
-                    {"category": category, "reason": "missing_ticket_name"}
-                )
-                continue
+        for group in work_data.get("groups", []):
+            category = group.get("key")
+            label = group.get("label")
 
-            message = build_reminder_message(category, row)
+            for ticket in group.get("tickets", []):
+                ticket_name = _ticket_name(ticket)
+                if not ticket_name:
+                    continue
 
-            for user in recipients:
+                subject = _row_value(ticket, "subject")
+                customer_name = _row_value(ticket, "customer_name")
+
+                parts = [f"[{label}]"]
+                if ticket_name:
+                    parts.append(f"Ticket: {ticket_name}")
+                if subject:
+                    parts.append(f"Subject: {subject}")
+                if customer_name:
+                    parts.append(f"Customer: {customer_name}")
+
+                message = " | ".join(parts)
+
                 result = create_hd_notification(user, ticket_name, category, message)
                 if result.get("created"):
                     results["created"].append(result)
@@ -156,8 +173,11 @@ def run_daily_reminder_notifications_dry_safe():
     """Create in-app HD Notification reminders without email or task side effects."""
 
     started_at = now_datetime()
+    # Still take SLA snapshot to track baseline counts
     snapshot = get_reminder_snapshot(limit=500)
-    results = create_reminder_notifications(snapshot=snapshot)
+
+    results = create_today_work_notifications(limit=50)
+
     heartbeat = record_reminder_scan_heartbeat(
         snapshot=snapshot,
         started_at=started_at,
