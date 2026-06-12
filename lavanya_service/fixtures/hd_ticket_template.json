@@ -236,6 +236,36 @@
     "url_method": null
    },
    {
+    "fieldname": "brand_registration_recommended",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Brand registration recommended",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "brand_registration_override_reason",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Reason brand registration is not needed",
+    "required": 0,
+    "url_method": null
+   },
+   {
+    "fieldname": "brand_registration_recommended_at",
+    "hide_from_customer": 1,
+    "parent": "Default",
+    "parentfield": "fields",
+    "parenttype": "HD Ticket Template",
+    "placeholder": "Brand registration recommended at",
+    "required": 0,
+    "url_method": null
+   },
+   {
     "fieldname": "service_center",
     "hide_from_customer": 1,
     "parent": "Default",
@@ -356,7 +386,7 @@
     "url_method": null
    }
   ],
-  "modified": "2026-06-11 22:53:12.152737",
+  "modified": "2026-06-12 11:43:39.618698",
   "name": "Default",
   "template_name": "Default"
  }

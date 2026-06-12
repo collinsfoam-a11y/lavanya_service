@@ -143,6 +143,8 @@ def _run_all():
 	if t2:
 		t2.reload()
 		t2.status = "In Progress"
+		t2.pending_reason = ""
+		t2.next_follow_up_date = None
 		_expect_block(
 			"TC-011a",
 			"In Progress without pending_reason/next_follow_up_date is blocked",

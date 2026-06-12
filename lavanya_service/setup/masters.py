@@ -212,6 +212,7 @@ def create_free_service_rule():
 				reqd=1,
 				in_list_view=1,
 			),
+			field("brand_backed", "Brand Backed", "Check", default="0", in_list_view=1, in_standard_filter=1),
 			field("due_after_days", "Due After Days", "Int", reqd=1),
 			field("reminder_before_days", "Reminder Before Days", "Int", default="7"),
 			field("active", "Active", "Check", default="1", in_list_view=1, in_standard_filter=1),
@@ -219,6 +220,35 @@ def create_free_service_rule():
 		autoname="format:FSR-.#####",
 		title_field="service_type",
 	)
+
+
+def ensure_free_service_rule_brand_backed_field():
+	doctype = "Free Service Rule"
+	fieldname = "brand_backed"
+
+	if not frappe.db.exists("DocType", doctype):
+		frappe.throw(f"Missing required DocType: {doctype}")
+
+	meta = frappe.get_meta(doctype)
+	if meta.get_field(fieldname):
+		return "exists"
+
+	doc = frappe.get_doc("DocType", doctype)
+	doc.append(
+		"fields",
+		field(
+			fieldname,
+			"Brand Backed",
+			"Check",
+			default="0",
+			in_list_view=1,
+			in_standard_filter=1,
+		),
+	)
+	doc.save(ignore_permissions=True)
+	frappe.db.commit()
+	frappe.clear_cache(doctype=doctype)
+	return "created"
 
 
 def seed_brand_service_master():
@@ -253,6 +283,7 @@ def create_supporting_masters():
 		"Local Technician Master": create_local_technician_master(),
 		"Free Service Rule": create_free_service_rule(),
 	}
+	results["Free Service Rule brand_backed field"] = ensure_free_service_rule_brand_backed_field()
 
 	frappe.clear_cache()
 

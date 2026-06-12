@@ -32,7 +32,10 @@ PRODUCT_SUBTYPE_OPTIONS = "\n".join(
 PENDING_REASON_OPTIONS = "\n".join(
     [
         "Invoice Proof Pending",
+        "Invoice Pending",
+        "Brand Registration Recommended",
         "Manufacturer Registration Pending",
+        "Service Follow-up Required",
         "Brand Ticket Number Pending",
         "Customer Details Missing",
         "Technician Not Visited",
@@ -302,11 +305,36 @@ FIELDS = [
         "insert_after": "registration_date",
     },
     {
+        "fieldname": "brand_registration_recommended",
+        "label": "Brand Registration Recommended",
+        "fieldtype": "Check",
+        "insert_after": "registration_pending_reason",
+        "default": "0",
+        "read_only": 1,
+        "permlevel": 1,
+    },
+    {
+        "fieldname": "brand_registration_override_reason",
+        "label": "Brand Registration Override Reason",
+        "fieldtype": "Small Text",
+        "insert_after": "brand_registration_recommended",
+        "permlevel": 1,
+    },
+    {
+        "fieldname": "brand_registration_recommended_at",
+        "label": "Brand Registration Recommended At",
+        "fieldtype": "Datetime",
+        "insert_after": "brand_registration_override_reason",
+        "read_only": 1,
+        "hidden": 1,
+        "permlevel": 1,
+    },
+    {
         "fieldname": "service_center",
         "label": "Service Center",
         "fieldtype": "Link",
         "options": "Service Center Master",
-        "insert_after": "registration_pending_reason",
+        "insert_after": "brand_registration_recommended_at",
     },
     {
         "fieldname": "local_technician",

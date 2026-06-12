@@ -1,4 +1,5 @@
 import frappe
+from frappe.utils import now_datetime, today
 
 from lavanya_service.utils.phone import normalize_phone
 
@@ -17,6 +18,31 @@ SERIAL_REQUIRED_TICKET_TYPES = {
 	"Customer Product at Store",
 }
 
+BRAND_REGISTRATION_RECOMMENDED_TICKET_TYPES = {
+	"Customer Complaint - Site",
+	"Customer Product at Store",
+	"Installation / Demo",
+	"Replacement / DOA",
+}
+
+BRAND_REGISTRATION_EXEMPT_TICKET_TYPES = {
+	"Stock Complaint",
+	"Out of Warranty Local Service",
+}
+
+BRAND_REGISTRATION_RECOMMENDED_REASON = "Brand Registration Recommended"
+INVOICE_PENDING_REASON = "Invoice Pending"
+
+IMPLICIT_SELECT_EMPTY_VALUES = {
+	"pending_reason": {"Invoice Proof Pending"},
+	"registration_pending_reason": {"Brand Line Busy"},
+}
+
+BRAND_REGISTRATION_SKIP_VALUES = {
+	"manufacturer_registration_required": {"No", "Not Applicable"},
+	"manufacturer_registered": {"No", "Failed"},
+}
+
 CLOSED_STATUSES = {
 	"Closed",
 }
@@ -32,6 +58,8 @@ SERVICE_COORDINATION_FIELDS = {
 	"brand_ticket_number",
 	"registration_date",
 	"registration_pending_reason",
+	"brand_registration_recommended",
+	"brand_registration_recommended_at",
 	"service_center",
 	"local_technician",
 	"is_repeated_complaint",
@@ -49,6 +77,10 @@ CLOSURE_CONTROL_FIELDS = {
 	"closure_date",
 }
 
+BRAND_REGISTRATION_OVERRIDE_FIELDS = {
+	"brand_registration_override_reason",
+}
+
 SERVICE_COORDINATION_WRITE_ROLES = {
 	"Lavanya Manager",
 	"Lavanya Helpdesk Agent",
@@ -56,6 +88,11 @@ SERVICE_COORDINATION_WRITE_ROLES = {
 }
 
 CLOSURE_CONTROL_WRITE_ROLES = {
+	"Lavanya Manager",
+	"Lavanya Service Coordinator",
+}
+
+BRAND_REGISTRATION_OVERRIDE_WRITE_ROLES = {
 	"Lavanya Manager",
 	"Lavanya Service Coordinator",
 }
@@ -72,6 +109,14 @@ def _value(doc, fieldname):
 def _has_value(doc, fieldname):
 	value = _value(doc, fieldname)
 	return value is not None and str(value).strip() != ""
+
+
+def _has_meaningful_value(doc, fieldname):
+	if not _has_value(doc, fieldname):
+		return False
+
+	value = str(_value(doc, fieldname)).strip()
+	return value not in IMPLICIT_SELECT_EMPTY_VALUES.get(fieldname, set())
 
 
 def _current_user_roles():
@@ -142,7 +187,9 @@ def normalize_ticket_phone_numbers(doc, method=None):
 def validate_ticket(doc, method=None):
 	validate_protected_field_permissions(doc)
 	validate_phone_numbers(doc)
+	apply_warranty_brand_registration_recommendation(doc)
 	validate_brand_registration(doc)
+	validate_brand_registration_override(doc)
 	validate_follow_up_required(doc)
 	validate_serial_number_required(doc)
 	validate_closure_required(doc)
@@ -164,12 +211,24 @@ def validate_protected_field_permissions(doc):
 	changed_closure_fields = sorted(
 		fieldname for fieldname in CLOSURE_CONTROL_FIELDS if _field_changed(doc, fieldname)
 	)
+	changed_override_fields = sorted(
+		fieldname for fieldname in BRAND_REGISTRATION_OVERRIDE_FIELDS if _field_changed(doc, fieldname)
+	)
 
 	if changed_service_fields and not _has_any_role(SERVICE_COORDINATION_WRITE_ROLES):
 		frappe.throw(
 			"Only Lavanya Manager, Lavanya Helpdesk Agent, or Lavanya Service Coordinator "
 			"can update service coordination fields: "
 			+ ", ".join(changed_service_fields)
+			+ ".",
+			frappe.PermissionError,
+		)
+
+	if changed_override_fields and not _has_any_role(BRAND_REGISTRATION_OVERRIDE_WRITE_ROLES):
+		frappe.throw(
+			"Only Lavanya Manager or Lavanya Service Coordinator can update brand registration "
+			"override fields: "
+			+ ", ".join(changed_override_fields)
 			+ ".",
 			frappe.PermissionError,
 		)
@@ -181,6 +240,92 @@ def validate_protected_field_permissions(doc):
 			+ ".",
 			frappe.PermissionError,
 		)
+
+
+def apply_warranty_brand_registration_recommendation(doc):
+	recommended = is_brand_registration_recommended(doc)
+
+	if hasattr(doc, "brand_registration_recommended"):
+		doc.brand_registration_recommended = 1 if recommended else 0
+
+	if not recommended:
+		if (
+			hasattr(doc, "pending_reason")
+			and _value(doc, "pending_reason") in IMPLICIT_SELECT_EMPTY_VALUES["pending_reason"]
+			and _value(doc, "status") not in FOLLOW_UP_REQUIRED_STATUSES
+		):
+			doc.pending_reason = ""
+		return
+
+	if hasattr(doc, "brand_registration_recommended_at") and not _has_value(
+		doc, "brand_registration_recommended_at"
+	):
+		doc.brand_registration_recommended_at = now_datetime()
+
+	if _brand_registration_completed(doc):
+		return
+
+	if _value(doc, "status") in FOLLOW_UP_REQUIRED_STATUSES:
+		return
+
+	if hasattr(doc, "pending_reason") and not _has_meaningful_value(doc, "pending_reason"):
+		doc.pending_reason = BRAND_REGISTRATION_RECOMMENDED_REASON
+
+	if (
+		hasattr(doc, "next_follow_up_date")
+		and _value(doc, "pending_reason") != INVOICE_PENDING_REASON
+		and not _has_value(doc, "next_follow_up_date")
+	):
+		doc.next_follow_up_date = today()
+
+
+def is_brand_registration_recommended(doc):
+	if _value(doc, "warranty_status") != "In Warranty":
+		return False
+
+	ticket_type = _value(doc, "ticket_type")
+	if ticket_type in BRAND_REGISTRATION_RECOMMENDED_TICKET_TYPES:
+		return True
+
+	if ticket_type in BRAND_REGISTRATION_EXEMPT_TICKET_TYPES:
+		return False
+
+	if ticket_type == "Free Service":
+		return _matching_free_service_rule_is_brand_backed(doc)
+
+	return False
+
+
+def _matching_free_service_rule_is_brand_backed(doc):
+	if not frappe.db.exists("DocType", "Free Service Rule"):
+		return False
+
+	if not frappe.get_meta("Free Service Rule").get_field("brand_backed"):
+		return False
+
+	product_type = _value(doc, "product_type")
+	if not product_type:
+		return False
+
+	filters = [
+		["active", "=", 1],
+		["brand_backed", "=", 1],
+		["product_type", "=", product_type],
+	]
+
+	brand = _value(doc, "brand")
+	if brand:
+		filters.append(["brand", "in", [brand, ""]])
+
+	return bool(frappe.get_all("Free Service Rule", filters=filters, pluck="name", limit=1))
+
+
+def _brand_registration_completed(doc):
+	return (
+		_value(doc, "manufacturer_registered") == "Yes"
+		and _has_value(doc, "brand_ticket_number")
+		and _has_value(doc, "registration_date")
+	)
 
 
 def validate_brand_registration(doc):
@@ -195,6 +340,31 @@ def validate_brand_registration(doc):
 
 	if missing:
 		frappe.throw("Brand Registered status requires: " + ", ".join(missing) + ".")
+
+
+def validate_brand_registration_override(doc):
+	if not is_brand_registration_recommended(doc):
+		return
+
+	if not _brand_registration_marked_skipped(doc):
+		return
+
+	if _has_meaningful_value(doc, "brand_registration_override_reason") or _has_meaningful_value(
+		doc, "registration_pending_reason"
+	):
+		return
+
+	frappe.throw(
+		"Brand registration is recommended for this in-warranty case. "
+		"Enter Brand Registration Override Reason or Registration Pending Reason to continue."
+	)
+
+
+def _brand_registration_marked_skipped(doc):
+	for fieldname, skip_values in BRAND_REGISTRATION_SKIP_VALUES.items():
+		if _value(doc, fieldname) in skip_values:
+			return True
+	return False
 
 
 def validate_follow_up_required(doc):
