@@ -641,6 +641,7 @@ fixtures.extend(
 						"Lavanya Intake Master Shortcuts - New Ticket",
 						"Lavanya Warranty Brand Registration Hint - Ticket Form",
 						"Lavanya Warranty Brand Registration Hint - New Ticket",
+						"Lavanya Quick Actions - Ticket Form",
 					],
 				],
 			],
