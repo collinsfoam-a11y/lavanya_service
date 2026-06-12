@@ -434,63 +434,16 @@ doc_events = {
 
 
 # Lavanya Service ticket template fixtures
+# HD Ticket Template Field is intentionally NOT exported as a standalone
+# fixture: the child rows travel embedded inside hd_ticket_template.json.
+# Exporting the same children twice double-imports them on migrate and
+# duplicated every template field (fixed in PHASE 1N-FIX-TEMPLATE-1).
 fixtures.extend(
 	[
 		{
 			"dt": "HD Ticket Template",
 			"filters": [
 				["name", "=", "Default"],
-			],
-		},
-		{
-			"dt": "HD Ticket Template Field",
-			"filters": [
-				["parenttype", "=", "HD Ticket Template"],
-				["parent", "=", "Default"],
-				[
-					"fieldname",
-					"in",
-					[
-						"complaint_source",
-						"customer_name",
-						"phone_1",
-						"phone_2",
-						"address",
-						"pincode",
-						"product_type",
-						"product_category",
-						"product_item",
-						"product_subtype",
-						"brand",
-						"model_no",
-						"serial_no",
-						"purchased_from_lavanya",
-						"invoice_source",
-						"old_erp_reference",
-						"purchase_date",
-						"warranty_status",
-						"manufacturer_registration_required",
-						"manufacturer_registered",
-						"brand_ticket_number",
-						"registration_date",
-						"registration_pending_reason",
-						"brand_registration_recommended",
-						"brand_registration_override_reason",
-						"brand_registration_recommended_at",
-						"service_center",
-						"local_technician",
-						"is_repeated_complaint",
-						"previous_ticket_link",
-						"pending_reason",
-						"next_follow_up_date",
-						"service_product_receipt",
-						"work_narration",
-						"closure_type",
-						"customer_confirmation_received",
-						"closed_by",
-						"closure_date",
-					],
-				],
 			],
 		},
 	]
