@@ -390,6 +390,16 @@ def create_product_receipt(ticket_name, accessories_received=None, physical_cond
 		receipt.accessories_received = accessories_received
 	if physical_condition:
 		receipt.physical_condition = physical_condition
+
+	receipt.append("custody_log", {
+		"custody_action": "Received",
+		"custody_status": "Received at Store",
+		"action_datetime": now_datetime(),
+		"from_party": "Customer",
+		"to_party": "Store",
+		"handled_by": _acting_user(),
+	})
+
 	receipt.insert()
 
 	# Link the receipt back to the ticket. ``service_product_receipt`` is a
