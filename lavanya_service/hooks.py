@@ -105,6 +105,7 @@ after_migrate = "lavanya_service.setup.install.after_migrate"
 # hyphenated URL printed on the QR code to that template.
 website_route_rules = [
 	{"from_route": "/qr-complaint", "to_route": "qr_complaint"},
+	{"from_route": "/frontend/<path:app_path>", "to_route": "frontend"},
 ]
 
 # Integration Setup

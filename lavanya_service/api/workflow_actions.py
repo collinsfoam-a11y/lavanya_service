@@ -89,3 +89,13 @@ def create_product_receipt(ticket_name, accessories_received=None, physical_cond
 		accessories_received=accessories_received,
 		physical_condition=physical_condition,
 	)
+
+@frappe.whitelist()
+def get_current_user_roles():
+    roles = frappe.get_roles(frappe.session.user)
+    return {
+        'is_manager': 'Lavanya Manager' in roles,
+        'is_coordinator': 'Lavanya Service Coordinator' in roles,
+        'is_agent': 'Lavanya Helpdesk Agent' in roles,
+        'is_front_desk': 'Lavanya Front Desk' in roles
+    }
