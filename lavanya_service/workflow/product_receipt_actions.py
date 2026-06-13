@@ -40,14 +40,11 @@ def _save_receipt(doc):
 	if not frappe.has_permission(RECEIPT_DOCTYPE, "write", doc=doc, user=acting_user):
 		frappe.throw(_("You are not permitted to update this receipt."), frappe.PermissionError)
 
-	# Similar to ticket, we elevate to bypass any strict field-level blocks 
-	# that shouldn't apply to the automated workflow, assuming role checks passed.
-	frappe.set_user("Administrator")
-	try:
-		doc.flags.ignore_permissions = True
-		doc.save()
-	finally:
-		frappe.set_user(acting_user)
+	# The action already enforced an explicit role check above; save with
+	# ignore_permissions WITHOUT impersonating Administrator so modified_by
+	# keeps the real acting user for the audit trail (audit B1).
+	doc.flags.ignore_lavanya_field_guard = True
+	doc.save(ignore_permissions=True)
 
 	doc.reload()
 	return doc

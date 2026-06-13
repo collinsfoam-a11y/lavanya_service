@@ -128,17 +128,19 @@ def _block_if_final(doc):
 
 
 def _save_ticket(doc):
-	"""Persist ticket changes. See module docstring for the elevation rationale."""
+	"""Persist ticket changes preserving the real actor in the audit trail.
+
+	The quick action has already enforced an explicit, action-specific role
+	check, so we bypass the Lavanya protected-field guard via an internal flag
+	rather than impersonating Administrator. This keeps ``modified_by`` (and
+	any version/comment authorship) pointed at the real staff user (audit B1).
+	"""
 	acting_user = _acting_user()
 	if not frappe.has_permission(TICKET_DOCTYPE, "write", doc=doc, user=acting_user):
 		frappe.throw(_("You are not permitted to update this ticket."), frappe.PermissionError)
 
-	frappe.set_user("Administrator")
-	try:
-		doc.flags.ignore_permissions = True
-		doc.save()
-	finally:
-		frappe.set_user(acting_user)
+	doc.flags.ignore_lavanya_field_guard = True
+	doc.save(ignore_permissions=True)
 
 	doc.reload()
 	return doc

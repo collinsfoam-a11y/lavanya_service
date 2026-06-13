@@ -141,8 +141,6 @@ def _test_ticket_raw_only_behavior():
 
 
 def _test_format_variants_reuse_one_profile(lookup_customer_by_mobile):
-	before_profiles = frappe.db.count("Lavanya Customer Profile")
-
 	first = _base_ticket("+91 98765 43210", customer_name="Format Variant Customer")
 	first.insert(ignore_permissions=True)
 	first.reload()
@@ -179,12 +177,18 @@ def _test_format_variants_reuse_one_profile(lookup_customer_by_mobile):
 			},
 		},
 	)
+	# Assert the business invariant (exactly one profile for the mobile, both
+	# variant tickets resolving to it) rather than an absolute count delta.
+	# The delta form was stateful: a profile committed by a previous run made
+	# the second insert UPDATE instead of CREATE, so the count never grew by 1.
+	# The invariant form is idempotent and still catches a real duplicate
+	# (len(profiles) would be > 1) without weakening any business rule.
 	_assert(
 		"PN-019",
 		"format variants resolve to one profile",
-		frappe.db.count("Lavanya Customer Profile") == before_profiles + 1
-		and len(profiles) == 1
+		len(profiles) == 1
 		and lookup.get("found")
-		and lookup.get("primary_mobile") == "9876543210",
-		{"profiles": profiles, "lookup": lookup},
+		and lookup.get("primary_mobile") == "9876543210"
+		and profiles[0]["last_ticket"] == second.name,
+		{"profiles": profiles, "lookup": lookup, "second": second.name},
 	)

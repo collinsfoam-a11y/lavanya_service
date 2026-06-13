@@ -203,15 +203,17 @@ def run_daily_reminder_notifications_dry_safe():
     }
 
 
-def _existing_unread_same_day_notification(user, ticket_name, message):
+def _existing_unread_same_day_notification(user, ticket_name, message=None):
     if not user or not ticket_name:
         return None
 
+    # Dedupe on stable components (recipient + ticket + reminder type + day)
+    # rather than the exact message text (audit E1): editing a ticket's subject
+    # intra-day must not spawn a second reminder for the same ticket/user/day.
     filters = {
         "user_to": user,
         "reference_ticket": ticket_name,
         "notification_type": REMINDER_NOTIFICATION_TYPE,
-        "message": message,
         "read": 0,
         "creation": ["between", [today() + " 00:00:00", today() + " 23:59:59"]],
     }

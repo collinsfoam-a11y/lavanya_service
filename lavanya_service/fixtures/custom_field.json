@@ -95,7 +95,7 @@
   "name": "HD Ticket-complaint_source",
   "no_copy": 0,
   "non_negative": 0,
-  "options": "Phone Call\nWhatsApp\nDirect Visit\nStaff Entered\nEmail",
+  "options": "Phone Call\nWhatsApp\nDirect Visit\nStaff Entered\nEmail\nCustomer QR Form",
   "permlevel": 0,
   "placeholder": null,
   "precision": "",

@@ -205,6 +205,13 @@ def validate_protected_field_permissions(doc):
 	if frappe.session.user == "Administrator" or _has_any_role(BYPASS_ROLES):
 		return
 
+	# Internal server-side bypass for trusted quick-action / product-receipt
+	# workflows (audit B1). These set the flag only AFTER an explicit,
+	# action-specific role check. Never honoured for Guest, so the public QR
+	# endpoint can never use it to write protected fields.
+	if getattr(getattr(doc, "flags", None), "ignore_lavanya_field_guard", False) and frappe.session.user != "Guest":
+		return
+
 	changed_service_fields = sorted(
 		fieldname for fieldname in SERVICE_COORDINATION_FIELDS if _field_changed(doc, fieldname)
 	)

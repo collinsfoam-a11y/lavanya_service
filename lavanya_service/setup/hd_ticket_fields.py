@@ -87,7 +87,7 @@ FIELDS = [
         "fieldname": "complaint_source",
         "label": "Complaint Source",
         "fieldtype": "Select",
-        "options": "Phone Call\nWhatsApp\nDirect Visit\nStaff Entered\nEmail",
+        "options": "Phone Call\nWhatsApp\nDirect Visit\nStaff Entered\nEmail\nCustomer QR Form",
         "insert_after": "lavanya_customer_section",
         "in_list_view": 1,
         "in_standard_filter": 1,

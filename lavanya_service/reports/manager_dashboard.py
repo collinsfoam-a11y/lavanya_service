@@ -25,7 +25,7 @@ def get_brand_pending_report():
 		  AND (
 			  status = 'Registration Pending'
 			  OR (warranty_status = 'In Warranty' AND IFNULL(manufacturer_registered, '') != 'Yes' AND IFNULL(brand_ticket_number, '') = '' AND IFNULL(brand_registration_override_reason, '') = '')
-			  OR (IFNULL(brand_ticket_number, '') != '' AND status IN ('Brand Registered', 'In Progress', 'Brand Service Complete'))
+			  OR (IFNULL(brand_ticket_number, '') != '' AND status IN ('Brand Registered', 'In Progress', 'Waiting on Part / Approval'))
 		  )
 		ORDER BY creation ASC
 	""", as_dict=True)

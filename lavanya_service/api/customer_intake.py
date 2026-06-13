@@ -88,17 +88,26 @@ def _profile_rows_by_mobile(mobile, include_disabled=False):
 	return [{"name": name, "matched_field": fieldname} for name, fieldname in matches.items()]
 
 
-def _find_profile_by_mobile(mobile, include_disabled=False):
+class AmbiguousCustomerProfile(Exception):
+	"""Raised internally when one mobile maps to multiple customer profiles."""
+
+
+def _find_profile_by_mobile(mobile, include_disabled=False, raise_on_ambiguous=True):
 	rows = _profile_rows_by_mobile(mobile, include_disabled=include_disabled)
 	if not rows:
 		return None
 
 	if len(rows) > 1:
+		names = ", ".join(sorted(row["name"] for row in rows))
+		if not raise_on_ambiguous:
+			# Caller wants a non-fatal signal (e.g. a background sync that must
+			# not block the ticket save). Surface via a typed exception.
+			raise AmbiguousCustomerProfile(names)
 		frappe.throw(
 			"Ambiguous customer profile conflict for mobile "
 			+ mobile
 			+ ": "
-			+ ", ".join(sorted(row["name"] for row in rows))
+			+ names
 			+ ".",
 			frappe.ValidationError,
 		)
@@ -250,7 +259,19 @@ def sync_customer_profile_from_ticket(doc, method=None):
 		return None
 
 	alternate = normalize_phone(_get_value(doc, "phone_2"))
-	profile = _find_profile_by_mobile(primary["normalized"], include_disabled=True)
+	# Profile sync is a side effect of saving a ticket. A duplicate-profile
+	# conflict must NOT block the ticket save (audit C1): log it and skip sync.
+	try:
+		profile = _find_profile_by_mobile(
+			primary["normalized"], include_disabled=True, raise_on_ambiguous=False
+		)
+	except AmbiguousCustomerProfile as conflict:
+		frappe.log_error(
+			f"Mobile {primary['normalized']} maps to multiple customer profiles: {conflict}. "
+			f"Skipped profile sync for ticket {_get_value(doc, 'name')}.",
+			"Lavanya duplicate customer profile",
+		)
+		return {"created": False, "changed": False, "skipped": "ambiguous_profile"}
 	created = False
 
 	if not profile:
