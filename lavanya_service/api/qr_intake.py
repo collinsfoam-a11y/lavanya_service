@@ -304,9 +304,20 @@ def submit_qr_complaint(**kwargs):
     doc.purchased_from_lavanya = "Unknown"
     doc.warranty_status = "Unknown"
 
-    # Insert with elevated permissions (guest cannot write HD Ticket directly).
-    doc.flags.ignore_permissions = True
-    doc.insert()
+    # Guest intake: create under a privileged identity. ignore_permissions on the
+    # ticket alone is insufficient because Helpdesk turns the description into a
+    # Communication whose on_communication_update calls HD Ticket.save() WITHOUT
+    # ignore_permissions, which a Guest cannot pass. There is no staff actor for a
+    # public submission; provenance is recorded via complaint_source="Customer QR
+    # Form" and raised_by=QR_RAISED_BY. Validation + rate limiting above already
+    # ran as the original (guest) request.
+    intake_user = frappe.session.user
+    frappe.set_user("Administrator")
+    try:
+        doc.flags.ignore_permissions = True
+        doc.insert()
+    finally:
+        frappe.set_user(intake_user)
 
     # Build safe reference (not internal ticket name).
     safe_ref = f"LV-QR-{normalized_mobile[-4:]}"

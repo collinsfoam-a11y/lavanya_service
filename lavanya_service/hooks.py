@@ -100,6 +100,13 @@ after_migrate = "lavanya_service.setup.install.after_migrate"
 # before_uninstall = "lavanya_service.uninstall.before_uninstall"
 # after_uninstall = "lavanya_service.uninstall.after_uninstall"
 
+# Public QR page: the www controller file must be qr_complaint.py (a valid Python
+# module name), so its template resolves at /qr_complaint. Map the customer-facing
+# hyphenated URL printed on the QR code to that template.
+website_route_rules = [
+	{"from_route": "/qr-complaint", "to_route": "qr_complaint"},
+]
+
 # Integration Setup
 # ------------------
 # To set up dependencies/integrations with other apps
