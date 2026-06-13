@@ -85,16 +85,14 @@ required_apps = ["helpdesk"]
 # before_install = "lavanya_service.install.before_install"
 # after_install = "lavanya_service.install.after_install"
 
-# Keep the HD Ticket "All" permission override restricted after every migrate.
-# Idempotent: only writes when the stored values drift from the approved target.
-after_install = [
-	"lavanya_service.setup.permission_fixes.restrict_hd_ticket_all_permission",
-	"lavanya_service.setup.sla_fixes.ensure_helpdesk_sla_defaults",
-]
-after_migrate = [
-	"lavanya_service.setup.permission_fixes.restrict_hd_ticket_all_permission",
-	"lavanya_service.setup.sla_fixes.ensure_helpdesk_sla_defaults",
-]
+# Idempotent unified setup: seeds all custom DocTypes, config and master data
+# (Phase 1S). It internally runs the previous permission_fixes + sla_fixes, so
+# the restricted HD Ticket "All" permission and the single default SLA are still
+# enforced after every install/migrate. Master records (brands, etc.) are seeded
+# here by code rather than via record fixtures, which failed on fresh installs
+# (controller resolution before the custom DocType was visible).
+after_install = "lavanya_service.setup.install.after_install"
+after_migrate = "lavanya_service.setup.install.after_migrate"
 
 # Uninstallation
 # ------------
@@ -394,27 +392,12 @@ fixtures = [
 			["name", "in", ["Lavanya Default"]],
 		],
 	},
-	{
-		"dt": "Brand Service Master",
-		"filters": [
-			[
-				"name",
-				"in",
-				[
-					"LG",
-					"Samsung",
-					"Whirlpool",
-					"Voltas",
-					"Preethi",
-					"Bajaj",
-					"Prestige",
-					"Crompton",
-					"Kent",
-					"Faber",
-				],
-			],
-		],
-	},
+	# NOTE: Brand Service Master records are intentionally NOT exported as a
+	# fixture. Importing records for a custom=1 DocType during fresh install
+	# failed controller resolution (No module named
+	# 'frappe.core.doctype.brand_service_master'). They are seeded idempotently
+	# by lavanya_service.setup.masters.seed_brand_service_master via after_install
+	# / after_migrate (Phase 1S).
 ]
 
 
