@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Product Receipt Form - ServiceDesk Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#bcc7de",
+                        "outline": "#7a7487",
+                        "surface-container-highest": "#e6e0ef",
+                        "surface-container": "#f2ebfa",
+                        "tertiary-fixed": "#ffdbca",
+                        "tertiary-fixed-dim": "#ffb690",
+                        "tertiary": "#823700",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#1f0060",
+                        "inverse-surface": "#322f3a",
+                        "secondary": "#545f73",
+                        "on-tertiary-container": "#ffddcd",
+                        "surface-container-low": "#f7f1ff",
+                        "on-surface-variant": "#494456",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e6e0ef",
+                        "on-error": "#ffffff",
+                        "on-surface": "#1c1a24",
+                        "surface-tint": "#6533ed",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#a84900",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#ded7e6",
+                        "outline-variant": "#cac3d9",
+                        "on-secondary-container": "#586377",
+                        "on-primary-fixed-variant": "#4d00d2",
+                        "background": "#fdf7ff",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-tertiary-fixed": "#331100",
+                        "on-background": "#1c1a24",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#f5eefd",
+                        "inverse-primary": "#ccbeff",
+                        "on-primary-container": "#e9e0ff",
+                        "primary-fixed": "#e7deff",
+                        "primary-container": "#6d3df5",
+                        "on-tertiary-fixed-variant": "#783200",
+                        "surface": "#fdf7ff",
+                        "surface-container-high": "#ece6f4",
+                        "secondary-container": "#d5e0f8",
+                        "primary-fixed-dim": "#ccbeff",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#5412dd",
+                        "surface-bright": "#fdf7ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "xl": "32px",
+                        "md": "16px",
+                        "xs": "4px",
+                        "base": "8px",
+                        "lg": "24px",
+                        "gutter": "16px",
+                        "container-margin": "24px"
+                    },
+                    "fontFamily": {
+                        "caption": ["Inter"],
+                        "page-title": ["Inter"],
+                        "field-label": ["Inter"],
+                        "section-title": ["Inter"],
+                        "body-default": ["Inter"],
+                        "button-text": ["Inter"],
+                        "display-metrics": ["Inter"]
+                    },
+                    "fontSize": {
+                        "caption": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "page-title": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "field-label": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "section-title": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "body-default": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "button-text": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "display-metrics": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-default min-h-screen">
+<!-- SideNavBar -->
+<nav class="w-[240px] h-screen fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant shadow-sm flex flex-col h-full py-lg z-40 hidden md:flex">
+<div class="px-lg mb-xl">
+<h1 class="font-page-title text-page-title text-primary">ServiceDesk Pro</h1>
+<p class="font-caption text-caption text-on-surface-variant mt-xs">Staff Portal</p>
+</div>
+<div class="px-lg mb-lg">
+<button class="w-full bg-primary-container text-on-primary font-button-text text-button-text py-sm px-md rounded-lg flex items-center justify-center gap-sm hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Ticket
+            </button>
+</div>
+<div class="flex-1 overflow-y-auto flex flex-col gap-xs">
+<a class="flex items-center gap-md px-lg py-md text-on-surface-variant hover:bg-surface-container-low transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">assignment_turned_in</span>
+                Today's Work
+            </a>
+<a class="flex items-center gap-md px-lg py-md border-l-4 border-primary bg-primary-container/10 text-primary font-button-text transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">confirmation_number</span>
+                All Tickets
+            </a>
+<a class="flex items-center gap-md px-lg py-md text-on-surface-variant hover:bg-surface-container-low transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">group</span>
+                Customers
+            </a>
+<a class="flex items-center gap-md px-lg py-md text-on-surface-variant hover:bg-surface-container-low transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+                Products
+            </a>
+<a class="flex items-center gap-md px-lg py-md text-on-surface-variant hover:bg-surface-container-low transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Management Dashboard
+            </a>
+</div>
+<div class="mt-auto flex flex-col gap-xs pt-lg border-t border-outline-variant/50">
+<a class="flex items-center gap-md px-lg py-md text-on-surface-variant hover:bg-surface-container-low transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-md px-lg py-md text-on-surface-variant hover:bg-surface-container-low transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">help</span>
+                Help
+            </a>
+</div>
+</nav>
+<!-- TopNavBar -->
+<header class="h-16 fixed top-0 right-0 left-0 md:left-[240px] z-50 bg-surface border-b border-outline-variant shadow-sm flex items-center justify-between px-lg w-full">
+<!-- Mobile Menu Toggle -->
+<button class="md:hidden text-on-surface-variant p-sm cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<!-- Search -->
+<div class="hidden md:flex items-center bg-surface-container-lowest border border-outline-variant rounded-full px-md py-xs w-64 focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container transition-all">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] mr-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-default font-body-default w-full text-on-surface placeholder:text-on-surface-variant/70" placeholder="Search tickets..." type="text"/>
+</div>
+<!-- Mobile Title (Hidden on Desktop) -->
+<h1 class="md:hidden font-page-title text-[18px] text-primary">ServiceDesk Pro</h1>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:scale-95 transition-transform p-sm rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:scale-95 transition-transform p-sm rounded-full hover:bg-surface-container-low hidden sm:block">
+<span class="material-symbols-outlined">chat_bubble</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:scale-95 transition-transform p-xs rounded-full ml-sm">
+<img alt="User Avatar" class="w-8 h-8 rounded-full border border-outline-variant" data-alt="Staff Member Profile Avatar, generic placeholder image with purple background and white initials." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhDU0yl7h-AnbLPgqK_Qu3gCS5NmG9inRA9ODu9QjMzrauCMniRlen62AiuxIjey6a-6bCn7lC7dn6VbMh-xzQlIXeAh89yNE13Zek7ZZS4B3a1B1Gh-nGq7J9s3CjNR-Ytm0t5VJhTpd3ngNy7PXhR68uATo8iYUaRQUnBqMjJkTK0lyQ_RJDT0jeLaEXGWEcMgW4J9nsnh69w3itzKn5xemMI2ljiZHkKTJ9TDLTGk2m_fGdJKVueXC-Hsb53FZm_qiE9D7sKns"/>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-16 md:pl-[240px] min-h-screen">
+<div class="p-container-margin max-w-5xl mx-auto">
+<!-- Breadcrumb / Back Navigation -->
+<div class="flex items-center gap-sm text-on-surface-variant font-body-default text-body-default mb-lg">
+<a class="hover:text-primary flex items-center gap-xs transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                    Back to Ticket
+                </a>
+<span class="text-outline-variant">/</span>
+<span class="text-on-surface font-medium">Product Receipt</span>
+</div>
+<div class="flex flex-col lg:flex-row gap-lg items-start">
+<!-- Left Column: Primary Form Areas -->
+<div class="w-full lg:w-2/3 flex flex-col gap-lg">
+<!-- Section 1: Header / Ticket Context -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)] relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
+<div class="flex justify-between items-start mb-md">
+<div>
+<h2 class="font-page-title text-page-title text-on-surface mb-xs">Product Receipt Form</h2>
+<p class="font-body-default text-body-default text-on-surface-variant">Log incoming product custody details.</p>
+</div>
+<span class="px-sm py-xs bg-surface-container-high text-on-surface rounded font-field-label text-field-label flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-primary">sell</span>
+                                #TK-2024-089
+                            </span>
+</div>
+<div class="bg-surface-container-low rounded-lg p-md border border-outline-variant/50 flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-primary-fixed-variant font-bold">
+                                RV
+                            </div>
+<div>
+<p class="font-field-label text-field-label text-on-surface-variant mb-1">Customer</p>
+<p class="font-section-title text-[16px] font-semibold text-on-surface">Rahul Verma</p>
+</div>
+<div class="ml-auto text-right">
+<p class="font-field-label text-field-label text-on-surface-variant mb-1">Product</p>
+<p class="font-body-default text-body-default font-medium text-on-surface">Samsung 65" QLED TV</p>
+</div>
+</div>
+</section>
+<!-- Section 3: Product Condition (Bento-style layout) -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+<h3 class="font-section-title text-section-title text-on-surface mb-md pb-sm border-b border-outline-variant flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary-container">fact_check</span>
+                            Condition &amp; Accessories
+                        </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+<!-- Accessories Multi-select area -->
+<div>
+<label class="font-field-label text-field-label text-on-surface-variant block mb-sm">Included Accessories</label>
+<div class="space-y-sm">
+<label class="flex items-center gap-md p-sm rounded hover:bg-surface-container-low border border-transparent hover:border-outline-variant/50 transition-colors cursor-pointer">
+<input checked="" class="w-4 h-4 text-primary-container border-outline rounded focus:ring-primary-container" type="checkbox"/>
+<span class="font-body-default text-body-default text-on-surface">Power Cable</span>
+</label>
+<label class="flex items-center gap-md p-sm rounded hover:bg-surface-container-low border border-transparent hover:border-outline-variant/50 transition-colors cursor-pointer">
+<input checked="" class="w-4 h-4 text-primary-container border-outline rounded focus:ring-primary-container" type="checkbox"/>
+<span class="font-body-default text-body-default text-on-surface">Remote Control</span>
+</label>
+<label class="flex items-center gap-md p-sm rounded hover:bg-surface-container-low border border-transparent hover:border-outline-variant/50 transition-colors cursor-pointer">
+<input class="w-4 h-4 text-primary-container border-outline rounded focus:ring-primary-container" type="checkbox"/>
+<span class="font-body-default text-body-default text-on-surface">Original Box/Packaging</span>
+</label>
+<label class="flex items-center gap-md p-sm rounded hover:bg-surface-container-low border border-transparent hover:border-outline-variant/50 transition-colors cursor-pointer">
+<input class="w-4 h-4 text-primary-container border-outline rounded focus:ring-primary-container" type="checkbox"/>
+<span class="font-body-default text-body-default text-on-surface">Wall Mount Brackets</span>
+</label>
+</div>
+</div>
+<!-- Remarks Text Area -->
+<div class="flex flex-col">
+<label class="font-field-label text-field-label text-on-surface-variant block mb-sm">Physical Condition &amp; Remarks</label>
+<textarea class="w-full h-full bg-surface-container-lowest border border-outline-variant rounded-lg p-md font-body-default text-body-default text-on-surface focus:ring-2 focus:ring-primary-container focus:border-primary-container resize-none" placeholder="E.g., Minor scratches on bezel, Dent on left corner..." rows="4"></textarea>
+</div>
+</div>
+</section>
+<!-- Section 4: Photos -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+<h3 class="font-section-title text-section-title text-on-surface mb-md pb-sm border-b border-outline-variant flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary-container">add_a_photo</span>
+                            Photographic Evidence
+                        </h3>
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-xl flex flex-col items-center justify-center bg-surface-container-low/50 hover:bg-surface-container-low transition-colors cursor-pointer group">
+<div class="w-16 h-16 rounded-full bg-secondary-container flex items-center justify-center text-primary-container mb-md group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[32px]">cloud_upload</span>
+</div>
+<p class="font-button-text text-button-text text-primary-container mb-xs">Click to upload photos</p>
+<p class="font-caption text-caption text-on-surface-variant">or drag and drop files here (Max 5MB per image)</p>
+</div>
+</section>
+</div>
+<!-- Right Column: Metadata & Actions -->
+<div class="w-full lg:w-1/3 flex flex-col gap-lg sticky top-24">
+<!-- Section 2: Custody Details -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+<h3 class="font-section-title text-section-title text-on-surface mb-md pb-sm border-b border-outline-variant flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary-container">schedule</span>
+                            Custody Details
+                        </h3>
+<div class="space-y-md">
+<div>
+<label class="font-field-label text-field-label text-on-surface-variant block mb-xs">Received By</label>
+<select class="w-full h-10 bg-surface-container-lowest border border-outline-variant rounded text-body-default font-body-default text-on-surface focus:ring-2 focus:ring-primary-container focus:border-primary-container px-md">
+<option>Jane Doe (Current User)</option>
+<option>Mark Smith</option>
+<option>Sarah Johnson</option>
+</select>
+</div>
+<div>
+<label class="font-field-label text-field-label text-on-surface-variant block mb-xs">Received Date</label>
+<div class="relative">
+<input class="w-full h-10 bg-surface-container-lowest border border-outline-variant rounded text-body-default font-body-default text-on-surface focus:ring-2 focus:ring-primary-container focus:border-primary-container px-md" type="date" value="2024-05-20"/>
+</div>
+</div>
+<div>
+<label class="font-field-label text-field-label text-on-surface-variant block mb-xs">Expected Return Date</label>
+<div class="relative">
+<input class="w-full h-10 bg-surface-container-lowest border border-outline-variant rounded text-body-default font-body-default text-on-surface focus:ring-2 focus:ring-primary-container focus:border-primary-container px-md" type="date"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 5: Actions -->
+<section class="bg-surface-container-lowest border border-primary/20 rounded-xl p-lg shadow-sm">
+<p class="font-caption text-caption text-on-surface-variant mb-md">Generating this receipt will update the ticket status to 'In Custody' and email a copy to the customer.</p>
+<div class="flex flex-col gap-sm">
+<button class="w-full bg-primary-container text-on-primary font-button-text text-button-text py-sm px-md rounded-lg flex items-center justify-center gap-sm hover:opacity-90 transition-opacity h-10">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+                                Generate Product Receipt
+                            </button>
+<button class="w-full bg-surface-container-lowest text-on-surface border border-outline-variant font-button-text text-button-text py-sm px-md rounded-lg flex items-center justify-center gap-sm hover:bg-surface-container-low transition-colors h-10">
+                                Cancel
+                            </button>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+</body></html>

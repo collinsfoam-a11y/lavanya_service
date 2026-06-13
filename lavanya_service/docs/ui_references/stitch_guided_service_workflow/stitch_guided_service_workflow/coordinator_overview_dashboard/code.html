@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Service Coordinator Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#f2ebfa",
+                        "surface-container-low": "#f7f1ff",
+                        "primary-fixed-dim": "#ccbeff",
+                        "on-surface": "#1c1a24",
+                        "surface": "#fdf7ff",
+                        "tertiary-fixed-dim": "#ffb690",
+                        "on-tertiary-fixed-variant": "#783200",
+                        "primary-container": "#6d3df5",
+                        "inverse-on-surface": "#f5eefd",
+                        "on-surface-variant": "#494456",
+                        "on-tertiary-fixed": "#331100",
+                        "outline-variant": "#cac3d9",
+                        "surface-bright": "#fdf7ff",
+                        "on-secondary-container": "#586377",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#ece6f4",
+                        "on-primary-fixed-variant": "#4d00d2",
+                        "secondary-container": "#d5e0f8",
+                        "background": "#fdf7ff",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "tertiary-fixed": "#ffdbca",
+                        "surface-container-highest": "#e6e0ef",
+                        "surface-dim": "#ded7e6",
+                        "surface-tint": "#6533ed",
+                        "primary": "#5412dd",
+                        "on-secondary-fixed": "#111c2d",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#1f0060",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#e7deff",
+                        "surface-variant": "#e6e0ef",
+                        "on-primary-container": "#e9e0ff",
+                        "inverse-primary": "#ccbeff",
+                        "tertiary-container": "#a84900",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#1c1a24",
+                        "secondary": "#545f73",
+                        "outline": "#7a7487",
+                        "on-tertiary-container": "#ffddcd",
+                        "inverse-surface": "#322f3a",
+                        "tertiary": "#823700",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "gutter": "16px",
+                        "container-margin": "24px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "base": "8px",
+                        "lg": "24px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "field-label": ["Inter"],
+                        "caption": ["Inter"],
+                        "body-default": ["Inter"],
+                        "section-title": ["Inter"],
+                        "display-metrics": ["Inter"],
+                        "button-text": ["Inter"],
+                        "page-title": ["Inter"]
+                    },
+                    "fontSize": {
+                        "field-label": ["13px", {"lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "body-default": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "section-title": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "display-metrics": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "button-text": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                        "page-title": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #F8FAFC; /* Level 0 Background */
+        }
+        .work-zone-card {
+            background-color: #ffffff;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0px 1px 3px rgba(0,0,0,0.05);
+        }
+        .high-emphasis-card {
+            border: 2px solid #5412dd; /* Lavanya Purple */
+        }
+    </style>
+</head>
+<body class="text-on-surface font-body-default flex h-screen overflow-hidden">
+<!-- SideNavBar -->
+<nav class="w-60 h-screen sticky left-0 top-0 bg-surface-container-lowest border-r border-outline-variant shadow-sm flex flex-col py-lg z-40 hidden md:flex">
+<div class="px-lg mb-8">
+<h1 class="font-page-title text-page-title text-primary">Lavanya Service</h1>
+<p class="font-caption text-caption text-on-surface-variant mt-1">Regional Hub</p>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full bg-primary text-on-primary font-button-text text-button-text py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-colors">
+<span class="material-symbols-outlined text-sm">add</span>
+                New Service Request
+            </button>
+</div>
+<ul class="flex-1 space-y-1">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 border-l-4 border-primary bg-primary-container/10 text-primary font-bold" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-button-text text-button-text">Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors transition-all duration-200 ease-in-out border-l-4 border-transparent" href="#">
+<span class="material-symbols-outlined">assignment_late</span>
+<span class="font-button-text text-button-text">Triage Queue</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors transition-all duration-200 ease-in-out border-l-4 border-transparent" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-button-text text-button-text">Procurement</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors transition-all duration-200 ease-in-out border-l-4 border-transparent" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-button-text text-button-text">Team Capacity</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors transition-all duration-200 ease-in-out border-l-4 border-transparent" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-button-text text-button-text">Settings</span>
+</a>
+</li>
+</ul>
+<div class="px-4 mt-auto">
+<div class="flex items-center gap-3">
+<img alt="Coordinator Profile" class="w-10 h-10 rounded-full object-cover" data-alt="A professional corporate portrait of a female service coordinator in a modern office setting. She is wearing a neat blazer and looking slightly off-camera with a confident, neutral expression. The background features subtle, blurred architectural elements and bright, clean natural lighting typical of a high-end corporate environment. The image reflects efficiency and authority, aligning with the Lavanya Service brand aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcA1uyKuBgbOFc_fJL3AHLM_STiETSjf6CHDy4ynoQ1HJS2F2e-iI5C-sBAg9XSn602OFwyhMkIBiI29cW38Blq847Rn2JvDMJI4Nos-uHqE6K_yg_v4X7KKV3xwQr8hfcKHZGnPJFba8Qg6r4Tuw5k3XyIT3SUtw-V251HxNQIwcF_wGy0MS1DD10Y2b5KA_zpCYy2tyK72NPHvuKiCSlwYGd8_yLXSPS-8HTCzdl5M-fIGTs3WnvZb4HiBFtl0jPqvMJrZEFtaI"/>
+<div>
+<p class="font-field-label text-field-label">Sarah Jenkins</p>
+<p class="font-caption text-caption text-on-surface-variant">Lead Coordinator</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col h-screen overflow-hidden">
+<!-- TopAppBar -->
+<header class="h-16 w-full sticky top-0 z-30 bg-surface border-b border-outline-variant flex justify-between items-center px-lg w-full">
+<div class="flex items-center gap-4">
+<h2 class="font-section-title text-section-title text-on-surface">Service Coordinator Portal</h2>
+</div>
+<div class="flex-1 max-w-md mx-8 hidden md:block">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full h-10 pl-10 pr-4 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary font-body-default text-body-default outline-none transition-all" placeholder="Search tickets, parts, or technicians..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-6 w-px bg-outline-variant mx-2"></div>
+<button class="bg-surface-container-lowest border border-outline-variant text-on-surface font-button-text text-button-text py-1.5 px-4 rounded-lg hover:bg-surface-container-high transition-colors">
+                    Support
+                </button>
+<button class="bg-primary text-on-primary font-button-text text-button-text py-1.5 px-4 rounded-lg hover:bg-on-primary-fixed-variant transition-colors shadow-sm">
+                    Quick Assign
+                </button>
+</div>
+</header>
+<!-- Scrollable Canvas -->
+<main class="flex-1 overflow-y-auto p-container-margin">
+<!-- Dashboard Header -->
+<div class="mb-8 flex justify-between items-end">
+<div>
+<h2 class="font-page-title text-page-title text-on-surface mb-1">Morning Shift Overview</h2>
+<p class="font-body-default text-body-default text-on-surface-variant">Tuesday, Oct 24 • Regional Hub Active</p>
+</div>
+<button class="flex items-center gap-2 text-primary font-button-text text-button-text hover:underline">
+<span class="material-symbols-outlined text-sm">download</span>
+                    Export Shift Report
+                </button>
+</div>
+<!-- Metrics Bar -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-8">
+<!-- High Priority Card -->
+<div class="work-zone-card high-emphasis-card rounded-xl p-md flex flex-col justify-between relative overflow-hidden">
+<div class="absolute top-0 right-0 w-16 h-16 bg-error/10 rounded-bl-full -mr-4 -mt-4"></div>
+<div>
+<p class="font-display-metrics text-display-metrics text-error mb-1">12</p>
+<h3 class="font-section-title text-section-title text-on-surface">Triage Queue</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-1">Needs immediate classification</p>
+</div>
+<a class="font-button-text text-button-text text-primary mt-4 flex items-center gap-1 group" href="#">
+                        Review Queue
+                        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+<div class="work-zone-card rounded-xl p-md flex flex-col justify-between">
+<div>
+<p class="font-display-metrics text-display-metrics text-on-surface mb-1">34</p>
+<h3 class="font-section-title text-section-title text-on-surface">Unassigned Tickets</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-1">Awaiting dispatch</p>
+</div>
+<a class="font-button-text text-button-text text-primary mt-4 flex items-center gap-1 group" href="#">
+                        Assign Technicians
+                        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+<div class="work-zone-card rounded-xl p-md flex flex-col justify-between">
+<div>
+<p class="font-display-metrics text-display-metrics text-on-surface mb-1">8</p>
+<h3 class="font-section-title text-section-title text-on-surface">Pending Parts</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-1">Blocking active repairs</p>
+</div>
+<a class="font-button-text text-button-text text-primary mt-4 flex items-center gap-1 group" href="#">
+                        Check Status
+                        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+<div class="work-zone-card border border-error rounded-xl p-md flex flex-col justify-between bg-error/5">
+<div>
+<p class="font-display-metrics text-display-metrics text-error mb-1">3</p>
+<h3 class="font-section-title text-section-title text-on-surface">Overdue SLAs</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-1">Breached response times</p>
+</div>
+<a class="font-button-text text-button-text text-error mt-4 flex items-center gap-1 group" href="#">
+                        Escalate Actions
+                        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Complex Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Triage Queue Preview (Spans 2 columns) -->
+<div class="lg:col-span-2 work-zone-card rounded-xl p-0 overflow-hidden flex flex-col">
+<div class="p-md border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<h3 class="font-section-title text-section-title text-on-surface">Urgent Triage Preview</h3>
+<button class="font-button-text text-button-text text-primary hover:underline">View All</button>
+</div>
+<div class="flex-1 overflow-y-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container border-b border-outline-variant">
+<th class="font-field-label text-field-label text-on-surface-variant py-2 px-md font-medium">Ticket ID</th>
+<th class="font-field-label text-field-label text-on-surface-variant py-2 px-md font-medium">Issue Summary</th>
+<th class="font-field-label text-field-label text-on-surface-variant py-2 px-md font-medium">Reported</th>
+<th class="font-field-label text-field-label text-on-surface-variant py-2 px-md font-medium">Action</th>
+</tr>
+</thead>
+<tbody class="font-body-default text-body-default">
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-md font-medium text-primary">#REQ-8901</td>
+<td class="py-3 px-md">Server rack power failure in Sector 4</td>
+<td class="py-3 px-md text-on-surface-variant">10m ago</td>
+<td class="py-3 px-md">
+<button class="font-button-text text-button-text text-primary border border-primary px-3 py-1 rounded hover:bg-primary/5 transition-colors">Classify</button>
+</td>
+</tr>
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-md font-medium text-primary">#REQ-8899</td>
+<td class="py-3 px-md">HVAC leakage near diagnostic terminal</td>
+<td class="py-3 px-md text-on-surface-variant">25m ago</td>
+<td class="py-3 px-md">
+<button class="font-button-text text-button-text text-primary border border-primary px-3 py-1 rounded hover:bg-primary/5 transition-colors">Classify</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-md font-medium text-primary">#REQ-8895</td>
+<td class="py-3 px-md">Network degradation on executive floor</td>
+<td class="py-3 px-md text-on-surface-variant">42m ago</td>
+<td class="py-3 px-md">
+<button class="font-button-text text-button-text text-primary border border-primary px-3 py-1 rounded hover:bg-primary/5 transition-colors">Classify</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Parts Procurement Status (Spans 1 column) -->
+<div class="work-zone-card rounded-xl p-md flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-section-title text-section-title text-on-surface">Procurement</h3>
+<span class="material-symbols-outlined text-on-surface-variant">inventory_2</span>
+</div>
+<div class="flex-1 flex flex-col gap-4">
+<div class="bg-surface-container-low p-4 rounded-lg border border-outline-variant">
+<div class="flex justify-between items-end mb-2">
+<span class="font-body-default text-body-default text-on-surface-variant">Critical Parts Ordered</span>
+<span class="font-display-metrics text-display-metrics text-on-surface">45</span>
+</div>
+<div class="w-full bg-outline-variant/30 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-3/4 rounded-full"></div>
+</div>
+<p class="font-caption text-caption text-on-surface-variant mt-2">75% Expected Today</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-lg border border-outline-variant">
+<div class="flex justify-between items-end mb-2">
+<span class="font-body-default text-body-default text-on-surface-variant">Parts Received (Shift)</span>
+<span class="font-display-metrics text-display-metrics text-on-surface">12</span>
+</div>
+<div class="w-full bg-outline-variant/30 h-2 rounded-full overflow-hidden">
+<div class="bg-[#22c55e] h-full w-1/4 rounded-full"></div>
+</div>
+<p class="font-caption text-caption text-on-surface-variant mt-2">25% Processed into inventory</p>
+</div>
+<button class="mt-auto w-full border border-outline-variant bg-surface-container-lowest text-on-surface font-button-text text-button-text py-2 rounded-lg hover:bg-surface-container-high transition-colors">
+                            Manage Inventory
+                        </button>
+</div>
+</div>
+<!-- Live Team Workload (Spans full width below) -->
+<div class="lg:col-span-3 work-zone-card rounded-xl p-md mt-4">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-section-title text-section-title text-on-surface">Live Team Workload</h3>
+<div class="flex items-center gap-4 font-caption text-caption">
+<div class="flex items-center gap-1"><div class="w-3 h-3 rounded-full bg-primary"></div><span>Active</span></div>
+<div class="flex items-center gap-1"><div class="w-3 h-3 rounded-full bg-outline-variant"></div><span>Available</span></div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Tech 1 -->
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container text-primary flex items-center justify-center font-bold">JD</div>
+<div class="flex-1">
+<div class="flex justify-between mb-1">
+<span class="font-field-label text-field-label">John Doe</span>
+<span class="font-caption text-caption">3/5 Tasks</span>
+</div>
+<div class="flex gap-1 h-2">
+<div class="flex-1 bg-primary rounded-sm"></div>
+<div class="flex-1 bg-primary rounded-sm"></div>
+<div class="flex-1 bg-primary rounded-sm"></div>
+<div class="flex-1 bg-outline-variant/30 rounded-sm"></div>
+<div class="flex-1 bg-outline-variant/30 rounded-sm"></div>
+</div>
+</div>
+</div>
+<!-- Tech 2 -->
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container text-primary flex items-center justify-center font-bold">AS</div>
+<div class="flex-1">
+<div class="flex justify-between mb-1">
+<span class="font-field-label text-field-label">Alice Smith</span>
+<span class="font-caption text-caption">5/5 Tasks</span>
+</div>
+<div class="flex gap-1 h-2">
+<div class="flex-1 bg-error rounded-sm"></div>
+<div class="flex-1 bg-error rounded-sm"></div>
+<div class="flex-1 bg-error rounded-sm"></div>
+<div class="flex-1 bg-error rounded-sm"></div>
+<div class="flex-1 bg-error rounded-sm"></div>
+</div>
+</div>
+</div>
+<!-- Tech 3 -->
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container text-primary flex items-center justify-center font-bold">MR</div>
+<div class="flex-1">
+<div class="flex justify-between mb-1">
+<span class="font-field-label text-field-label">Mike Ross</span>
+<span class="font-caption text-caption">1/5 Tasks</span>
+</div>
+<div class="flex gap-1 h-2">
+<div class="flex-1 bg-primary rounded-sm"></div>
+<div class="flex-1 bg-outline-variant/30 rounded-sm"></div>
+<div class="flex-1 bg-outline-variant/30 rounded-sm"></div>
+<div class="flex-1 bg-outline-variant/30 rounded-sm"></div>
+<div class="flex-1 bg-outline-variant/30 rounded-sm"></div>
+</div>
+</div>
+</div>
+<!-- Tech 4 -->
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container text-primary flex items-center justify-center font-bold">EW</div>
+<div class="flex-1">
+<div class="flex justify-between mb-1">
+<span class="font-field-label text-field-label">Emma Watson</span>
+<span class="font-caption text-caption">0/5 Tasks</span>
+</div>
+<div class="flex gap-1 h-2">
+<div class="flex-1 bg-outline-variant/30 rounded-sm"></div>
+<div class="flex-1 bg-outline-variant/30 rounded-sm"></div>
+<div class="flex-1 bg-outline-variant/30 rounded-sm"></div>
+<div class="flex-1 bg-outline-variant/30 rounded-sm"></div>
+<div class="flex-1 bg-outline-variant/30 rounded-sm"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="h-12"></div> <!-- Bottom padding -->
+</main>
+</div>
+</body></html>
