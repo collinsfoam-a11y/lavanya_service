@@ -148,6 +148,69 @@ def run():
         except Exception:
             pass
 
+    # --- Ready for Pickup Tests ---
+    print("Running Ready for Pickup tests...")
+    api_ready = "lavanya_service.api.product_receipt_actions.mark_ready_for_pickup"
+    
+    frappe.set_user("Administrator")
+    # Need a ticket with a receipt that is not already "Ready for Customer Pickup"
+    # To keep it safe, we'll create one and link it.
+    t_ready = frappe.new_doc("HD Ticket")
+    t_ready.subject = "Test Ready for Pickup"
+    t_ready.ticket_type = "Customer Product at Store"
+    t_ready.serial_no = "TEST-SN-READY-1"
+    cust_list_ready = frappe.get_all("HD Customer", limit=1)
+    t_ready.customer = cust_list_ready[0].name if cust_list_ready else None
+    t_ready.insert(ignore_permissions=True)
+    
+    res_receipt = frappe.call(api_receipt, ticket_name=t_ready.name, accessories_received="Box", physical_condition="Good")
+    r_ready_name = res_receipt.get("receipt")
+    
+    # 1. Guest is rejected
+    frappe.set_user("Guest")
+    try:
+        frappe.call(api_ready, receipt_name=r_ready_name, notes="Test")
+        assert False, "Guest could call Ready for Pickup API"
+    except frappe.PermissionError:
+        pass
+        
+    # 2. Viewer is rejected
+    frappe.set_user("uat.viewer@lavanya.local")
+    if frappe.db.exists("User", "uat.viewer@lavanya.local"):
+        try:
+            frappe.call(api_ready, receipt_name=r_ready_name, notes="Test")
+            assert False, "Viewer could call Ready for Pickup API"
+        except frappe.PermissionError:
+            pass
+
+    # 3. Helpdesk Agent is rejected
+    frappe.set_user("uat.agent@lavanya.local")
+    if frappe.db.exists("User", "uat.agent@lavanya.local"):
+        try:
+            frappe.call(api_ready, receipt_name=r_ready_name, notes="Test")
+            assert False, "Agent could call Ready for Pickup API"
+        except frappe.PermissionError:
+            pass
+            
+    # 4. Service Coordinator can mark ready
+    frappe.set_user("uat.coordinator@lavanya.local")
+    if frappe.db.exists("User", "uat.coordinator@lavanya.local"):
+        res = frappe.call(api_ready, receipt_name=r_ready_name, notes="Coordinator Test")
+        assert res.get("ok"), "Coordinator failed to mark ready for pickup"
+        
+        # 5. Duplicate call is rejected safely
+        try:
+            frappe.call(api_ready, receipt_name=r_ready_name, notes="Coordinator Test 2")
+            assert False, "Duplicate ready for pickup should be rejected"
+        except Exception as e:
+            assert "Cannot mark ready for pickup from current status" in str(e), f"Unexpected duplicate error: {e}"
+
+    # Clean up test ticket and receipt
+    frappe.set_user("Administrator")
+    frappe.db.set_value("HD Ticket", t_ready.name, "service_product_receipt", None)
+    frappe.delete_doc("Service Product Receipt", r_ready_name)
+    frappe.delete_doc("HD Ticket", t_ready.name)
+
     # Restore admin
     frappe.set_user("Administrator")
     print("✅ Stitch Console Actions tests passed")

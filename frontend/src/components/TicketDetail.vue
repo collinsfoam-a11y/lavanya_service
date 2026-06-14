@@ -125,9 +125,14 @@
             Create Product Receipt
           </button>
 
-          <button disabled class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left opacity-50 cursor-not-allowed group relative">
+          <button 
+            :disabled="!ticket?.receipt?.number"
+            @click="ticket?.receipt?.number ? openReadyForPickup() : null"
+            class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left transition-all group relative"
+            :class="ticket?.receipt?.number ? 'hover:opacity-90 active:scale-[0.98]' : 'opacity-50 cursor-not-allowed'"
+          >
             Mark Ready for Pickup
-            <span class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Available in Phase 2C after write-action wiring and role smoke.</span>
+            <span v-if="!ticket?.receipt?.number" class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Create Product Receipt first.</span>
           </button>
 
           <button disabled class="w-full px-4 py-3 bg-outline text-surface rounded-lg font-label-md text-left opacity-50 cursor-not-allowed group relative">
@@ -296,6 +301,67 @@
       </div>
     </div>
   </div>
+
+  <!-- Mark Ready for Pickup Modal -->
+  <div v-if="modals.readyPickup" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="modals.readyPickup = false">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-lg shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <!-- Modal Header -->
+      <div class="px-6 py-5 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+            <span class="material-symbols-outlined icon-fill">hail</span>
+          </div>
+          <div>
+            <h2 class="text-headline-md font-headline-md text-on-surface">Mark Ready for Pickup</h2>
+            <p class="text-body-md font-body-md text-on-surface-variant mt-1">Ticket #{{ ticketId }}</p>
+          </div>
+        </div>
+        <button @click="modals.readyPickup = false" class="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant/50">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <!-- Modal Body -->
+      <div class="px-6 py-6 space-y-6 overflow-y-auto">
+        <div v-if="actionError" class="p-3 bg-error-container text-on-error-container rounded font-body-sm mb-2">
+          {{ actionError }}
+        </div>
+        <form class="space-y-5" @submit.prevent="submitReadyPickup">
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Ticket info -->
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Ticket ID</label>
+              <input class="w-full h-10 px-3 bg-surface-variant/30 border border-outline-variant/50 rounded-lg text-on-surface text-body-md font-body-md cursor-not-allowed" readonly type="text" :value="ticket?.name || ''" />
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Receipt Number</label>
+              <input class="w-full h-10 px-3 bg-surface-variant/30 border border-outline-variant/50 rounded-lg text-on-surface text-body-md font-body-md cursor-not-allowed" readonly type="text" :value="ticket?.receipt?.number || ''" />
+            </div>
+          </div>
+          
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block" for="readyDate">Ready Date</label>
+            <input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" id="readyDate" type="date" v-model="formReady.ready_date" :min="todayDate()"/>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block" for="readyNote">Ready Note</label>
+            <textarea class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" id="readyNote" placeholder="Instructions for front desk / customer" rows="3" v-model="formReady.ready_note"></textarea>
+          </div>
+        </form>
+      </div>
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 bg-surface-bright border-t border-outline-variant/30 flex justify-end gap-3 rounded-b-xl">
+        <button @click="modals.readyPickup = false" :disabled="submitting" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium text-on-surface-variant hover:bg-surface-variant/50 transition-colors border border-transparent disabled:opacity-50" type="button">
+          Cancel
+        </button>
+        <button @click="submitReadyPickup" :disabled="submitting" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50" type="button">
+          <span v-if="submitting" class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+          <span v-else class="material-symbols-outlined text-[18px]">check_circle</span>
+          Mark Ready for Pickup
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -335,7 +401,8 @@ function close() {
 // Action state
 const modals = reactive({
   needInvoice: false,
-  createReceipt: false
+  createReceipt: false,
+  readyPickup: false
 })
 const form = reactive({
   pending_reason: 'Need Invoice',
@@ -418,6 +485,37 @@ async function submitProductReceipt() {
       serial_no: formReceipt.serial_no
     })
     modals.createReceipt = false
+    emit('refresh')
+    await loadTicket()
+  } catch (err) {
+    actionError.value = err.message || 'An error occurred while saving.'
+  } finally {
+    submitting.value = false
+  }
+}
+
+const formReady = reactive({
+  ready_date: '',
+  ready_note: ''
+})
+
+function openReadyForPickup() {
+  actionError.value = ''
+  formReady.ready_date = todayDate()
+  formReady.ready_note = ''
+  modals.readyPickup = true
+}
+
+async function submitReadyPickup() {
+  submitting.value = true
+  actionError.value = ''
+  try {
+    await post('lavanya_service.api.product_receipt_actions.mark_ready_for_pickup', {
+      receipt_name: ticket.value.receipt.number,
+      next_follow_up_date: formReady.ready_date,
+      notes: formReady.ready_note
+    })
+    modals.readyPickup = false
     emit('refresh')
     await loadTicket()
   } catch (err) {
