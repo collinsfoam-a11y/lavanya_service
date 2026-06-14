@@ -1,7 +1,7 @@
 <!--
   Today's Work dashboard — ported from the Stitch "Today's Work Dashboard"
-  screen. Data comes from the live backend:
-  lavanya_service.api.today_work.get_today_work (role-aware grouping +
+  screen (6-metric grid + single Action Queue). Data comes from the live
+  backend: lavanya_service.api.today_work.get_today_work (role-aware grouping +
   priority order are decided server-side; this page only renders).
 -->
 <template>
@@ -11,19 +11,18 @@
       <p class="font-body-md text-on-surface-variant">{{ data?.date || '' }}</p>
     </div>
 
-    <!-- Summary metrics -->
-    <div class="lav-card-grid">
-      <div class="rounded-xl border-2 border-primary bg-surface-container-low p-gutter">
-        <div class="font-display text-display text-primary">{{ summary.total }}</div>
-        <div class="font-label-md text-label-md uppercase tracking-wide text-on-surface-variant">Total Pending</div>
-      </div>
-      <div class="rounded-xl border border-outline-variant bg-surface-container-lowest p-gutter">
-        <div class="font-display text-display text-error">{{ summary.overdue }}</div>
-        <div class="font-label-md text-label-md uppercase tracking-wide text-on-surface-variant">Overdue</div>
-      </div>
-      <div class="rounded-xl border border-outline-variant bg-surface-container-lowest p-gutter">
-        <div class="font-display text-display text-tertiary">{{ summary.due_today }}</div>
-        <div class="font-label-md text-label-md uppercase tracking-wide text-on-surface-variant">Due Today</div>
+    <!-- 6 work-priority metric cards (Stitch) -->
+    <div class="lav-metric-grid">
+      <div
+        v-for="m in METRICS"
+        :key="m.key"
+        class="lav-metric"
+        :style="{ '--lav-accent': accent(m.key) }"
+        @click="scrollToBucket(m.key)"
+      >
+        <span class="material-symbols-outlined lav-metric__icon">{{ m.icon }}</span>
+        <div class="lav-metric__label">{{ m.label }}</div>
+        <div class="lav-metric__num">{{ metricCount(m.key) }}</div>
       </div>
     </div>
 
@@ -39,23 +38,23 @@
       <div class="text-on-surface-variant font-body-lg">All clear — no pending work right now.</div>
     </div>
 
-    <!-- Buckets -->
-    <div v-else class="flex flex-col gap-gutter">
-      <section
+    <!-- Action Queue -->
+    <div v-else class="lav-queue">
+      <div class="lav-queue__title">
+        <span class="material-symbols-outlined">checklist</span> Action Queue
+      </div>
+      <div
         v-for="group in groups"
         :key="group.key"
-        class="rounded-xl border border-outline-variant bg-surface-container-lowest overflow-hidden"
-        :style="{ borderLeft: '4px solid ' + accent(group.key) }"
+        :id="'bucket-' + group.key"
+        class="lav-bucket"
       >
-        <header class="flex items-center gap-3 px-gutter py-3 border-b border-outline-variant">
-          <span
-            class="min-w-[28px] h-7 px-2 rounded-full text-on-primary font-label-md text-label-md flex items-center justify-center"
-            :style="{ background: group.count ? accent(group.key) : '#c3c6d7' }"
-          >{{ group.count }}</span>
+        <div class="lav-bucket__head" :style="{ borderLeft: '4px solid ' + accent(group.key) }">
+          <span class="lav-badge" :style="{ background: group.count ? accent(group.key) : '#c3c6d7' }">{{ group.count }}</span>
           <h3 class="font-headline-md text-headline-md text-on-surface">{{ group.label }}</h3>
-        </header>
+        </div>
 
-        <div v-if="group.tickets.length === 0" class="px-gutter py-3 font-body-md text-on-surface-variant">
+        <div v-if="group.tickets.length === 0" style="padding: 12px 16px; color: #434655; font-size: 14px;">
           Nothing here.
         </div>
         <ul v-else>
@@ -87,7 +86,7 @@
             </button>
           </li>
         </ul>
-      </section>
+      </div>
     </div>
 
     <!-- Ticket Detail Drawer -->
@@ -123,6 +122,27 @@ onMounted(loadTodayWork)
 const data = computed(() => raw.value || {})
 const groups = computed(() => data.value.groups || [])
 const summary = computed(() => data.value.summary || { total: 0, overdue: 0, due_today: 0 })
+
+// 6 priority metric cards (Stitch "Today's Work Dashboard").
+const METRICS = [
+  { key: 'overdue_follow_up', label: 'Overdue Follow-up', icon: 'warning' },
+  { key: 'due_today', label: 'Due Today', icon: 'event' },
+  { key: 'registration_pending', label: 'Reg Pending', icon: 'app_registration' },
+  { key: 'waiting_on_customer', label: 'Wait Customer', icon: 'hourglass_top' },
+  { key: 'ready_for_pickup', label: 'Ready Pickup', icon: 'inventory_2' },
+  { key: 'new_complaints', label: 'New Complaint', icon: 'fiber_new' },
+]
+function metricGroup(key) {
+  return groups.value.find((g) => g.key === key)
+}
+function metricCount(key) {
+  const g = metricGroup(key)
+  return g ? (g.count != null ? g.count : g.tickets.length) : 0
+}
+function scrollToBucket(key) {
+  const el = document.getElementById('bucket-' + key)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 const ACCENT = {
   overdue_follow_up: '#ba1a1a',
