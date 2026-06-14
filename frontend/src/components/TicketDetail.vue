@@ -121,9 +121,8 @@
             <span class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Available in Phase 2C after write-action wiring and role smoke.</span>
           </button>
 
-          <button disabled class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left opacity-50 cursor-not-allowed group relative">
+          <button @click="openProductReceipt" class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left hover:opacity-90 active:scale-[0.98] transition-all group relative">
             Create Product Receipt
-            <span class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Available in Phase 2C after write-action wiring and role smoke.</span>
           </button>
 
           <button disabled class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left opacity-50 cursor-not-allowed group relative">
@@ -217,6 +216,86 @@
       </div>
     </div>
   </div>
+  <!-- Create Product Receipt Modal -->
+  <div v-if="modals.createReceipt" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="modals.createReceipt = false">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-2xl shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh]">
+      <!-- Modal Header -->
+      <div class="px-6 py-5 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+            <span class="material-symbols-outlined icon-fill">inventory_2</span>
+          </div>
+          <div>
+            <h2 class="text-headline-md font-headline-md text-on-surface">Create Product Receipt</h2>
+            <p class="text-body-md font-body-md text-on-surface-variant mt-1">Ticket #{{ ticketId }} - Intake</p>
+          </div>
+        </div>
+        <button @click="modals.createReceipt = false" class="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant/50">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <!-- Modal Body -->
+      <div class="px-6 py-6 space-y-6 overflow-y-auto">
+        <div v-if="actionError" class="p-3 bg-error-container text-on-error-container rounded font-body-sm mb-2">
+          {{ actionError }}
+        </div>
+        
+        <form class="space-y-5" @submit.prevent="submitProductReceipt">
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Customer info -->
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Customer Name</label>
+              <input class="w-full h-10 px-3 bg-surface-variant/30 border border-outline-variant/50 rounded-lg text-on-surface text-body-md font-body-md cursor-not-allowed" readonly type="text" :value="ticket?.customer?.name || ''" />
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Mobile</label>
+              <input class="w-full h-10 px-3 bg-surface-variant/30 border border-outline-variant/50 rounded-lg text-on-surface text-body-md font-body-md cursor-not-allowed" readonly type="text" :value="ticket?.customer?.mobile || ''" />
+            </div>
+            
+            <!-- Product info -->
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Product Type</label>
+              <input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" type="text" v-model="formReceipt.product_type" />
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Brand</label>
+              <input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" type="text" v-model="formReceipt.brand" />
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Model Number</label>
+              <input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" type="text" v-model="formReceipt.model_no" />
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Serial Number</label>
+              <input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" type="text" v-model="formReceipt.serial_no" />
+            </div>
+          </div>
+          
+          <!-- Notes -->
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block" for="accessories">Accessories Received <span class="text-error">*</span></label>
+            <textarea class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" id="accessories" required rows="2" v-model="formReceipt.accessories_received" placeholder="E.g. Charger, Original Box..."></textarea>
+          </div>
+          
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block" for="condition">Physical Condition Notes <span class="text-error">*</span></label>
+            <textarea class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" id="condition" required rows="2" v-model="formReceipt.physical_condition" placeholder="E.g. Scratches on screen, dent on corner..."></textarea>
+          </div>
+        </form>
+      </div>
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 bg-surface-bright border-t border-outline-variant/30 flex justify-end gap-3 rounded-b-xl">
+        <button @click="modals.createReceipt = false" :disabled="submitting" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium text-on-surface-variant hover:bg-surface-variant/50 transition-colors border border-transparent disabled:opacity-50" type="button">
+          Cancel
+        </button>
+        <button @click="submitProductReceipt" :disabled="submitting || !formReceipt.accessories_received || !formReceipt.physical_condition" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium bg-secondary text-on-secondary hover:bg-secondary-fixed-variant transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50" type="button">
+          <span v-if="submitting" class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+          <span v-else class="material-symbols-outlined text-[18px]">check_circle</span>
+          Create Receipt
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -255,7 +334,8 @@ function close() {
 
 // Action state
 const modals = reactive({
-  needInvoice: false
+  needInvoice: false,
+  createReceipt: false
 })
 const form = reactive({
   pending_reason: 'Need Invoice',
@@ -291,6 +371,53 @@ async function submitNeedInvoice() {
       note: form.note
     })
     modals.needInvoice = false
+    emit('refresh')
+    await loadTicket()
+  } catch (err) {
+    actionError.value = err.message || 'An error occurred while saving.'
+  } finally {
+    submitting.value = false
+  }
+}
+
+const formReceipt = reactive({
+  product_type: '',
+  brand: '',
+  model_no: '',
+  serial_no: '',
+  accessories_received: '',
+  physical_condition: ''
+})
+
+function openProductReceipt() {
+  actionError.value = ''
+  formReceipt.product_type = ticket.value?.product?.type || ''
+  formReceipt.brand = ticket.value?.product?.brand || ''
+  formReceipt.model_no = ticket.value?.product?.model_number || ''
+  formReceipt.serial_no = ticket.value?.product?.serial_number || ''
+  formReceipt.accessories_received = ''
+  formReceipt.physical_condition = ''
+  modals.createReceipt = true
+}
+
+async function submitProductReceipt() {
+  if (!formReceipt.accessories_received || !formReceipt.physical_condition) {
+    actionError.value = "Accessories and condition are required."
+    return
+  }
+  submitting.value = true
+  actionError.value = ''
+  try {
+    await post('lavanya_service.api.workflow_actions.create_product_receipt', {
+      ticket_name: props.ticketId,
+      accessories_received: formReceipt.accessories_received,
+      physical_condition: formReceipt.physical_condition,
+      product_type: formReceipt.product_type,
+      brand: formReceipt.brand,
+      model_no: formReceipt.model_no,
+      serial_no: formReceipt.serial_no
+    })
+    modals.createReceipt = false
     emit('refresh')
     await loadTicket()
   } catch (err) {
