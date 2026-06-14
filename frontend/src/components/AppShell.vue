@@ -5,12 +5,9 @@
   routed page via the default slot.
 -->
 <template>
-  <div class="flex min-h-screen bg-background text-on-surface">
+  <div class="lav-shell">
     <!-- Sidebar -->
-    <aside
-      class="hidden md:flex flex-col fixed left-0 top-0 h-screen w-sidebar-width py-gutter
-             border-r border-outline-variant bg-surface-container-highest z-30"
-    >
+    <aside class="lav-sidebar">
       <div class="px-gutter mb-8 flex items-center gap-3">
         <div class="w-10 h-10 rounded-lg bg-primary text-on-primary flex items-center justify-center shrink-0">
           <span class="material-symbols-outlined fill">storefront</span>
@@ -50,11 +47,8 @@
     </aside>
 
     <!-- Main -->
-    <main class="flex-1 md:ml-sidebar-width flex flex-col min-h-screen w-full">
-      <header
-        class="sticky top-0 z-20 flex justify-between items-center w-full px-container-padding h-16
-               bg-surface border-b border-outline-variant"
-      >
+    <main class="lav-main">
+      <header class="lav-header">
         <h2 class="font-headline-md text-headline-md font-bold text-primary md:hidden">Lavanya</h2>
         <div class="hidden md:block font-body-md text-on-surface-variant">{{ headerTitle }}</div>
         <div class="flex items-center gap-3">
@@ -70,10 +64,7 @@
       </div>
 
       <!-- Mobile bottom nav -->
-      <nav
-        class="md:hidden fixed bottom-0 left-0 w-full z-40 flex justify-around items-center px-4 py-2
-               border-t border-outline-variant bg-surface-container-highest"
-      >
+      <nav class="lav-mobile-nav">
         <router-link
           v-for="item in navItems.filter((i) => !i.external)"
           :key="'m-' + item.label"

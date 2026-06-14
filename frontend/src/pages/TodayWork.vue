@@ -12,7 +12,7 @@
     </div>
 
     <!-- Summary metrics -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-gutter mb-8">
+    <div class="lav-card-grid">
       <div class="rounded-xl border-2 border-primary bg-surface-container-low p-gutter">
         <div class="font-display text-display text-primary">{{ summary.total }}</div>
         <div class="font-label-md text-label-md uppercase tracking-wide text-on-surface-variant">Total Pending</div>
@@ -62,7 +62,7 @@
           <li
             v-for="t in group.tickets"
             :key="t.name"
-            class="flex flex-wrap items-center gap-3 px-gutter py-3 border-b border-outline-variant last:border-b-0"
+            class="lav-work-card"
           >
             <div class="flex-[2_1_220px] min-w-[200px]">
               <a :href="ticketUrl(t.name)" target="_blank" rel="noopener"
