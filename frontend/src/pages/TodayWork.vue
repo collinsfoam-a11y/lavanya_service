@@ -62,13 +62,13 @@
           <li
             v-for="t in group.tickets"
             :key="t.name"
-            class="lav-work-card"
+            class="lav-work-card cursor-pointer hover:bg-surface-container"
+            @click="selectedTicket = t.name"
           >
             <div class="flex-[2_1_220px] min-w-[200px]">
-              <a :href="ticketUrl(t.name)" target="_blank" rel="noopener"
-                 class="font-body-md font-semibold text-primary hover:underline">
+              <span class="font-body-md font-semibold text-primary hover:underline">
                 {{ t.name }} · {{ t.subject || '(no subject)' }}
-              </a>
+              </span>
               <div class="font-label-md text-label-md text-on-surface-variant mt-0.5">
                 {{ t.customer_name }}<template v-if="t.phone_1"> · {{ t.phone_1 }}</template>
                 <template v-if="product(t)"> · {{ product(t) }}</template>
@@ -82,14 +82,16 @@
             <div class="font-label-md text-label-md" :style="followStyle(t.next_follow_up_date)">
               {{ followText(t.next_follow_up_date) }}
             </div>
-            <a :href="ticketUrl(t.name)" target="_blank" rel="noopener"
-               class="px-3 py-1 rounded border border-outline-variant text-primary font-label-md hover:bg-surface-container-low">
+            <button class="px-3 py-1 rounded border border-outline-variant text-primary font-label-md hover:bg-surface-container-low">
               Open
-            </a>
+            </button>
           </li>
         </ul>
       </section>
     </div>
+
+    <!-- Ticket Detail Drawer -->
+    <TicketDetail :ticketId="selectedTicket" @close="selectedTicket = null" />
   </AppShell>
 </template>
 
@@ -97,10 +99,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { call } from '@/api'
 import AppShell from '@/components/AppShell.vue'
+import TicketDetail from '@/components/TicketDetail.vue'
 
 const raw = ref({})
 const loading = ref(true)
 const error = ref(false)
+const selectedTicket = ref(null)
 
 onMounted(async () => {
   try {
@@ -158,9 +162,6 @@ function chip(status) {
 
 function product(t) {
   return [t.brand, t.product_item || t.product_type].filter(Boolean).join(' / ')
-}
-function ticketUrl(name) {
-  return `/helpdesk/tickets/${encodeURIComponent(name)}`
 }
 
 function followText(value) {

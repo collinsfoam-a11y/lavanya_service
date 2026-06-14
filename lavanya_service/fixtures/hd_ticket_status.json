@@ -27,19 +27,6 @@
  },
  {
   "category": "Open",
-  "color": "Red",
-  "different_view": 0,
-  "docstatus": 0,
-  "doctype": "HD Ticket Status",
-  "enabled": 1,
-  "label_agent": "New",
-  "label_customer": null,
-  "modified": "2026-06-10 23:29:09.044205",
-  "name": "New",
-  "order": 1
- },
- {
-  "category": "Open",
   "color": "Orange",
   "different_view": 0,
   "docstatus": 0,
@@ -128,5 +115,18 @@
   "modified": "2026-06-10 23:29:18.997787",
   "name": "Cancelled",
   "order": 10
+ },
+ {
+  "category": "Open",
+  "color": "Red",
+  "different_view": 0,
+  "docstatus": 0,
+  "doctype": "HD Ticket Status",
+  "enabled": 1,
+  "label_agent": "New",
+  "label_customer": null,
+  "modified": "2026-06-10 23:29:09.044205",
+  "name": "New",
+  "order": 1
  }
 ]

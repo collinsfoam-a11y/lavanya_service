@@ -350,6 +350,12 @@ fixtures = [
 		],
 	},
 	{
+		"dt": "Client Script",
+		"filters": [
+			["dt", "=", "HD Ticket"],
+		],
+	},
+	{
 		"dt": "HD Ticket Status",
 		"filters": [
 			[
