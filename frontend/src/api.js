@@ -8,7 +8,38 @@ export async function call(method, params = {}) {
     credentials: 'include',
   })
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`)
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.exc_type || err._server_messages || `HTTP ${res.status}`)
+  }
+  const data = await res.json()
+  return data.message
+}
+
+export async function post(method, body = {}) {
+  const res = await fetch(`/api/method/${method}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'X-Frappe-CSRF-Token': window.csrf_token || '',
+    },
+    credentials: 'include',
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    let errMsg = `HTTP ${res.status}`
+    try {
+      const errData = await res.json()
+      if (errData._server_messages) {
+        const msgs = JSON.parse(errData._server_messages).map(m => JSON.parse(m).message)
+        errMsg = msgs.join(', ')
+      } else if (errData.exc_type) {
+        errMsg = errData.exc_type
+      }
+    } catch (e) {
+      // ignore
+    }
+    throw new Error(errMsg)
   }
   const data = await res.json()
   return data.message

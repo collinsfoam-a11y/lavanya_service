@@ -91,7 +91,7 @@
     </div>
 
     <!-- Ticket Detail Drawer -->
-    <TicketDetail :ticketId="selectedTicket" @close="selectedTicket = null" />
+    <TicketDetail :ticketId="selectedTicket" @close="selectedTicket = null" @refresh="loadTodayWork" />
   </AppShell>
 </template>
 
@@ -106,7 +106,9 @@ const loading = ref(true)
 const error = ref(false)
 const selectedTicket = ref(null)
 
-onMounted(async () => {
+async function loadTodayWork() {
+  loading.value = true
+  error.value = false
   try {
     raw.value = (await call('lavanya_service.api.today_work.get_today_work', { include_counts: 1 })) || {}
   } catch (e) {
@@ -114,7 +116,9 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(loadTodayWork)
 
 const data = computed(() => raw.value || {})
 const groups = computed(() => data.value.groups || [])

@@ -107,9 +107,8 @@
             <span class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Available in Phase 2C after write-action wiring and role smoke.</span>
           </button>
           
-          <button disabled class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg font-label-md text-left opacity-50 cursor-not-allowed group relative">
+          <button @click="openNeedInvoice" class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg font-label-md text-left hover:opacity-90 active:scale-[0.98] transition-all group relative">
             Need Invoice
-            <span class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Available in Phase 2C after write-action wiring and role smoke.</span>
           </button>
           
           <button disabled class="w-full px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-label-md text-left opacity-50 cursor-not-allowed group relative">
@@ -144,45 +143,132 @@
 
         </div>
         <div class="p-4 mt-auto text-xs text-on-surface-variant text-center bg-surface-container-low border-t border-outline-variant">
-          Actions disabled for read-only preview mode. Use Standard Helpdesk for real operations.
+          Other actions disabled for read-only preview mode. Use Standard Helpdesk for real operations.
         </div>
       </div>
       
     </div>
   </div>
+
+  <!-- Need Invoice Modal -->
+  <div v-if="modals.needInvoice" class="fixed inset-0 z-[60] flex items-center justify-center bg-on-surface/40 p-4" @click.self="modals.needInvoice = false">
+    <div class="bg-surface rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
+      <div class="p-6 pb-4 border-b border-outline-variant">
+        <h3 class="font-headline-sm text-headline-sm text-on-surface">Need Invoice / Waiting on Customer</h3>
+        <p class="font-body-sm text-on-surface-variant mt-1">Mark this ticket as waiting for the customer to provide their invoice.</p>
+      </div>
+      <div class="p-6 flex flex-col gap-4">
+        <div v-if="actionError" class="p-3 bg-error-container text-on-error-container rounded font-body-sm mb-2">
+          {{ actionError }}
+        </div>
+        
+        <div class="flex flex-col gap-1">
+          <label class="font-label-md text-on-surface font-semibold">Pending Reason</label>
+          <input type="text" v-model="form.pending_reason" disabled class="px-3 py-2 border border-outline-variant rounded bg-surface-container-low text-on-surface-variant font-body-md cursor-not-allowed" />
+        </div>
+        
+        <div class="flex flex-col gap-1">
+          <label class="font-label-md text-on-surface font-semibold">Next Follow-up Date <span class="text-error">*</span></label>
+          <input type="date" v-model="form.next_follow_up_date" :min="todayDate()" class="px-3 py-2 border border-outline rounded bg-surface text-on-surface font-body-md outline-primary" required />
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="font-label-md text-on-surface font-semibold">Note to Staff (Internal)</label>
+          <textarea v-model="form.note" rows="3" class="px-3 py-2 border border-outline rounded bg-surface text-on-surface font-body-md outline-primary" placeholder="Optional internal note..."></textarea>
+        </div>
+      </div>
+      <div class="p-4 border-t border-outline-variant bg-surface-container-low flex justify-end gap-3">
+        <button @click="modals.needInvoice = false" :disabled="submitting" class="px-4 py-2 rounded text-primary font-label-md hover:bg-surface-container-highest disabled:opacity-50 transition-colors">
+          Cancel
+        </button>
+        <button @click="submitNeedInvoice" :disabled="submitting || !form.next_follow_up_date" class="px-4 py-2 rounded bg-primary text-on-primary font-label-md flex items-center gap-2 hover:opacity-90 disabled:opacity-50 transition-colors">
+          <span v-if="submitting" class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+          Mark Waiting on Customer
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import { call } from '@/api'
+import { ref, watch, reactive } from 'vue'
+import { call, post } from '@/api'
 
 const props = defineProps({
   ticketId: { type: String, default: null }
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'refresh'])
 
 const ticket = ref(null)
 const loading = ref(false)
 const error = ref(false)
 
-watch(() => props.ticketId, async (newVal) => {
-  if (newVal) {
+const loadTicket = async () => {
+  if (props.ticketId) {
     loading.value = true
     error.value = false
-    ticket.value = null
     try {
-      ticket.value = await call('lavanya_service.api.stitch_console.get_ticket_detail', { ticket_id: newVal })
+      ticket.value = await call('lavanya_service.api.stitch_console.get_ticket_detail', { ticket_id: props.ticketId })
     } catch (e) {
       error.value = true
     } finally {
       loading.value = false
     }
   }
-})
+}
+
+watch(() => props.ticketId, loadTicket)
 
 function close() {
   emit('close')
+}
+
+// Action state
+const modals = reactive({
+  needInvoice: false
+})
+const form = reactive({
+  pending_reason: 'Need Invoice',
+  next_follow_up_date: '',
+  note: ''
+})
+const submitting = ref(false)
+const actionError = ref('')
+
+function todayDate() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function openNeedInvoice() {
+  actionError.value = ''
+  form.pending_reason = 'Need Invoice'
+  form.next_follow_up_date = ''
+  form.note = ''
+  modals.needInvoice = true
+}
+
+async function submitNeedInvoice() {
+  if (!form.next_follow_up_date) {
+    actionError.value = "Next follow-up date is required."
+    return
+  }
+  submitting.value = true
+  actionError.value = ''
+  try {
+    await post('lavanya_service.api.workflow_actions.need_invoice_from_customer', {
+      ticket_name: props.ticketId,
+      next_follow_up_date: form.next_follow_up_date,
+      note: form.note
+    })
+    modals.needInvoice = false
+    emit('refresh')
+    await loadTicket()
+  } catch (err) {
+    actionError.value = err.message || 'An error occurred while saving.'
+  } finally {
+    submitting.value = false
+  }
 }
 
 const STATUS_HUE = {
