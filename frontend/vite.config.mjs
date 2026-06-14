@@ -1,10 +1,16 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
-import { webserver_port } from '../../../sites/common_site_config.json'
+import { fileURLToPath } from 'url'
+import { createRequire } from 'module'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const require = createRequire(import.meta.url)
+const { webserver_port } = require('../../../sites/common_site_config.json')
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/assets/lavanya_service/frontend/',
   plugins: [vue()],
   server: {
     port: 8080,
@@ -15,9 +21,9 @@ export default defineConfig({
         router: function (req) {
           const site_name = req.headers.host.split(':')[0]
           return `http://${site_name}:${webserver_port}`
-        }
-      }
-    }
+        },
+      },
+    },
   },
   resolve: {
     alias: {
@@ -28,8 +34,5 @@ export default defineConfig({
     outDir: `../${path.basename(path.resolve('..'))}/public/frontend`,
     emptyOutDir: true,
     target: 'es2015',
-  },
-  optimizeDeps: {
-    include: ['frappe-ui > feather-icons', 'showdown', 'engine.io-client'],
   },
 })

@@ -1,5 +1,66 @@
 @import './assets/Inter/inter.css';
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #f8f9ff;
+    color: #121c28;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+  }
+  .material-symbols-outlined.fill {
+    font-variation-settings: 'FILL' 1;
+  }
+}
+
+/*
+  Stitch color tokens as plain CSS. The extend.colors utilities did not emit
+  from Tailwind's JIT in this toolchain (config resolves correctly, but bg/
+  text/border color utilities were not generated). These plain rules are never
+  purged and guarantee the Stitch "Lavanya Service Console" palette renders.
+  Keep in sync with tailwind.config.js colors.
+*/
+.bg-background { background-color: #f8f9ff; }
+.bg-primary { background-color: #004ac6; }
+.bg-primary-container { background-color: #2563eb; }
+.bg-surface { background-color: #f8f9ff; }
+.bg-surface-container-highest { background-color: #d9e3f4; }
+.bg-surface-container-low { background-color: #eef4ff; }
+.bg-surface-container-lowest { background-color: #ffffff; }
+.border-outline-variant { border-color: #c3c6d7; }
+.border-primary { border-color: #004ac6; }
+.text-error { color: #ba1a1a; }
+.text-on-primary { color: #ffffff; }
+.text-on-surface { color: #121c28; }
+.text-on-surface-variant { color: #434655; }
+.text-primary { color: #004ac6; }
+.text-tertiary { color: #943700; }
+.hover\:bg-surface-container-low:hover { background-color: #eef4ff; }
+.hover\:text-on-surface:hover { color: #121c28; }
+.\!border-primary { border-color: #004ac6 !important; }
+.\!text-primary { color: #004ac6 !important; }
+
