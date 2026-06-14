@@ -151,38 +151,67 @@
   </div>
 
   <!-- Need Invoice Modal -->
-  <div v-if="modals.needInvoice" class="fixed inset-0 z-[60] flex items-center justify-center bg-on-surface/40 p-4" @click.self="modals.needInvoice = false">
-    <div class="bg-surface rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
-      <div class="p-6 pb-4 border-b border-outline-variant">
-        <h3 class="font-headline-sm text-headline-sm text-on-surface">Need Invoice / Waiting on Customer</h3>
-        <p class="font-body-sm text-on-surface-variant mt-1">Mark this ticket as waiting for the customer to provide their invoice.</p>
+  <div v-if="modals.needInvoice" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="modals.needInvoice = false">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-lg shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <!-- Modal Header -->
+      <div class="px-6 py-5 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center text-error">
+            <span class="material-symbols-outlined icon-fill">error</span>
+          </div>
+          <div>
+            <h2 class="text-headline-md font-headline-md text-on-surface">Need Invoice</h2>
+            <p class="text-body-md font-body-md text-on-surface-variant mt-1">Ticket #{{ ticketId }} - Status Update</p>
+          </div>
+        </div>
+        <button @click="modals.needInvoice = false" class="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant/50">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
-      <div class="p-6 flex flex-col gap-4">
+      <!-- Modal Body -->
+      <div class="px-6 py-6 space-y-6 overflow-y-auto">
         <div v-if="actionError" class="p-3 bg-error-container text-on-error-container rounded font-body-sm mb-2">
           {{ actionError }}
         </div>
-        
-        <div class="flex flex-col gap-1">
-          <label class="font-label-md text-on-surface font-semibold">Pending Reason</label>
-          <input type="text" v-model="form.pending_reason" disabled class="px-3 py-2 border border-outline-variant rounded bg-surface-container-low text-on-surface-variant font-body-md cursor-not-allowed" />
+        <!-- Info Banner -->
+        <div class="bg-surface-container p-4 rounded-lg flex items-start gap-3 border border-primary-fixed-dim/30">
+          <span class="material-symbols-outlined text-primary mt-0.5">info</span>
+          <div>
+            <p class="text-body-md font-body-md text-on-surface font-medium">Customer document missing</p>
+            <p class="text-body-md font-body-md text-on-surface-variant mt-1">This action will change the ticket status to <span class="font-semibold text-secondary">Waiting on Customer</span> and notify the assigned agent.</p>
+          </div>
         </div>
-        
-        <div class="flex flex-col gap-1">
-          <label class="font-label-md text-on-surface font-semibold">Next Follow-up Date <span class="text-error">*</span></label>
-          <input type="date" v-model="form.next_follow_up_date" :min="todayDate()" class="px-3 py-2 border border-outline rounded bg-surface text-on-surface font-body-md outline-primary" required />
-        </div>
-
-        <div class="flex flex-col gap-1">
-          <label class="font-label-md text-on-surface font-semibold">Note to Staff (Internal)</label>
-          <textarea v-model="form.note" rows="3" class="px-3 py-2 border border-outline rounded bg-surface text-on-surface font-body-md outline-primary" placeholder="Optional internal note..."></textarea>
-        </div>
+        <form class="space-y-5" @submit.prevent="submitNeedInvoice">
+          <!-- Pending Reason -->
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block">Pending Reason</label>
+            <div class="relative">
+              <input class="w-full h-10 px-3 bg-surface-variant/30 border border-outline-variant/50 rounded-lg text-on-surface text-body-md font-body-md cursor-not-allowed focus:outline-none focus:ring-0" readonly type="text" :value="form.pending_reason" />
+              <span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant/50 text-[20px]">lock</span>
+            </div>
+          </div>
+          <!-- Next Follow-up Date -->
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block" for="followup">Next Follow-up Date <span class="text-error">*</span></label>
+            <div class="relative">
+              <input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" id="followup" required type="date" v-model="form.next_follow_up_date" :min="todayDate()"/>
+            </div>
+          </div>
+          <!-- Note to Staff -->
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block" for="staffNote">Note to Staff (Visible to internal team)</label>
+            <textarea class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" id="staffNote" placeholder="E.g., Customer promised to email it by tomorrow..." rows="3" v-model="form.note"></textarea>
+          </div>
+        </form>
       </div>
-      <div class="p-4 border-t border-outline-variant bg-surface-container-low flex justify-end gap-3">
-        <button @click="modals.needInvoice = false" :disabled="submitting" class="px-4 py-2 rounded text-primary font-label-md hover:bg-surface-container-highest disabled:opacity-50 transition-colors">
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 bg-surface-bright border-t border-outline-variant/30 flex justify-end gap-3 rounded-b-xl">
+        <button @click="modals.needInvoice = false" :disabled="submitting" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium text-on-surface-variant hover:bg-surface-variant/50 transition-colors border border-transparent disabled:opacity-50" type="button">
           Cancel
         </button>
-        <button @click="submitNeedInvoice" :disabled="submitting || !form.next_follow_up_date" class="px-4 py-2 rounded bg-primary text-on-primary font-label-md flex items-center gap-2 hover:opacity-90 disabled:opacity-50 transition-colors">
+        <button @click="submitNeedInvoice" :disabled="submitting || !form.next_follow_up_date" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50" type="button">
           <span v-if="submitting" class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+          <span v-else class="material-symbols-outlined text-[18px]">schedule_send</span>
           Mark Waiting on Customer
         </button>
       </div>
