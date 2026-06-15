@@ -271,3 +271,59 @@
   justify-content: center;
 }
 
+/* Tickets page — search bar + status filter chips. */
+.lav-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  height: 44px;
+  background: #ffffff;
+  border: 1px solid #c3c6d7;
+  border-radius: 0.75rem;
+}
+.lav-search:focus-within {
+  border-color: #004ac6;
+  box-shadow: 0 0 0 2px rgba(0, 74, 198, 0.15);
+}
+.lav-search__input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: #121c28;
+}
+.lav-search__clear {
+  display: inline-flex;
+  align-items: center;
+  color: #434655;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.lav-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.lav-chip {
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid #c3c6d7;
+  background: #ffffff;
+  color: #434655;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.lav-chip:hover {
+  background: #eef4ff;
+}
+.lav-chip--active {
+  background: #004ac6;
+  border-color: #004ac6;
+  color: #ffffff;
+}
+

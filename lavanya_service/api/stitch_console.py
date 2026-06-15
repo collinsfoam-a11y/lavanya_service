@@ -1,5 +1,64 @@
 import frappe
 
+# Ticket fields safe to surface in the SPA list view.
+_LIST_FIELDS = [
+    "name",
+    "subject",
+    "status",
+    "priority",
+    "customer_name",
+    "phone_1",
+    "product_item",
+    "brand",
+    "next_follow_up_date",
+    "pending_reason",
+    "modified",
+    "creation",
+]
+
+
+@frappe.whitelist()
+def get_ticket_list(search=None, status=None, start=0, page_length=30):
+    """Paginated, permission-scoped HD Ticket list for the SPA Tickets page.
+
+    Honours the user's HD Ticket read permissions (frappe.get_list applies the
+    user_permissions / role-based query filters automatically). Supports a free
+    -text search across name / subject / customer / phone, and a status filter.
+    """
+    if frappe.session.user == "Guest":
+        frappe.throw("Not permitted", frappe.PermissionError)
+
+    start = frappe.utils.cint(start)
+    page_length = min(frappe.utils.cint(page_length) or 30, 100)
+
+    filters = {}
+    if status and status != "All":
+        filters["status"] = status
+
+    or_filters = None
+    if search:
+        like = f"%{search.strip()}%"
+        or_filters = [
+            ["name", "like", like],
+            ["subject", "like", like],
+            ["customer_name", "like", like],
+            ["phone_1", "like", like],
+        ]
+
+    tickets = frappe.get_list(
+        "HD Ticket",
+        fields=_LIST_FIELDS,
+        filters=filters,
+        or_filters=or_filters,
+        order_by="modified desc",
+        start=start,
+        page_length=page_length,
+    )
+
+    has_more = len(tickets) == page_length
+    return {"tickets": tickets, "start": start, "page_length": page_length, "has_more": has_more}
+
+
 @frappe.whitelist()
 def get_ticket_detail(ticket_id):
     if frappe.session.user == "Guest":
