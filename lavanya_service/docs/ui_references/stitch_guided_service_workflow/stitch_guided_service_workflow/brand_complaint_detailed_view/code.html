@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Complaint Details - B-8821</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#ffffff",
+                      "surface-variant": "#e6e0ef",
+                      "on-primary": "#ffffff",
+                      "secondary-container": "#d5e0f8",
+                      "surface-container-high": "#ece6f4",
+                      "error": "#ba1a1a",
+                      "on-primary-container": "#e9e0ff",
+                      "tertiary": "#823700",
+                      "primary-fixed": "#e7deff",
+                      "on-surface-variant": "#494456",
+                      "on-surface": "#1c1a24",
+                      "error-container": "#ffdad6",
+                      "secondary": "#545f73",
+                      "on-primary-fixed-variant": "#4d00d2",
+                      "on-secondary-fixed": "#111c2d",
+                      "on-tertiary": "#ffffff",
+                      "background": "#fdf7ff",
+                      "surface": "#fdf7ff",
+                      "on-error-container": "#93000a",
+                      "surface-bright": "#fdf7ff",
+                      "surface-tint": "#6533ed",
+                      "on-error": "#ffffff",
+                      "inverse-on-surface": "#f5eefd",
+                      "on-primary-fixed": "#1f0060",
+                      "primary-fixed-dim": "#ccbeff",
+                      "outline": "#7a7487",
+                      "tertiary-container": "#a84900",
+                      "inverse-primary": "#ccbeff",
+                      "tertiary-fixed-dim": "#ffb690",
+                      "on-tertiary-fixed-variant": "#783200",
+                      "secondary-fixed-dim": "#bcc7de",
+                      "on-tertiary-container": "#ffddcd",
+                      "on-tertiary-fixed": "#331100",
+                      "on-secondary-fixed-variant": "#3c475a",
+                      "surface-dim": "#ded7e6",
+                      "inverse-surface": "#322f3a",
+                      "tertiary-fixed": "#ffdbca",
+                      "secondary-fixed": "#d8e3fb",
+                      "on-secondary": "#ffffff",
+                      "primary-container": "#6d3df5",
+                      "on-secondary-container": "#586377",
+                      "surface-container": "#f2ebfa",
+                      "primary": "#5412dd",
+                      "outline-variant": "#cac3d9",
+                      "surface-container-highest": "#e6e0ef",
+                      "surface-container-low": "#f7f1ff",
+                      "on-background": "#1c1a24"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "base": "8px",
+                      "sm": "8px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "xl": "32px",
+                      "lg": "24px",
+                      "container-margin": "24px"
+              },
+              "fontFamily": {
+                      "field-label": [
+                              "Inter"
+                      ],
+                      "page-title": [
+                              "Inter"
+                      ],
+                      "button-text": [
+                              "Inter"
+                      ],
+                      "display-metrics": [
+                              "Inter"
+                      ],
+                      "section-title": [
+                              "Inter"
+                      ],
+                      "caption": [
+                              "Inter"
+                      ],
+                      "body-default": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "field-label": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "page-title": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "button-text": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-metrics": [
+                              "28px",
+                              {
+                                      "lineHeight": "34px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "section-title": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "caption": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-default": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body { background-color: #F8FAFC; }
+    </style>
+</head>
+<body class="flex min-h-screen text-on-surface">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full py-lg w-60 h-screen sticky left-0 top-0 bg-surface-container-lowest border-r border-outline-variant shadow-sm z-40">
+<div class="px-4 mb-8">
+<h1 class="font-page-title text-page-title text-primary">Lavanya Service</h1>
+<p class="font-caption text-caption text-secondary mt-1">Regional Hub</p>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-button-text text-button-text">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 border-l-4 border-primary bg-primary-container/10 text-primary font-bold" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_late" style="font-variation-settings: 'FILL' 1;">assignment_late</span>
+<span class="font-button-text text-button-text">Triage Queue</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-button-text text-button-text">Procurement</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-button-text text-button-text">Team Capacity</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-secondary hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-button-text text-button-text">Settings</span>
+</a>
+</nav>
+<div class="px-4 mt-auto pt-4 border-t border-outline-variant">
+<button class="w-full bg-primary text-on-primary font-button-text text-button-text py-2 rounded-lg hover:bg-primary-container hover:text-on-primary-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Service Request
+            </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- TopAppBar -->
+<header class="h-16 w-full sticky top-0 z-30 bg-surface border-b border-outline-variant flex justify-between items-center px-lg w-full">
+<div class="flex items-center gap-4">
+<button class="md:hidden text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h2 class="font-section-title text-section-title text-on-surface">Service Coordinator Portal</h2>
+</div>
+<div class="flex items-center gap-6">
+<!-- Search -->
+<div class="hidden lg:flex items-center bg-surface-container-highest rounded-full px-4 py-1.5 border border-outline-variant focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-default font-body-default w-64 p-0" placeholder="Search ID or Keyword..." type="text"/>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+<div class="h-6 w-px bg-outline-variant mx-2"></div>
+<!-- CTA -->
+<button class="hidden sm:block text-primary font-button-text text-button-text hover:bg-surface-container-high px-3 py-1.5 rounded-md transition-colors">
+                    Support
+                </button>
+<button class="bg-primary text-on-primary font-button-text text-button-text px-4 py-1.5 rounded-lg hover:bg-primary/90 transition-colors shadow-sm">
+                    Quick Assign
+                </button>
+<div class="w-8 h-8 rounded-full bg-secondary-container overflow-hidden border border-outline-variant ml-2">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4H9o8Lz2pS4xyxoaRIMfgSfPYRhzn4ftMLelBez8If7ZvHqWgUNtLrYd9YZksqRY4YLnpxotxIbBy5OyvaWcnvfhEGzWR7-w_nP8Tk84NafFzQqZ3m8ZOYXdcKStu-y65vxZ2_SaDTiUyUSrBuOGyXwHOSsQd5dDbXDG5Qw7hlquwnq37KZ7iN11qk5k7hzCsgolCAubU9EFQrK4BDEOQKDNBMBSBdT3vMda8sY3pdwqC_qEzikLmag7POh5sfNK-bCCmOr0f1bc"/>
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="flex-1 p-lg overflow-y-auto">
+<!-- Context Header -->
+<div class="mb-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<a class="text-secondary hover:text-primary transition-colors flex items-center gap-1 font-button-text text-button-text text-sm" href="#">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span> Back to Queue
+                        </a>
+</div>
+<h1 class="font-page-title text-page-title text-on-surface flex items-center gap-3">
+                        Complaint ID: B-8821
+                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-[#fdf2f8] text-[#be185d] border border-[#fbcfe8] text-sm font-semibold tracking-wide">
+<span class="w-2 h-2 rounded-full bg-[#be185d] mr-2"></span>
+                            Awaiting Brand Response
+                        </span>
+</h1>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-on-surface font-button-text text-button-text rounded-lg hover:bg-surface-container-high transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">print</span>
+                        Print Record
+                    </button>
+</div>
+</div>
+<!-- Bento Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left Column: Details & Remarks -->
+<div class="lg:col-span-7 flex flex-col gap-gutter">
+<!-- Registration Details Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-md shadow-sm">
+<h3 class="font-section-title text-section-title text-on-surface mb-md flex items-center gap-2 border-b border-outline-variant pb-3">
+<span class="material-symbols-outlined text-primary">info</span>
+                            Registration Details
+                        </h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+<div class="flex flex-col gap-1">
+<span class="font-field-label text-field-label text-secondary uppercase tracking-wider text-[11px]">Brand Name</span>
+<span class="font-body-default text-body-default text-on-surface font-medium">Acme Electronics Corp.</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-field-label text-field-label text-secondary uppercase tracking-wider text-[11px]">Ticket Reference</span>
+<span class="font-body-default text-body-default text-primary font-medium cursor-pointer hover:underline">TKT-2023-994A</span>
+</div>
+<div class="flex flex-col gap-1 sm:col-span-2">
+<span class="font-field-label text-field-label text-secondary uppercase tracking-wider text-[11px]">Fault Description</span>
+<div class="bg-surface-container-low p-3 rounded-lg border border-outline-variant/50">
+<p class="font-body-default text-body-default text-on-surface leading-relaxed">
+                                        Customer reported that the main processing unit overheats after 30 minutes of continuous use, leading to an automatic thermal shutdown. Diagnostics run remotely confirm error code E-77 (Thermal Throttle).
+                                    </p>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-field-label text-field-label text-secondary uppercase tracking-wider text-[11px]">Registered Date</span>
+<span class="font-body-default text-body-default text-on-surface">Oct 24, 2023 - 14:30 EST</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-field-label text-field-label text-secondary uppercase tracking-wider text-[11px]">Brand Ref Number</span>
+<span class="font-body-default text-body-default text-on-surface font-mono">BRN-ACME-8842</span>
+</div>
+</div>
+</div>
+<!-- Official Remarks Card -->
+<div class="bg-[#fefce8] rounded-xl border border-[#fef08a] p-md shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-[#eab308]"></div>
+<h3 class="font-section-title text-section-title text-[#854d0e] mb-md flex items-center gap-2">
+<span class="material-symbols-outlined">notes</span>
+                            Official Remarks (Internal)
+                        </h3>
+<p class="font-body-default text-body-default text-[#713f12] leading-relaxed">
+                            Awaiting RMA authorization from Acme. Do not promise customer a replacement timeline until brand confirms stock availability in the regional depot. Escalate to Level 2 if no response by EOD tomorrow.
+                        </p>
+</div>
+</div>
+<!-- Right Column: Timeline & Action Panel -->
+<div class="lg:col-span-5 flex flex-col gap-gutter h-[calc(100vh-180px)] sticky top-24">
+<!-- Action Panel (High Emphasis) -->
+<div class="bg-surface-container-lowest rounded-xl border-2 border-primary-container p-md shadow-[0_4px_12px_rgba(109,61,245,0.08)]">
+<h3 class="font-section-title text-section-title text-on-surface mb-4">Add Follow-up</h3>
+<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-sm">
+<label class="font-field-label text-field-label text-on-surface">Enter Follow-up Note</label>
+<textarea class="w-full border border-outline-variant rounded-lg p-3 font-body-default text-body-default focus:ring-2 focus:ring-primary focus:border-primary bg-surface-container-lowest resize-none" placeholder="Detail the latest interaction or status..." rows="3"></textarea>
+</div>
+<div class="flex flex-col gap-sm">
+<label class="font-field-label text-field-label text-on-surface">Update Remarks <span class="text-secondary font-normal">(Optional)</span></label>
+<textarea class="w-full border border-outline-variant rounded-lg p-3 font-body-default text-body-default focus:ring-2 focus:ring-primary focus:border-primary bg-surface-container-lowest resize-none" placeholder="Append to internal remarks..." rows="2"></textarea>
+</div>
+<div class="flex gap-3 mt-2">
+<button class="flex-1 bg-primary text-on-primary font-button-text text-button-text py-2.5 rounded-lg hover:bg-primary/90 transition-colors shadow-sm">
+                                    Save Update
+                                </button>
+<button class="px-6 bg-surface-container-lowest text-secondary border border-outline-variant font-button-text text-button-text py-2.5 rounded-lg hover:bg-surface-container-high hover:text-on-surface transition-colors">
+                                    Mark Resolved
+                                </button>
+</div>
+</div>
+</div>
+<!-- Follow-up Timeline -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant flex-1 flex flex-col overflow-hidden shadow-sm">
+<div class="p-md border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<h3 class="font-section-title text-section-title text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">history</span>
+                                Timeline
+                            </h3>
+<span class="text-caption font-caption text-secondary">3 Entries</span>
+</div>
+<div class="flex-1 p-md overflow-y-auto">
+<div class="relative border-l-2 border-outline-variant/30 ml-3 space-y-6 pb-4">
+<!-- Timeline Item -->
+<div class="relative pl-6">
+<div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-surface-container-lowest border-2 border-primary"></div>
+<div class="flex flex-col gap-1 mb-2">
+<div class="flex justify-between items-start">
+<span class="font-button-text text-button-text text-on-surface">Sarah Jenkins <span class="text-secondary font-normal text-sm ml-1">(L1 Support)</span></span>
+<span class="font-caption text-caption text-secondary">Today, 09:15 AM</span>
+</div>
+</div>
+<div class="bg-surface-container-high rounded-lg p-3 border border-outline-variant/30">
+<p class="font-body-default text-body-default text-on-surface-variant">Sent second chaser email to Brand Support desk regarding RMA approval. No response yet.</p>
+</div>
+</div>
+<!-- Timeline Item -->
+<div class="relative pl-6">
+<div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-surface-container-lowest border-2 border-secondary-fixed-dim"></div>
+<div class="flex flex-col gap-1 mb-2">
+<div class="flex justify-between items-start">
+<span class="font-button-text text-button-text text-on-surface">System Auto-logger</span>
+<span class="font-caption text-caption text-secondary">Oct 25, 14:00 PM</span>
+</div>
+</div>
+<div class="bg-surface-container-high rounded-lg p-3 border border-outline-variant/30">
+<p class="font-body-default text-body-default text-on-surface-variant">Status automatically changed to 'Awaiting Brand Response' after 24h SLA threshold passed.</p>
+</div>
+</div>
+<!-- Timeline Item -->
+<div class="relative pl-6">
+<div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-surface-container-lowest border-2 border-secondary-fixed-dim"></div>
+<div class="flex flex-col gap-1 mb-2">
+<div class="flex justify-between items-start">
+<span class="font-button-text text-button-text text-on-surface">Marcus Chen <span class="text-secondary font-normal text-sm ml-1">(Triage)</span></span>
+<span class="font-caption text-caption text-secondary">Oct 24, 14:45 PM</span>
+</div>
+</div>
+<div class="bg-surface-container-high rounded-lg p-3 border border-outline-variant/30">
+<p class="font-body-default text-body-default text-on-surface-variant">Initial complaint logged. Diagnostics attached and forwarded to Acme Electronics dedicated portal.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

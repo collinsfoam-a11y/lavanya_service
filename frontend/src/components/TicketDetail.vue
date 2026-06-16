@@ -1,0 +1,982 @@
+<template>
+  <div v-if="ticketId" class="fixed inset-0 z-50 flex justify-end bg-on-surface/20" @click.self="close">
+    <div class="w-full max-w-4xl bg-surface-container-lowest h-full shadow-xl flex flex-col md:flex-row overflow-hidden animate-slide-in">
+      
+      <!-- Main Detail Area -->
+      <div class="flex-1 overflow-y-auto border-r border-outline-variant flex flex-col">
+        <div v-if="loading" class="p-8 text-center text-on-surface-variant">Loading ticket...</div>
+        <div v-else-if="error" class="p-8 text-center text-error">Failed to load ticket.</div>
+        <div v-else-if="ticket" class="p-6 md:p-8 flex flex-col gap-8">
+          
+          <!-- Header -->
+          <header class="flex flex-col gap-2 border-b border-outline-variant pb-4">
+            <div class="flex items-start justify-between">
+              <div>
+                <h2 class="font-headline-lg text-headline-lg text-on-surface">{{ ticket.name }}</h2>
+                <div class="flex flex-wrap gap-2 mt-2">
+                  <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="chip(ticket.status)">{{ ticket.status }}</span>
+                  <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md bg-surface-variant text-on-surface-variant">{{ ticket.priority }}</span>
+                  <SlaBadge :agreement-status="ticket.sla?.agreement_status" :response-by="ticket.sla?.response_by" :resolution-by="ticket.sla?.resolution_by" />
+                </div>
+              </div>
+              <button @click="close" class="p-2 rounded hover:bg-surface-container-low">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div class="mt-4 font-body-md text-on-surface-variant grid grid-cols-2 gap-y-2">
+              <div>Customer: <span class="font-bold text-on-surface">{{ ticket.customer?.name || '—' }}</span></div>
+              <div>Mobile: <span class="text-on-surface">{{ ticket.customer?.mobile || '—' }}</span></div>
+              <div>Age: <span class="text-on-surface">{{ ticketAge(ticket.creation) }} days</span></div>
+              <div>Assigned: <span class="text-on-surface">{{ ticket.assigned_to || 'Unassigned' }}</span></div>
+            </div>
+            <div class="mt-2">
+              <a :href="'/helpdesk/tickets/' + ticket.name" target="_blank" class="text-primary hover:underline font-label-md">
+                Open in Standard Helpdesk ↗
+              </a>
+            </div>
+          </header>
+
+          <!-- Repeat complaint banner -->
+          <div v-if="ticket.repeat?.is_repeat" class="rounded-xl p-4 flex items-center justify-between gap-3"
+               style="border:1px solid rgba(113,42,226,0.4); background:rgba(113,42,226,0.08)">
+            <div class="flex items-center gap-2 font-body-md text-on-surface">
+              <span class="material-symbols-outlined text-secondary">repeat</span>
+              Marked as repeat complaint<template v-if="ticket.repeat.previous_ticket"> · linked to <span class="font-semibold text-primary">{{ ticket.repeat.previous_ticket }}</span></template>
+            </div>
+            <button @click="clearRepeat" class="px-3 h-8 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low shrink-0">Clear</button>
+          </div>
+          <div v-else-if="repeatCandidates.length" class="rounded-xl p-4"
+               style="border:1px solid rgba(148,55,0,0.4); background:rgba(148,55,0,0.07)">
+            <div class="flex items-center gap-2 font-body-md text-on-surface mb-2">
+              <span class="material-symbols-outlined text-tertiary">repeat</span>
+              Possible repeat — {{ repeatCandidates.length }} earlier ticket(s) for this customer/product
+            </div>
+            <ul class="flex flex-col gap-1.5">
+              <li v-for="c in repeatCandidates" :key="c.ticket" class="flex items-center justify-between gap-2 font-body-md">
+                <span class="text-on-surface-variant truncate"><span class="text-primary font-semibold">{{ c.ticket }}</span> · {{ c.subject || '(no subject)' }}</span>
+                <button @click="linkRepeat(c.ticket)" class="px-3 h-8 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md shrink-0 hover:opacity-90">Link as repeat</button>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Customer Summary -->
+          <section>
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Customer</h3>
+            <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
+              <div><span class="block text-label-md text-outline">Name</span> {{ ticket.customer?.name || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Mobile</span> {{ ticket.customer?.mobile || '—' }}</div>
+              <div class="col-span-2"><span class="block text-label-md text-outline">Address</span> {{ ticket.customer?.address || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Pincode</span> {{ ticket.customer?.pincode || '—' }}</div>
+            </div>
+          </section>
+
+          <!-- Product Summary -->
+          <section>
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Product</h3>
+            <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
+              <div><span class="block text-label-md text-outline">Type</span> {{ ticket.product?.type || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Category/Item</span> {{ ticket.product?.item || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Brand</span> {{ ticket.product?.brand || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Model</span> {{ ticket.product?.model_number || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Serial Number</span> {{ ticket.product?.serial_number || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Warranty</span> {{ ticket.product?.warranty_status || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Invoice No.</span> {{ ticket.product?.invoice_number || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Purchase Date</span> {{ ticket.product?.purchase_date || '—' }}</div>
+            </div>
+          </section>
+
+          <!-- Workflow Summary -->
+          <section>
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Workflow</h3>
+            <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
+              <div><span class="block text-label-md text-outline">Current Status</span> {{ ticket.workflow?.status || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Pending Reason</span> {{ ticket.workflow?.pending_reason || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Next Follow-up</span> {{ ticket.workflow?.next_follow_up_date || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Service Center</span> {{ ticket.workflow?.service_center || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Brand Ticket</span> {{ ticket.workflow?.brand_ticket_number || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Brand Reg Date</span> {{ ticket.workflow?.brand_registration_date || '—' }}</div>
+              <div>
+                <span class="block text-label-md text-outline">SLA</span>
+                <SlaBadge v-if="ticket.sla?.agreement_status" :agreement-status="ticket.sla.agreement_status" :response-by="ticket.sla.response_by" :resolution-by="ticket.sla.resolution_by" />
+                <template v-else>—</template>
+              </div>
+              <div><span class="block text-label-md text-outline">Resolution Due</span> {{ ticket.sla?.resolution_by?.substring(0,16) || '—' }}</div>
+            </div>
+          </section>
+
+          <!-- Product Receipt Summary -->
+          <section>
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Product Custody</h3>
+            <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
+              <div><span class="block text-label-md text-outline">Receipt No.</span> {{ ticket.receipt?.number || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Custody Status</span> {{ ticket.receipt?.custody_status || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Last Movement</span> {{ ticket.receipt?.last_movement?.substring(0,10) || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Ready for Pickup</span> {{ ticket.receipt?.ready_for_pickup ? 'Yes' : 'No' }}</div>
+            </div>
+          </section>
+
+          <!-- Activity timeline + add note -->
+          <section class="border-t border-outline-variant pt-4 mt-4">
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-3">Activity</h3>
+
+            <!-- Add note -->
+            <div class="mb-5">
+              <textarea
+                v-model="noteText"
+                rows="2"
+                placeholder="Add an internal note…"
+                class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none"
+              ></textarea>
+              <div v-if="noteError" class="text-error font-label-md text-label-md mt-1">{{ noteError }}</div>
+              <div class="flex justify-end mt-2">
+                <button
+                  @click="addNote"
+                  :disabled="postingNote || !noteText.trim()"
+                  class="px-4 h-9 rounded-lg bg-primary text-on-primary font-label-md text-body-md flex items-center gap-1.5 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  <span class="material-symbols-outlined" :class="postingNote ? 'animate-spin' : ''" style="font-size: 18px">
+                    {{ postingNote ? 'progress_activity' : 'post_add' }}
+                  </span>
+                  Post note
+                </button>
+              </div>
+            </div>
+
+            <!-- Timeline -->
+            <div v-if="activityLoading" class="text-on-surface-variant text-body-md py-4">Loading activity…</div>
+            <ul v-else-if="activity.length" class="flex flex-col">
+              <li v-for="(ev, i) in activity" :key="ev.id" class="flex gap-3">
+                <div class="flex flex-col items-center">
+                  <span
+                    class="material-symbols-outlined w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                    :class="ev.kind === 'note' ? 'bg-primary-container text-on-primary' : 'bg-surface-container-highest text-on-surface-variant'"
+                    style="font-size: 18px"
+                  >{{ ev.kind === 'note' ? 'sticky_note_2' : 'history' }}</span>
+                  <span v-if="i < activity.length - 1" class="flex-1 w-px bg-outline-variant my-1"></span>
+                </div>
+                <div class="flex-1 pb-5 -mt-0.5">
+                  <div class="font-body-md text-on-surface whitespace-pre-line">{{ ev.text || '—' }}</div>
+                  <div class="font-label-md text-label-md text-on-surface-variant mt-0.5">{{ ev.by }} · {{ relTime(ev.on) }}</div>
+                </div>
+              </li>
+            </ul>
+            <div v-else class="text-on-surface-variant text-body-md py-2">No activity yet.</div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Quick Action Panel -->
+      <div class="w-full md:w-80 bg-surface flex flex-col overflow-y-auto border-t md:border-t-0 md:border-l border-outline-variant">
+        <div class="p-4 border-b border-outline-variant bg-surface-container-low sticky top-0 z-10">
+          <h3 class="font-headline-md text-headline-md text-on-surface">Quick Actions</h3>
+        </div>
+        <div class="p-4 flex flex-col gap-3">
+
+          <button @click="openAction('brand_complaint')" class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">verified</span> Register Brand Complaint
+          </button>
+
+          <button @click="openNeedInvoice" class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">receipt_long</span> Need Invoice
+          </button>
+
+          <button @click="openAction('follow_up_sc')" class="w-full px-4 py-3 bg-primary-container text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">support_agent</span> Follow Up Service Center
+          </button>
+
+          <button @click="openAction('waiting_part')" class="w-full px-4 py-3 bg-primary-container text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">build</span> Waiting for Part
+          </button>
+
+          <button @click="openProductReceipt" class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">inventory_2</span> Create Product Receipt
+          </button>
+
+          <button
+            :disabled="!ticket?.receipt?.number"
+            @click="ticket?.receipt?.number ? openReadyForPickup() : null"
+            class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left flex items-center gap-2 transition-all group relative"
+            :class="ticket?.receipt?.number ? 'hover:opacity-90 active:scale-[0.98]' : 'opacity-50 cursor-not-allowed'"
+          >
+            <span class="material-symbols-outlined" style="font-size: 18px">hail</span> Mark Ready for Pickup
+            <span v-if="!ticket?.receipt?.number" class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Create Product Receipt first.</span>
+          </button>
+
+          <button @click="openAction('customer_confirmed')" class="w-full px-4 py-3 bg-tertiary text-on-tertiary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">how_to_reg</span> Customer Confirmed
+          </button>
+
+          <button @click="openAction('close_ticket')" class="w-full px-4 py-3 bg-error text-on-error rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">task_alt</span> Close Ticket
+          </button>
+
+          <!-- Product custody movements (only when a receipt exists) -->
+          <template v-if="ticket?.receipt?.number">
+            <div class="pt-2 mt-1 border-t border-outline-variant font-label-md text-label-md text-on-surface-variant uppercase tracking-wide">Product custody</div>
+            <button @click="openAction('sent_to_sc')" class="w-full px-4 py-3 bg-surface-container-highest text-on-surface rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+              <span class="material-symbols-outlined" style="font-size: 18px">local_shipping</span> Send to Service Center
+            </button>
+            <button @click="openAction('returned_from_sc')" class="w-full px-4 py-3 bg-surface-container-highest text-on-surface rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+              <span class="material-symbols-outlined" style="font-size: 18px">assignment_return</span> Returned from SC
+            </button>
+            <button @click="openAction('delivered')" class="w-full px-4 py-3 bg-surface-container-highest text-on-surface rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+              <span class="material-symbols-outlined" style="font-size: 18px">verified</span> Delivered to Customer
+            </button>
+          </template>
+
+          <!-- Reopen (only when the ticket is closed/resolved) -->
+          <button v-if="isClosed" @click="openAction('reopen')" class="w-full px-4 py-3 bg-tertiary text-on-tertiary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">restart_alt</span> Reopen Ticket
+          </button>
+
+        </div>
+        <div class="p-4 mt-auto text-xs text-on-surface-variant text-center bg-surface-container-low border-t border-outline-variant">
+          Actions are role-gated and validated server-side. You'll see a clear message if your role can't run one.
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- Need Invoice Modal -->
+  <div v-if="modals.needInvoice" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="modals.needInvoice = false">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-lg shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <!-- Modal Header -->
+      <div class="px-6 py-5 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center text-error">
+            <span class="material-symbols-outlined icon-fill">error</span>
+          </div>
+          <div>
+            <h2 class="text-headline-md font-headline-md text-on-surface">Need Invoice</h2>
+            <p class="text-body-md font-body-md text-on-surface-variant mt-1">Ticket #{{ ticketId }} - Status Update</p>
+          </div>
+        </div>
+        <button @click="modals.needInvoice = false" class="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant/50">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <!-- Modal Body -->
+      <div class="px-6 py-6 space-y-6 overflow-y-auto">
+        <div v-if="actionError" class="p-3 bg-error-container text-on-error-container rounded font-body-sm mb-2">
+          {{ actionError }}
+        </div>
+        <!-- Info Banner -->
+        <div class="bg-surface-container p-4 rounded-lg flex items-start gap-3 border border-primary-fixed-dim/30">
+          <span class="material-symbols-outlined text-primary mt-0.5">info</span>
+          <div>
+            <p class="text-body-md font-body-md text-on-surface font-medium">Customer document missing</p>
+            <p class="text-body-md font-body-md text-on-surface-variant mt-1">This action will change the ticket status to <span class="font-semibold text-secondary">Waiting on Customer</span> and notify the assigned agent.</p>
+          </div>
+        </div>
+        <form class="space-y-5" @submit.prevent="submitNeedInvoice">
+          <!-- Pending Reason -->
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block">Pending Reason</label>
+            <div class="relative">
+              <input class="w-full h-10 px-3 bg-surface-variant/30 border border-outline-variant/50 rounded-lg text-on-surface text-body-md font-body-md cursor-not-allowed focus:outline-none focus:ring-0" readonly type="text" :value="form.pending_reason" />
+              <span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant/50 text-[20px]">lock</span>
+            </div>
+          </div>
+          <!-- Next Follow-up Date -->
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block" for="followup">Next Follow-up Date <span class="text-error">*</span></label>
+            <div class="relative">
+              <input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" id="followup" required type="date" v-model="form.next_follow_up_date" :min="todayDate()"/>
+            </div>
+          </div>
+          <!-- Note to Staff -->
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block" for="staffNote">Note to Staff (Visible to internal team)</label>
+            <textarea class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" id="staffNote" placeholder="E.g., Customer promised to email it by tomorrow..." rows="3" v-model="form.note"></textarea>
+          </div>
+        </form>
+      </div>
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 bg-surface-bright border-t border-outline-variant/30 flex justify-end gap-3 rounded-b-xl">
+        <button @click="modals.needInvoice = false" :disabled="submitting" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium text-on-surface-variant hover:bg-surface-variant/50 transition-colors border border-transparent disabled:opacity-50" type="button">
+          Cancel
+        </button>
+        <button @click="submitNeedInvoice" :disabled="submitting || !form.next_follow_up_date" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50" type="button">
+          <span v-if="submitting" class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+          <span v-else class="material-symbols-outlined text-[18px]">schedule_send</span>
+          Mark Waiting on Customer
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Create Product Receipt Modal -->
+  <div v-if="modals.createReceipt" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="modals.createReceipt = false">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-2xl shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh]">
+      <!-- Modal Header -->
+      <div class="px-6 py-5 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+            <span class="material-symbols-outlined icon-fill">inventory_2</span>
+          </div>
+          <div>
+            <h2 class="text-headline-md font-headline-md text-on-surface">Create Product Receipt</h2>
+            <p class="text-body-md font-body-md text-on-surface-variant mt-1">Ticket #{{ ticketId }} - Intake</p>
+          </div>
+        </div>
+        <button @click="modals.createReceipt = false" class="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant/50">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <!-- Modal Body -->
+      <div class="px-6 py-6 space-y-6 overflow-y-auto">
+        <div v-if="actionError" class="p-3 bg-error-container text-on-error-container rounded font-body-sm mb-2">
+          {{ actionError }}
+        </div>
+        
+        <form class="space-y-5" @submit.prevent="submitProductReceipt">
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Customer info -->
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Customer Name</label>
+              <input class="w-full h-10 px-3 bg-surface-variant/30 border border-outline-variant/50 rounded-lg text-on-surface text-body-md font-body-md cursor-not-allowed" readonly type="text" :value="ticket?.customer?.name || ''" />
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Mobile</label>
+              <input class="w-full h-10 px-3 bg-surface-variant/30 border border-outline-variant/50 rounded-lg text-on-surface text-body-md font-body-md cursor-not-allowed" readonly type="text" :value="ticket?.customer?.mobile || ''" />
+            </div>
+            
+            <!-- Product info -->
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Product Type</label>
+              <input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" type="text" v-model="formReceipt.product_type" />
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Brand</label>
+              <input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" type="text" v-model="formReceipt.brand" />
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Model Number</label>
+              <input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" type="text" v-model="formReceipt.model_no" />
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Serial Number</label>
+              <input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" type="text" v-model="formReceipt.serial_no" />
+            </div>
+          </div>
+          
+          <!-- Notes -->
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block" for="accessories">Accessories Received <span class="text-error">*</span></label>
+            <textarea class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" id="accessories" required rows="2" v-model="formReceipt.accessories_received" placeholder="E.g. Charger, Original Box..."></textarea>
+          </div>
+          
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block" for="condition">Physical Condition Notes <span class="text-error">*</span></label>
+            <textarea class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" id="condition" required rows="2" v-model="formReceipt.physical_condition" placeholder="E.g. Scratches on screen, dent on corner..."></textarea>
+          </div>
+        </form>
+      </div>
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 bg-surface-bright border-t border-outline-variant/30 flex justify-end gap-3 rounded-b-xl">
+        <button @click="modals.createReceipt = false" :disabled="submitting" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium text-on-surface-variant hover:bg-surface-variant/50 transition-colors border border-transparent disabled:opacity-50" type="button">
+          Cancel
+        </button>
+        <button @click="submitProductReceipt" :disabled="submitting || !formReceipt.accessories_received || !formReceipt.physical_condition" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium bg-secondary text-on-secondary hover:bg-secondary-fixed-variant transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50" type="button">
+          <span v-if="submitting" class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+          <span v-else class="material-symbols-outlined text-[18px]">check_circle</span>
+          Create Receipt
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mark Ready for Pickup Modal -->
+  <div v-if="modals.readyPickup" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="modals.readyPickup = false">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-lg shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <!-- Modal Header -->
+      <div class="px-6 py-5 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+            <span class="material-symbols-outlined icon-fill">hail</span>
+          </div>
+          <div>
+            <h2 class="text-headline-md font-headline-md text-on-surface">Mark Ready for Pickup</h2>
+            <p class="text-body-md font-body-md text-on-surface-variant mt-1">Ticket #{{ ticketId }}</p>
+          </div>
+        </div>
+        <button @click="modals.readyPickup = false" class="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant/50">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <!-- Modal Body -->
+      <div class="px-6 py-6 space-y-6 overflow-y-auto">
+        <div v-if="actionError" class="p-3 bg-error-container text-on-error-container rounded font-body-sm mb-2">
+          {{ actionError }}
+        </div>
+        <form class="space-y-5" @submit.prevent="submitReadyPickup">
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Ticket info -->
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Ticket ID</label>
+              <input class="w-full h-10 px-3 bg-surface-variant/30 border border-outline-variant/50 rounded-lg text-on-surface text-body-md font-body-md cursor-not-allowed" readonly type="text" :value="ticket?.name || ''" />
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-label-md font-label-md text-on-surface-variant block">Receipt Number</label>
+              <input class="w-full h-10 px-3 bg-surface-variant/30 border border-outline-variant/50 rounded-lg text-on-surface text-body-md font-body-md cursor-not-allowed" readonly type="text" :value="ticket?.receipt?.number || ''" />
+            </div>
+          </div>
+          
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block" for="readyDate">Ready Date</label>
+            <input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" id="readyDate" type="date" v-model="formReady.ready_date" :min="todayDate()"/>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block" for="readyNote">Ready Note</label>
+            <textarea class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" id="readyNote" placeholder="Instructions for front desk / customer" rows="3" v-model="formReady.ready_note"></textarea>
+          </div>
+        </form>
+      </div>
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 bg-surface-bright border-t border-outline-variant/30 flex justify-end gap-3 rounded-b-xl">
+        <button @click="modals.readyPickup = false" :disabled="submitting" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium text-on-surface-variant hover:bg-surface-variant/50 transition-colors border border-transparent disabled:opacity-50" type="button">
+          Cancel
+        </button>
+        <button @click="submitReadyPickup" :disabled="submitting" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50" type="button">
+          <span v-if="submitting" class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+          <span v-else class="material-symbols-outlined text-[18px]">check_circle</span>
+          Mark Ready for Pickup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generic Action Modal (Register Brand / Follow-up SC / Waiting Part / Customer Confirmed / Close) -->
+  <div v-if="actionDef" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="closeAction">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-lg shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh]">
+      <div class="px-6 py-5 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center"
+               :class="actionDef.danger ? 'bg-error-container text-error' : 'bg-primary-container text-on-primary'">
+            <span class="material-symbols-outlined">{{ actionDef.icon }}</span>
+          </div>
+          <div>
+            <h2 class="text-headline-md font-headline-md text-on-surface">{{ actionDef.title }}</h2>
+            <p class="text-body-md font-body-md text-on-surface-variant mt-1">Ticket #{{ ticketId }}</p>
+          </div>
+        </div>
+        <button @click="closeAction" class="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant/50">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="px-6 py-6 space-y-5 overflow-y-auto">
+        <div v-if="actionError" class="p-3 bg-error-container text-on-error-container rounded font-body-md">{{ actionError }}</div>
+
+        <form class="space-y-5" @submit.prevent="submitAction">
+          <div v-for="f in actionDef.fields" :key="f.key" class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block">
+              {{ f.label }} <span v-if="f.required" class="text-error">*</span>
+            </label>
+
+            <select
+              v-if="f.type === 'select'"
+              v-model="actionForm[f.key]"
+              class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow"
+            >
+              <option value="" disabled>Select…</option>
+              <option v-for="o in f.options" :key="o" :value="o">{{ o }}</option>
+            </select>
+
+            <textarea
+              v-else-if="f.type === 'textarea'"
+              v-model="actionForm[f.key]"
+              rows="3"
+              :placeholder="f.placeholder || ''"
+              class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none"
+            ></textarea>
+
+            <input
+              v-else
+              v-model="actionForm[f.key]"
+              :type="f.type"
+              :min="f.type === 'date' ? todayDate() : undefined"
+              :placeholder="f.placeholder || ''"
+              class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow"
+            />
+
+            <p v-if="f.hint" class="text-label-md font-label-md text-on-surface-variant">{{ f.hint }}</p>
+          </div>
+        </form>
+      </div>
+
+      <div class="px-6 py-4 bg-surface-bright border-t border-outline-variant/30 flex justify-end gap-3 rounded-b-xl">
+        <button @click="closeAction" :disabled="submitting" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium text-on-surface-variant hover:bg-surface-variant/50 transition-colors disabled:opacity-50" type="button">
+          Cancel
+        </button>
+        <button
+          @click="submitAction"
+          :disabled="submitting || !actionValid"
+          class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium text-on-primary hover:opacity-90 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+          :class="actionDef.danger ? 'bg-error' : 'bg-primary'"
+          type="button"
+        >
+          <span v-if="submitting" class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+          <span v-else class="material-symbols-outlined text-[18px]">{{ actionDef.icon }}</span>
+          {{ actionDef.submitLabel }}
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, watch, reactive, computed } from 'vue'
+import { call, post } from '@/api'
+import SlaBadge from '@/components/SlaBadge.vue'
+
+const props = defineProps({
+  ticketId: { type: String, default: null }
+})
+
+const emit = defineEmits(['close', 'refresh'])
+
+const ticket = ref(null)
+const loading = ref(false)
+const error = ref(false)
+
+// Activity timeline + add-note state
+const activity = ref([])
+const activityLoading = ref(false)
+const noteText = ref('')
+const noteError = ref('')
+const postingNote = ref(false)
+
+// Repeat-complaint detection / linking
+const repeatCandidates = ref([])
+
+const isClosed = computed(() => ['Closed', 'Cancelled', 'Resolved'].includes(ticket.value?.status))
+
+async function loadRepeat() {
+  repeatCandidates.value = []
+  if (!props.ticketId) return
+  try {
+    const res = await call('lavanya_service.api.repeat_complaints.find_repeat_candidates', { ticket_name: props.ticketId })
+    repeatCandidates.value = res?.candidates || []
+  } catch (e) {
+    repeatCandidates.value = []
+  }
+}
+
+async function linkRepeat(previous) {
+  try {
+    await post('lavanya_service.api.repeat_complaints.confirm_repeat_complaint', {
+      ticket_name: props.ticketId,
+      previous_ticket_link: previous,
+    })
+    emit('refresh')
+    await loadTicket()
+  } catch (e) {
+    actionError.value = e.message || 'Could not link the repeat complaint.'
+  }
+}
+
+async function clearRepeat() {
+  try {
+    await post('lavanya_service.api.repeat_complaints.clear_repeat_complaint', { ticket_name: props.ticketId })
+    emit('refresh')
+    await loadTicket()
+  } catch (e) {
+    actionError.value = e.message || 'Could not clear the repeat flag.'
+  }
+}
+
+const loadActivity = async () => {
+  if (!props.ticketId) return
+  activityLoading.value = true
+  try {
+    const res = await call('lavanya_service.api.stitch_console.get_ticket_activity', { ticket_id: props.ticketId })
+    activity.value = res?.events || []
+  } catch (e) {
+    activity.value = []
+  } finally {
+    activityLoading.value = false
+  }
+}
+
+async function addNote() {
+  const text = noteText.value.trim()
+  if (!text) return
+  postingNote.value = true
+  noteError.value = ''
+  try {
+    const ev = await post('lavanya_service.api.stitch_console.add_ticket_note', {
+      ticket_id: props.ticketId,
+      note: text,
+    })
+    activity.value = [ev, ...activity.value]
+    noteText.value = ''
+  } catch (err) {
+    noteError.value = err.message || 'Could not post note.'
+  } finally {
+    postingNote.value = false
+  }
+}
+
+const loadTicket = async () => {
+  if (props.ticketId) {
+    loading.value = true
+    error.value = false
+    noteText.value = ''
+    noteError.value = ''
+    try {
+      ticket.value = await call('lavanya_service.api.stitch_console.get_ticket_detail', { ticket_id: props.ticketId })
+    } catch (e) {
+      error.value = true
+    } finally {
+      loading.value = false
+    }
+    loadActivity()
+    loadRepeat()
+  }
+}
+
+watch(() => props.ticketId, loadTicket)
+
+function close() {
+  emit('close')
+}
+
+// Action state
+const modals = reactive({
+  needInvoice: false,
+  createReceipt: false,
+  readyPickup: false
+})
+const form = reactive({
+  pending_reason: 'Need Invoice',
+  next_follow_up_date: '',
+  note: ''
+})
+const submitting = ref(false)
+const actionError = ref('')
+
+function todayDate() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function openNeedInvoice() {
+  actionError.value = ''
+  form.pending_reason = 'Need Invoice'
+  form.next_follow_up_date = ''
+  form.note = ''
+  modals.needInvoice = true
+}
+
+async function submitNeedInvoice() {
+  if (!form.next_follow_up_date) {
+    actionError.value = "Next follow-up date is required."
+    return
+  }
+  submitting.value = true
+  actionError.value = ''
+  try {
+    await post('lavanya_service.api.workflow_actions.need_invoice_from_customer', {
+      ticket_name: props.ticketId,
+      next_follow_up_date: form.next_follow_up_date,
+      note: form.note
+    })
+    modals.needInvoice = false
+    emit('refresh')
+    await loadTicket()
+  } catch (err) {
+    actionError.value = err.message || 'An error occurred while saving.'
+  } finally {
+    submitting.value = false
+  }
+}
+
+const formReceipt = reactive({
+  product_type: '',
+  brand: '',
+  model_no: '',
+  serial_no: '',
+  accessories_received: '',
+  physical_condition: ''
+})
+
+function openProductReceipt() {
+  actionError.value = ''
+  formReceipt.product_type = ticket.value?.product?.type || ''
+  formReceipt.brand = ticket.value?.product?.brand || ''
+  formReceipt.model_no = ticket.value?.product?.model_number || ''
+  formReceipt.serial_no = ticket.value?.product?.serial_number || ''
+  formReceipt.accessories_received = ''
+  formReceipt.physical_condition = ''
+  modals.createReceipt = true
+}
+
+async function submitProductReceipt() {
+  if (!formReceipt.accessories_received || !formReceipt.physical_condition) {
+    actionError.value = "Accessories and condition are required."
+    return
+  }
+  submitting.value = true
+  actionError.value = ''
+  try {
+    await post('lavanya_service.api.workflow_actions.create_product_receipt', {
+      ticket_name: props.ticketId,
+      accessories_received: formReceipt.accessories_received,
+      physical_condition: formReceipt.physical_condition,
+      product_type: formReceipt.product_type,
+      brand: formReceipt.brand,
+      model_no: formReceipt.model_no,
+      serial_no: formReceipt.serial_no
+    })
+    modals.createReceipt = false
+    emit('refresh')
+    await loadTicket()
+  } catch (err) {
+    actionError.value = err.message || 'An error occurred while saving.'
+  } finally {
+    submitting.value = false
+  }
+}
+
+const formReady = reactive({
+  ready_date: '',
+  ready_note: ''
+})
+
+function openReadyForPickup() {
+  actionError.value = ''
+  formReady.ready_date = todayDate()
+  formReady.ready_note = ''
+  modals.readyPickup = true
+}
+
+async function submitReadyPickup() {
+  submitting.value = true
+  actionError.value = ''
+  try {
+    await post('lavanya_service.api.product_receipt_actions.mark_ready_for_pickup', {
+      receipt_name: ticket.value.receipt.number,
+      next_follow_up_date: formReady.ready_date,
+      notes: formReady.ready_note
+    })
+    modals.readyPickup = false
+    emit('refresh')
+    await loadTicket()
+  } catch (err) {
+    actionError.value = err.message || 'An error occurred while saving.'
+  } finally {
+    submitting.value = false
+  }
+}
+
+// ── Generic quick-action modal ──────────────────────────────────────────────
+// Option lists mirror the backend constants in setup/hd_ticket_fields.py and
+// workflow/quick_actions.py. The server re-validates every value and the role,
+// so these are only for a good dropdown UX — drift surfaces as a clear error.
+const FOLLOW_UP_RESULTS = [
+  'Service center contacted',
+  'Technician assigned',
+  'Customer not reachable',
+  'Service completed',
+  'Part pending',
+  'Approval pending',
+]
+const PENDING_REASONS = [
+  'Invoice Proof Pending', 'Invoice Pending', 'Brand Registration Recommended',
+  'Manufacturer Registration Pending', 'Service Follow-up Required', 'Brand Ticket Number Pending',
+  'Customer Details Missing', 'Technician Not Visited', 'Service Center Delayed',
+  'Service Center Out of Area', 'Customer Not Reachable', 'Customer Reappointed', 'Part Pending',
+  'Part Warranty Pending', 'Replacement Approval Pending', 'Supplier Approval Pending',
+  'Customer Pickup Pending', 'Manager Escalation Pending', 'Local Technician Pending',
+  'Local Service Transfer Pending', 'Estimate Approval Pending', 'Brand Line Busy',
+  'Service Center Unreachable', 'Other',
+]
+const CLOSURE_TYPES = [
+  'Resolved by Brand Service', 'Resolved by Local Technician', 'Replacement Completed',
+  'Customer Collected Product', 'Customer Cancelled', 'Duplicate Ticket',
+  'Not Purchased From Lavanya - Guided Only', 'Brand Denied Warranty', 'Customer Not Responding',
+  'Closed After Manager Approval', 'Other',
+]
+
+const ACTIONS = {
+  brand_complaint: {
+    title: 'Register Brand Complaint', icon: 'verified', submitLabel: 'Register',
+    endpoint: 'lavanya_service.api.workflow_actions.register_brand_complaint',
+    fields: [
+      { key: 'brand_ticket_number', label: 'Brand Ticket Number', type: 'text', required: true },
+      { key: 'registration_date', label: 'Registration Date', type: 'date', required: true },
+      { key: 'next_follow_up_date', label: 'Next Follow-up Date', type: 'date', required: true },
+      { key: 'service_center', label: 'Service Center (optional)', type: 'text', required: false },
+    ],
+  },
+  follow_up_sc: {
+    title: 'Follow Up Service Center', icon: 'support_agent', submitLabel: 'Record Follow-up',
+    endpoint: 'lavanya_service.api.workflow_actions.follow_up_service_center',
+    fields: [
+      { key: 'follow_up_result', label: 'Follow-up Result', type: 'select', required: true, options: FOLLOW_UP_RESULTS },
+      {
+        key: 'next_follow_up_date', label: 'Next Follow-up Date', type: 'date',
+        required: (f) => f.follow_up_result !== 'Service completed',
+        hint: 'Required unless the result is “Service completed”.',
+      },
+    ],
+  },
+  waiting_part: {
+    title: 'Waiting for Part', icon: 'build', submitLabel: 'Mark Waiting on Part',
+    endpoint: 'lavanya_service.api.workflow_actions.waiting_for_part',
+    fields: [
+      { key: 'pending_reason', label: 'Pending Reason', type: 'select', required: true, options: PENDING_REASONS },
+      { key: 'next_follow_up_date', label: 'Next Follow-up Date', type: 'date', required: true },
+    ],
+  },
+  customer_confirmed: {
+    title: 'Customer Confirmed', icon: 'how_to_reg', submitLabel: 'Confirm & Close',
+    endpoint: 'lavanya_service.api.workflow_actions.customer_confirmed',
+    fields: [
+      { key: 'work_narration', label: 'Work Narration', type: 'textarea', required: true, placeholder: 'Summary of the work done…' },
+      { key: 'closure_type', label: 'Closure Type', type: 'select', required: true, options: CLOSURE_TYPES },
+    ],
+  },
+  close_ticket: {
+    title: 'Close Ticket', icon: 'task_alt', submitLabel: 'Close Ticket', danger: true,
+    endpoint: 'lavanya_service.api.workflow_actions.close_ticket',
+    fields: [
+      { key: 'work_narration', label: 'Work Narration', type: 'textarea', required: true, placeholder: 'Summary of the work done…' },
+      { key: 'closure_type', label: 'Closure Type', type: 'select', required: true, options: CLOSURE_TYPES },
+      { key: 'customer_confirmation_received', label: 'Customer Confirmation Received', type: 'select', required: true, options: ['Yes', 'No'] },
+    ],
+  },
+  // Product-custody movements — operate on the linked Service Product Receipt.
+  sent_to_sc: {
+    title: 'Send to Service Center', icon: 'local_shipping', submitLabel: 'Mark Sent', target: 'receipt',
+    endpoint: 'lavanya_service.api.product_receipt_actions.mark_product_sent_to_sc',
+    fields: [
+      { key: 'expected_return_date', label: 'Expected Return Date', type: 'date', required: false },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  returned_from_sc: {
+    title: 'Returned from Service Center', icon: 'assignment_return', submitLabel: 'Mark Returned', target: 'receipt',
+    endpoint: 'lavanya_service.api.product_receipt_actions.mark_product_returned_from_sc',
+    fields: [
+      { key: 'actual_return_date', label: 'Actual Return Date', type: 'date', required: false },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  delivered: {
+    title: 'Delivered to Customer', icon: 'verified', submitLabel: 'Mark Delivered', target: 'receipt',
+    endpoint: 'lavanya_service.api.product_receipt_actions.mark_delivered_to_customer',
+    fields: [{ key: 'notes', label: 'Handover notes', type: 'textarea', required: false }],
+  },
+  reopen: {
+    title: 'Reopen Ticket', icon: 'restart_alt', submitLabel: 'Reopen', danger: true, target: 'ticket',
+    endpoint: 'lavanya_service.api.product_receipt_actions.reopen_ticket',
+    fields: [{ key: 'reopen_reason', label: 'Reason for reopening', type: 'textarea', required: true, placeholder: 'e.g. Customer reports the issue persists' }],
+  },
+}
+
+const actionKey = ref(null)
+const actionDef = computed(() => (actionKey.value ? ACTIONS[actionKey.value] : null))
+const actionForm = reactive({})
+
+function isRequired(f) {
+  return typeof f.required === 'function' ? f.required(actionForm) : !!f.required
+}
+const actionValid = computed(() => {
+  const def = actionDef.value
+  if (!def) return false
+  return def.fields.every((f) => !isRequired(f) || String(actionForm[f.key] ?? '').trim() !== '')
+})
+
+function openAction(key) {
+  actionError.value = ''
+  Object.keys(actionForm).forEach((k) => delete actionForm[k])
+  for (const f of ACTIONS[key].fields) actionForm[f.key] = ''
+  actionKey.value = key
+}
+function closeAction() {
+  actionKey.value = null
+}
+async function submitAction() {
+  if (!actionValid.value) return
+  const def = actionDef.value
+  // Receipt-targeted actions (custody movements) need the linked receipt.
+  if (def.target === 'receipt' && !ticket.value?.receipt?.number) {
+    actionError.value = 'This action needs a Product Receipt. Create one first.'
+    return
+  }
+  submitting.value = true
+  actionError.value = ''
+  try {
+    const payload = def.target === 'receipt'
+      ? { receipt_name: ticket.value.receipt.number }
+      : { ticket_name: props.ticketId }
+    for (const f of def.fields) {
+      const v = String(actionForm[f.key] ?? '').trim()
+      if (v) payload[f.key] = v
+    }
+    await post(def.endpoint, payload)
+    actionKey.value = null
+    emit('refresh')
+    await loadTicket()
+  } catch (err) {
+    actionError.value = err.message || 'An error occurred while saving.'
+  } finally {
+    submitting.value = false
+  }
+}
+
+const STATUS_HUE = {
+  New: '#004ac6',
+  'Registration Pending': '#2563eb',
+  'Brand Registered': '#0053db',
+  'In Progress': '#004ac6',
+  'Waiting on Customer': '#943700',
+  'Waiting on Part / Approval': '#943700',
+  'Ready for Pickup': '#1a7f37',
+  Resolved: '#1a7f37',
+  Closed: '#434655',
+  Cancelled: '#ba1a1a',
+}
+function hexToRgba(hex, a) {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${a})`
+}
+function chip(status) {
+  const hue = STATUS_HUE[status] || '#434655'
+  return { color: hue, background: hexToRgba(hue, 0.12) }
+}
+function ticketAge(creationDate) {
+  if (!creationDate) return 0
+  const created = new Date(creationDate)
+  const diffTime = Math.abs(new Date() - created)
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+}
+function relTime(value) {
+  if (!value) return ''
+  const d = new Date(String(value).replace(' ', 'T'))
+  const secs = Math.round((Date.now() - d.getTime()) / 1000)
+  if (secs < 60) return 'just now'
+  const mins = Math.round(secs / 60)
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.round(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.round(hrs / 24)
+  if (days < 30) return `${days}d ago`
+  return d.toLocaleDateString()
+}
+</script>
+
+<style scoped>
+.animate-slide-in {
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+</style>

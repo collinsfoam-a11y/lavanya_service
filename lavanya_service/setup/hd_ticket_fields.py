@@ -222,6 +222,7 @@ FIELDS = [
     },
     {
         "fieldname": "lavanya_purchase_section",
+        "depends_on": "eval: doc.ticket_type === 'Customer Product at Store' || doc.ticket_type === 'Stock Complaint' || doc.service_product_receipt",
         "label": "Lavanya Purchase and Warranty",
         "fieldtype": "Section Break",
         "insert_after": "serial_no",
@@ -263,6 +264,7 @@ FIELDS = [
     },
     {
         "fieldname": "lavanya_brand_service_section",
+        "depends_on": "eval: doc.brand_registration_recommended || doc.status === 'Registration Pending' || doc.brand_ticket_number || doc.registration_date",
         "label": "Lavanya Brand Service Coordination",
         "fieldtype": "Section Break",
         "insert_after": "warranty_status",
@@ -353,6 +355,7 @@ FIELDS = [
     },
     {
         "fieldname": "is_repeated_complaint",
+        "depends_on": "eval: doc._is_manager || doc._is_coordinator",
         "label": "Is Repeated Complaint",
         "fieldtype": "Select",
         "options": "Yes\nNo",
@@ -362,6 +365,7 @@ FIELDS = [
     },
     {
         "fieldname": "previous_ticket_link",
+        "depends_on": "eval: doc._is_manager || doc._is_coordinator",
         "label": "Previous Ticket Link",
         "fieldtype": "Link",
         "options": "HD Ticket",
@@ -386,6 +390,7 @@ FIELDS = [
     },
     {
         "fieldname": "closure_type",
+        "depends_on": "eval: (doc.status === 'Resolved' || doc.status === 'Ready for Pickup' || doc.status === 'Closed') && (doc._is_manager || doc._is_coordinator)",
         "label": "Closure Type",
         "fieldtype": "Select",
         "options": CLOSURE_TYPE_OPTIONS,
@@ -393,12 +398,14 @@ FIELDS = [
     },
     {
         "fieldname": "work_narration",
+        "depends_on": "eval: (doc.status === 'Resolved' || doc.status === 'Ready for Pickup' || doc.status === 'Closed') && (doc._is_manager || doc._is_coordinator)",
         "label": "Work Narration",
         "fieldtype": "Long Text",
         "insert_after": "closure_type",
     },
     {
         "fieldname": "customer_confirmation_received",
+        "depends_on": "eval: (doc.status === 'Resolved' || doc.status === 'Ready for Pickup' || doc.status === 'Closed') && (doc._is_manager || doc._is_coordinator)",
         "label": "Customer Confirmation Received",
         "fieldtype": "Select",
         "options": "Yes\nNo\nNot Required",
@@ -407,6 +414,7 @@ FIELDS = [
     },
     {
         "fieldname": "closed_by",
+        "depends_on": "eval: (doc.status === 'Resolved' || doc.status === 'Ready for Pickup' || doc.status === 'Closed') && (doc._is_manager || doc._is_coordinator)",
         "label": "Closed By",
         "fieldtype": "Link",
         "options": "User",
@@ -415,6 +423,7 @@ FIELDS = [
     },
     {
         "fieldname": "closure_date",
+        "depends_on": "eval: (doc.status === 'Resolved' || doc.status === 'Ready for Pickup' || doc.status === 'Closed') && (doc._is_manager || doc._is_coordinator)",
         "label": "Closure Date",
         "fieldtype": "Datetime",
         "insert_after": "closed_by",

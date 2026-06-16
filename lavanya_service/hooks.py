@@ -105,6 +105,7 @@ after_migrate = "lavanya_service.setup.install.after_migrate"
 # hyphenated URL printed on the QR code to that template.
 website_route_rules = [
 	{"from_route": "/qr-complaint", "to_route": "qr_complaint"},
+	{"from_route": "/frontend/<path:app_path>", "to_route": "frontend"},
 ]
 
 # Integration Setup
@@ -349,6 +350,12 @@ fixtures = [
 		],
 	},
 	{
+		"dt": "Client Script",
+		"filters": [
+			["dt", "=", "HD Ticket"],
+		],
+	},
+	{
 		"dt": "HD Ticket Status",
 		"filters": [
 			[
@@ -553,6 +560,7 @@ fixtures.extend(
 scheduler_events = {
 	"daily": [
 		"lavanya_service.reminders.notification_output.run_daily_reminder_notifications_dry_safe",
+		"lavanya_service.reminders.notification_output.run_escalation_notifications_dry_safe",
 	],
 }
 # Lavanya Service print format fixtures

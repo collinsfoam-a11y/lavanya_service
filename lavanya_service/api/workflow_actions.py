@@ -83,9 +83,31 @@ def close_ticket(
 
 
 @frappe.whitelist(methods=["POST"])
-def create_product_receipt(ticket_name, accessories_received=None, physical_condition=None):
+def create_product_receipt(
+	ticket_name,
+	accessories_received=None,
+	physical_condition=None,
+	product_type=None,
+	brand=None,
+	model_no=None,
+	serial_no=None
+):
 	return quick_actions.create_product_receipt(
 		ticket_name,
 		accessories_received=accessories_received,
 		physical_condition=physical_condition,
+		product_type=product_type,
+		brand=brand,
+		model_no=model_no,
+		serial_no=serial_no
 	)
+
+@frappe.whitelist()
+def get_current_user_roles():
+    roles = frappe.get_roles(frappe.session.user)
+    return {
+        'is_manager': 'Lavanya Manager' in roles,
+        'is_coordinator': 'Lavanya Service Coordinator' in roles,
+        'is_agent': 'Lavanya Helpdesk Agent' in roles,
+        'is_front_desk': 'Lavanya Front Desk' in roles
+    }

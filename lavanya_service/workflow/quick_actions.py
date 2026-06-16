@@ -342,7 +342,15 @@ def close_ticket(
 	return _result(doc, _("Ticket closed"))
 
 
-def create_product_receipt(ticket_name, accessories_received=None, physical_condition=None):
+def create_product_receipt(
+	ticket_name,
+	accessories_received=None,
+	physical_condition=None,
+	product_type=None,
+	brand=None,
+	model_no=None,
+	serial_no=None
+):
 	_require_roles(
 		"Create Product Receipt", {ROLE_MANAGER, ROLE_COORDINATOR, ROLE_FRONT_DESK}
 	)
@@ -384,10 +392,13 @@ def create_product_receipt(ticket_name, accessories_received=None, physical_cond
 	receipt.customer_name = doc.get("customer_name")
 	receipt.phone = doc.get("phone_1")
 	receipt.address = doc.get("address")
-	receipt.product_type = doc.get("product_type")
-	receipt.brand = doc.get("brand")
-	receipt.model_no = doc.get("model_no")
-	receipt.serial_no = doc.get("serial_no")
+	
+	# Use provided values, fallback to ticket values
+	receipt.product_type = product_type if product_type else doc.get("product_type")
+	receipt.brand = brand if brand else doc.get("brand")
+	receipt.model_no = model_no if model_no else doc.get("model_no")
+	receipt.serial_no = serial_no if serial_no else doc.get("serial_no")
+	
 	if accessories_received:
 		receipt.accessories_received = accessories_received
 	if physical_condition:

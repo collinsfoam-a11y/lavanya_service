@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Customer Feedback - Lavanya eMart</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e6e0ef",
+                        "primary-container": "#6d3df5",
+                        "tertiary-fixed-dim": "#ffb690",
+                        "inverse-primary": "#ccbeff",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#fdf7ff",
+                        "tertiary-fixed": "#ffdbca",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#d5e0f8",
+                        "on-tertiary-fixed": "#331100",
+                        "on-error-container": "#93000a",
+                        "on-surface": "#1c1a24",
+                        "secondary": "#545f73",
+                        "surface-container-highest": "#e6e0ef",
+                        "primary": "#5412dd",
+                        "inverse-surface": "#322f3a",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "primary-fixed-dim": "#ccbeff",
+                        "background": "#fdf7ff",
+                        "on-primary-fixed": "#1f0060",
+                        "surface": "#fdf7ff",
+                        "on-background": "#1c1a24",
+                        "surface-container": "#f2ebfa",
+                        "tertiary-container": "#a84900",
+                        "on-primary-container": "#e9e0ff",
+                        "on-surface-variant": "#494456",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f7f1ff",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-tertiary-fixed-variant": "#783200",
+                        "on-secondary-container": "#586377",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-primary-fixed-variant": "#4d00d2",
+                        "primary-fixed": "#e7deff",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-container-high": "#ece6f4",
+                        "surface-dim": "#ded7e6",
+                        "outline-variant": "#cac3d9",
+                        "inverse-on-surface": "#f5eefd",
+                        "outline": "#7a7487",
+                        "on-tertiary-container": "#ffddcd",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#823700",
+                        "surface-tint": "#6533ed",
+                        "on-secondary-fixed-variant": "#3c475a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "xs": "4px",
+                        "sm": "8px",
+                        "gutter": "16px",
+                        "base": "8px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "container-margin": "24px"
+                    },
+                    "fontFamily": {
+                        "caption": ["Inter"],
+                        "button-text": ["Inter"],
+                        "page-title": ["Inter"],
+                        "section-title": ["Inter"],
+                        "display-metrics": ["Inter"],
+                        "field-label": ["Inter"],
+                        "body-default": ["Inter"]
+                    },
+                    "fontSize": {
+                        "caption": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "button-text": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "page-title": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "section-title": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "display-metrics": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "field-label": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-default": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .star-rating input[type="radio"] {
+            display: none;
+        }
+        .star-rating label {
+            cursor: pointer;
+            color: #cac3d9;
+            transition: color 0.2s;
+        }
+        .star-rating input[type="radio"]:checked ~ label,
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: #6d3df5;
+        }
+        
+        .chip-checkbox input[type="checkbox"] {
+            display: none;
+        }
+        .chip-checkbox label {
+            transition: all 0.2s ease;
+        }
+        .chip-checkbox input[type="checkbox"]:checked + label {
+            background-color: #f2ebfa;
+            border-color: #5412dd;
+            color: #5412dd;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-default min-h-screen flex flex-col md:flex-row">
+<!-- SideNavBar (Desktop Only) -->
+<nav class="bg-surface text-primary font-button-text fixed left-0 top-0 h-full w-[240px] border-r border-outline-variant hidden md:flex flex-col py-lg gap-sm z-40">
+<div class="px-lg pb-md mb-sm border-b border-outline-variant">
+<h1 class="font-section-title text-section-title font-bold text-on-surface">Service Portal</h1>
+<p class="font-caption text-caption text-secondary mt-xs">Staff Access</p>
+</div>
+<div class="px-lg mb-md">
+<button class="w-full bg-primary text-on-primary font-button-text text-button-text py-sm px-md rounded flex justify-center items-center gap-sm hover:bg-surface-tint transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                New Ticket
+            </button>
+</div>
+<div class="flex-1 overflow-y-auto px-md flex flex-col gap-xs">
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-secondary hover:bg-surface-container transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-secondary hover:bg-surface-container transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[20px]">confirmation_number</span>
+<span>Tickets</span>
+</a>
+<!-- Active State Navigation -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg bg-primary-container text-on-primary-container border-l-4 border-primary transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">rate_review</span>
+<span>Feedback</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-secondary hover:bg-surface-container transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[20px]">menu_book</span>
+<span>Knowledge Base</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-secondary hover:bg-surface-container transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span>Settings</span>
+</a>
+</div>
+<div class="px-md pt-sm border-t border-outline-variant mt-auto">
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-secondary hover:bg-surface-container transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined text-[20px]">contact_support</span>
+<span>Help Center</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-h-screen md:ml-[240px]">
+<!-- TopAppBar -->
+<header class="bg-surface text-primary font-page-title border-b border-outline-variant shadow-sm flex justify-between items-center px-lg py-md w-full sticky top-0 z-50 transition-all duration-200">
+<div class="flex items-center gap-md">
+<!-- Mobile Menu Button -->
+<button class="md:hidden text-on-surface hover:bg-surface-container-high p-sm rounded-full transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="font-page-title text-page-title font-bold text-primary">
+                    Lavanya Helpdesk
+                </div>
+</div>
+<div class="flex items-center gap-md">
+<div class="hidden sm:flex relative mr-sm">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="pl-xl pr-sm py-sm border border-outline-variant rounded-full text-body-default font-body-default bg-surface-container-lowest focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-[200px] transition-all" placeholder="Search..." type="text"/>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-high p-sm rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-xs right-xs w-[8px] h-[8px] bg-error rounded-full"></span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-high p-sm rounded-full transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="ml-sm w-[32px] h-[32px] rounded-full overflow-hidden border border-outline-variant cursor-pointer hover:opacity-80 transition-opacity">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU6BCekwWFaw8KyIQKv74L0aIybuEqfZVO5BOVZcGbQZdBwORxh-TZtnJmiws0DpjaBhx90EUjt5xrnoPtpyhvbp6GoeVJlm4_bJ9CWiiREq-5AV89YZN7eZzizwqU7FXpvzUui6uDI98GoEdIXtmVJXb1lJkmeZiCdYq_b-WaSkel32JSMUJFUY4xAz27joIIjul-BLm8LLXnWLKeq_XQsK0vj7Lryh35Py2cIky1mBwt8HixvwnS8mMSUXU0TwdCgySmBFY0vWg"/>
+</div>
+</div>
+</header>
+<!-- Main Form Content -->
+<main class="flex-1 p-lg md:p-xl flex items-center justify-center bg-background">
+<div class="w-full max-w-2xl bg-surface-container-lowest border border-outline-variant shadow-sm rounded-xl p-lg md:p-xl relative overflow-hidden">
+<!-- Decorative Top Border -->
+<div class="absolute top-0 left-0 w-full h-[4px] bg-primary"></div>
+<!-- Header -->
+<div class="text-center mb-xl">
+<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-container text-primary mb-md">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">rate_review</span>
+</div>
+<h2 class="font-page-title text-page-title text-on-surface mb-xs">Share Your Experience</h2>
+<p class="font-body-default text-body-default text-on-surface-variant">Your feedback helps us improve our service for everyone.</p>
+</div>
+<form class="space-y-xl">
+<!-- Rating Section -->
+<div class="space-y-md text-center border-b border-outline-variant pb-xl">
+<label class="block font-section-title text-section-title text-on-surface">Overall Service Quality</label>
+<div class="star-rating flex flex-row-reverse justify-center gap-xs">
+<input id="star5" name="rating" type="radio" value="5"/>
+<label class="material-symbols-outlined text-[40px] hover:scale-110 transition-transform" for="star5" style="font-variation-settings: 'FILL' 1;" title="5 stars">star</label>
+<input id="star4" name="rating" type="radio" value="4"/>
+<label class="material-symbols-outlined text-[40px] hover:scale-110 transition-transform" for="star4" style="font-variation-settings: 'FILL' 1;" title="4 stars">star</label>
+<input id="star3" name="rating" type="radio" value="3"/>
+<label class="material-symbols-outlined text-[40px] hover:scale-110 transition-transform" for="star3" style="font-variation-settings: 'FILL' 1;" title="3 stars">star</label>
+<input id="star2" name="rating" type="radio" value="2"/>
+<label class="material-symbols-outlined text-[40px] hover:scale-110 transition-transform" for="star2" style="font-variation-settings: 'FILL' 1;" title="2 stars">star</label>
+<input id="star1" name="rating" type="radio" value="1"/>
+<label class="material-symbols-outlined text-[40px] hover:scale-110 transition-transform" for="star1" style="font-variation-settings: 'FILL' 1;" title="1 star">star</label>
+</div>
+<div class="flex justify-between text-caption font-caption text-secondary max-w-[240px] mx-auto mt-xs">
+<span>Poor</span>
+<span>Excellent</span>
+</div>
+</div>
+<!-- Multi-select Chips -->
+<div class="space-y-sm">
+<label class="block font-field-label text-field-label text-on-surface">What did we do well? (Select all that apply)</label>
+<div class="flex flex-wrap gap-sm">
+<div class="chip-checkbox">
+<input id="chip-speed" type="checkbox"/>
+<label class="inline-flex items-center px-md py-xs border border-outline-variant rounded-full font-body-default text-body-default text-on-surface-variant cursor-pointer hover:bg-surface-container-low select-none" for="chip-speed">
+<span class="material-symbols-outlined text-[16px] mr-xs hidden check-icon">check</span>
+                                    Speed of Service
+                                </label>
+</div>
+<div class="chip-checkbox">
+<input id="chip-comm" type="checkbox"/>
+<label class="inline-flex items-center px-md py-xs border border-outline-variant rounded-full font-body-default text-body-default text-on-surface-variant cursor-pointer hover:bg-surface-container-low select-none" for="chip-comm">
+<span class="material-symbols-outlined text-[16px] mr-xs hidden check-icon">check</span>
+                                    Communication
+                                </label>
+</div>
+<div class="chip-checkbox">
+<input id="chip-tech" type="checkbox"/>
+<label class="inline-flex items-center px-md py-xs border border-outline-variant rounded-full font-body-default text-body-default text-on-surface-variant cursor-pointer hover:bg-surface-container-low select-none" for="chip-tech">
+<span class="material-symbols-outlined text-[16px] mr-xs hidden check-icon">check</span>
+                                    Technical Expertise
+                                </label>
+</div>
+<div class="chip-checkbox">
+<input id="chip-friend" type="checkbox"/>
+<label class="inline-flex items-center px-md py-xs border border-outline-variant rounded-full font-body-default text-body-default text-on-surface-variant cursor-pointer hover:bg-surface-container-low select-none" for="chip-friend">
+<span class="material-symbols-outlined text-[16px] mr-xs hidden check-icon">check</span>
+                                    Friendliness
+                                </label>
+</div>
+<div class="chip-checkbox">
+<input id="chip-trans" type="checkbox"/>
+<label class="inline-flex items-center px-md py-xs border border-outline-variant rounded-full font-body-default text-body-default text-on-surface-variant cursor-pointer hover:bg-surface-container-low select-none" for="chip-trans">
+<span class="material-symbols-outlined text-[16px] mr-xs hidden check-icon">check</span>
+                                    Transparency
+                                </label>
+</div>
+</div>
+</div>
+<!-- Text Area -->
+<div class="space-y-xs">
+<label class="block font-field-label text-field-label text-on-surface" for="comments">Any additional comments or suggestions?</label>
+<textarea class="w-full border border-outline-variant rounded-lg p-md font-body-default text-body-default bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none" id="comments" placeholder="Tell us more about your experience..." rows="4"></textarea>
+</div>
+<!-- Toggle/Checkbox -->
+<div class="flex items-center p-sm bg-surface-container-low rounded-lg border border-outline-variant border-opacity-50">
+<input class="w-5 h-5 text-primary border-outline-variant rounded focus:ring-primary cursor-pointer accent-primary" id="testimonial" type="checkbox"/>
+<label class="ml-sm font-body-default text-body-default text-on-surface-variant cursor-pointer select-none" for="testimonial">
+                            I'm happy for my feedback to be shared as a testimonial
+                        </label>
+</div>
+<!-- Actions -->
+<div class="flex flex-col sm:flex-row-reverse gap-md pt-md mt-xl border-t border-outline-variant">
+<button class="w-full sm:w-auto px-xl py-sm bg-primary text-on-primary font-button-text text-button-text rounded shadow-sm hover:bg-surface-tint hover:shadow transition-all flex justify-center items-center" type="button">
+                            Submit Feedback
+                        </button>
+<button class="w-full sm:w-auto px-xl py-sm bg-surface-container-lowest border border-outline-variant text-on-surface font-button-text text-button-text rounded hover:bg-surface-container-low transition-colors flex justify-center items-center" type="button">
+                            Skip for now
+                        </button>
+</div>
+</form>
+</div>
+</main>
+</div>
+<script>
+        // Simple script to toggle check icon visibility on chips
+        document.querySelectorAll('.chip-checkbox input').forEach(input => {
+            input.addEventListener('change', function() {
+                const icon = this.nextElementSibling.querySelector('.check-icon');
+                if(this.checked) {
+                    icon.classList.remove('hidden');
+                } else {
+                    icon.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body></html>

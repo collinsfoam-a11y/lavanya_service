@@ -1,0 +1,64 @@
+// Minimal Frappe API helper. Whitelisted GET methods don't need CSRF; the
+// browser session cookie authenticates. Returns the unwrapped `message`.
+export async function call(method, params = {}) {
+  // Drop null/undefined so they aren't serialized as the literal strings
+  // "null"/"undefined" (URLSearchParams stringifies everything) — otherwise an
+  // optional filter like search=undefined silently matches nothing.
+  const clean = {}
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== null) clean[k] = v
+  }
+  const qs = new URLSearchParams(clean).toString()
+  // `cache: 'no-store'` so a page refresh always re-reads live data. The API
+  // responses carry no cache headers, so without this the browser's heuristic
+  // HTTP cache can serve a stale list — e.g. a just-created ticket missing after
+  // refresh.
+  const res = await fetch(`/api/method/${method}${qs ? '?' + qs : ''}`, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    credentials: 'include',
+    cache: 'no-store',
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.exc_type || err._server_messages || `HTTP ${res.status}`)
+  }
+  const data = await res.json()
+  return data.message
+}
+
+export async function post(method, body = {}) {
+  const res = await fetch(`/api/method/${method}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'X-Frappe-CSRF-Token': window.csrf_token || '',
+    },
+    credentials: 'include',
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    // A 400 on these POST actions is almost always a stale CSRF token — the
+    // page was loaded before a server restart/deploy. Give an actionable
+    // message instead of a raw "HTTP 400".
+    if (res.status === 400) {
+      throw new Error('Your session changed (the page was likely open across a server restart). Please refresh the page and try again.')
+    }
+    let errMsg = `HTTP ${res.status}`
+    try {
+      const errData = await res.json()
+      if (errData._server_messages) {
+        const msgs = JSON.parse(errData._server_messages).map(m => JSON.parse(m).message)
+        errMsg = msgs.join(', ')
+      } else if (errData.exc_type) {
+        errMsg = errData.exc_type
+      }
+    } catch (e) {
+      // ignore
+    }
+    throw new Error(errMsg)
+  }
+  const data = await res.json()
+  return data.message
+}
