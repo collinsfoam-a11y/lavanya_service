@@ -39,6 +39,12 @@ export async function post(method, body = {}) {
     body: JSON.stringify(body),
   })
   if (!res.ok) {
+    // A 400 on these POST actions is almost always a stale CSRF token — the
+    // page was loaded before a server restart/deploy. Give an actionable
+    // message instead of a raw "HTTP 400".
+    if (res.status === 400) {
+      throw new Error('Your session changed (the page was likely open across a server restart). Please refresh the page and try again.')
+    }
     let errMsg = `HTTP ${res.status}`
     try {
       const errData = await res.json()
