@@ -72,6 +72,11 @@ values** — these are validated server-side.
 - **Pending reasons** (24 values) — see `PENDING_REASON_OPTIONS`.
 - **Closure types** (11 values) — see `CLOSURE_TYPE_OPTIONS`.
 - **Custody statuses** (`Service Product Receipt.current_custody_status`): Received at Store, Handed to Service Center, With Local Technician, Returned to Store, Ready for Customer Pickup.
+- **Status → category** (HD Ticket `status_category`, maintained by Helpdesk; verified in DB). Only `Resolved` is terminal:
+  - **Open** (active): New, Open, In Progress, Brand Registered, Registration Pending
+  - **Paused** (active/waiting): Replied, Ready for Pickup, Waiting on Customer, Waiting on Part / Approval
+  - **Resolved** (terminal): Closed, Resolved, Cancelled
+  - Today's Work derives active/terminal from this category, not literal status strings (`workflow/today_work.py`). Helpdesk-native `Open`/`Replied` exist alongside the Lavanya statuses; they're handled via category + a triage catch-all rather than retired (retiring them is unconfirmed — see §10).
 
 ## 5. Ticket lifecycle (status transitions)
 
