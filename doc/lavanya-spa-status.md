@@ -49,6 +49,7 @@ All on the frappe-ui theme base. Newest first.
 
 | Commit | What | Verified |
 |---|---|---|
+| `cc013fc` | **SLA visibility** (gap-analysis change #2): shared `SlaBadge` shows Helpdesk SLA state (breached/met/paused/due) on Tickets, Today's Work, and the ticket drawer. SLA fields added to the list/today-work/detail payloads. | 24 today_work + SPA tests; browser screenshots show breached/due badges |
 | `4e6b972` | **Status-model unification** (gap-analysis change #1): Today's Work derives active/terminal from the unified `status_category` (Resolved=terminal) instead of hard-coded status strings — robust to any status incl. Helpdesk-native Open/Replied. | 24 today_work tests (incl. Replied TW-014c) + live check; payload doesn't leak status_category |
 | `43c0ca0` | **Fix**: `cache: 'no-store'` on API reads so a refresh always shows live data (no-cache-header responses could be served stale by the browser heuristic cache). | browser diag: pages load live data |
 | `f12bb3e` | **Bug fix**: Helpdesk-native `Open`/`Replied` tickets were invisible on Today's Work (classifier didn't map them). Active tickets matching no bucket now surface as new complaints. NOTE: normal tickets already get `New` (HD Settings `default_ticket_status=New` + Helpdesk `set_default_status`); the only `Open` ticket is the install seed `0001`. So no status-normalization code is needed — this fix is the safety net for seed/`Replied` edge cases. | live data (Open ticket 0001) + regression TW-014b; 23 today_work tests pass |
