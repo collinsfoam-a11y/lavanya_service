@@ -9,10 +9,15 @@ export async function call(method, params = {}) {
     if (v !== undefined && v !== null) clean[k] = v
   }
   const qs = new URLSearchParams(clean).toString()
+  // `cache: 'no-store'` so a page refresh always re-reads live data. The API
+  // responses carry no cache headers, so without this the browser's heuristic
+  // HTTP cache can serve a stale list — e.g. a just-created ticket missing after
+  // refresh.
   const res = await fetch(`/api/method/${method}${qs ? '?' + qs : ''}`, {
     method: 'GET',
     headers: { Accept: 'application/json' },
     credentials: 'include',
+    cache: 'no-store',
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
