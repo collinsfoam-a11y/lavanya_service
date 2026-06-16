@@ -287,6 +287,11 @@ def _run_all(get_today_work, baseline):
 		next_follow_up_date=today(),
 	)
 	new_ticket = _insert_ticket("TW New Complaint", status="New")
+	# Helpdesk's native "Open" status (assigned by the standard new-ticket form)
+	# is not part of the Lavanya status set; an Open ticket must still surface on
+	# Today's Work instead of vanishing. Regression for the "new ticket not
+	# showing after refresh" report.
+	open_ticket = _insert_ticket("TW Helpdesk Open Status", status="Open")
 
 	before_api_counts = _side_effect_counts()
 	data = get_today_work(limit=200)
@@ -355,6 +360,11 @@ def _run_all(get_today_work, baseline):
 		ready_pickup.name in _names(data, "ready_for_pickup"),
 	)
 	_assert("TW-014", "new ticket appears in new_complaints", new_ticket.name in _names(data, "new_complaints"))
+	_assert(
+		"TW-014b",
+		"active ticket with Helpdesk-native 'Open' status surfaces in new_complaints (was invisible on Today's Work)",
+		open_ticket.name in _names(data, "new_complaints"),
+	)
 	_assert("TW-015", "API returns expected group order", _group_keys(data) == GROUP_KEYS, _group_keys(data))
 
 	all_ticket_keys_safe = all(

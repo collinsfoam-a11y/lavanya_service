@@ -192,6 +192,15 @@ def classify_ticket(row, today_date=None):
 		if status == "New":
 			keys.append("new_complaints")
 
+		# Safety net: an active ticket that matched no bucket above is otherwise
+		# invisible on Today's Work. This happens for Helpdesk's native
+		# "Open"/"Replied" statuses (still present alongside the Lavanya status
+		# set), which the standard new-ticket form assigns on creation — so a
+		# freshly created ticket would vanish from Today's Work until its status
+		# was changed. Surface any such active ticket as a new complaint to triage.
+		if not keys:
+			keys.append("new_complaints")
+
 	if _is_closure_pending(row):
 		keys.append("closure_pending")
 
