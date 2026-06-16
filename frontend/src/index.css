@@ -316,3 +316,29 @@
   color: #ffffff;
 }
 
+/* New Ticket form inputs */
+.lav-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  background: #ffffff;
+  border: 1px solid #c3c6d7;
+  border-radius: 0.5rem;
+  font-size: 14px;
+  color: #121c28;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+textarea.lav-input {
+  height: auto;
+  padding: 10px 12px;
+  line-height: 20px;
+}
+.lav-input:focus {
+  border-color: #004ac6;
+  box-shadow: 0 0 0 2px rgba(0, 74, 198, 0.15);
+}
+.lav-input::placeholder {
+  color: #737686;
+}
+

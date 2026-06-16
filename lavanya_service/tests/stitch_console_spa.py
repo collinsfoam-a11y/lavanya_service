@@ -168,11 +168,27 @@ def _test_api_js_undefined_guard():
     )
 
 
+def _test_frontend_csrf_injection():
+    """Guard: the /frontend www controller must inject a real csrf_token, else the
+    literal '{{ csrf_token }}' is served and every POST 400s for non-admins.
+    Source check (rendering needs a web-request session the test harness lacks)."""
+    print("  /frontend csrf injection guard…")
+    app_path = frappe.get_app_path("lavanya_service")
+    src = os.path.join(app_path, "www", "frontend.py")
+    with open(src, "r", encoding="utf-8") as f:
+        content = f.read()
+    assert "context.csrf_token" in content and "get_csrf_token" in content, (
+        "www/frontend.py must inject a real csrf_token (context.csrf_token = "
+        "frappe.sessions.get_csrf_token()) or POST actions 400 for non-admins"
+    )
+
+
 def run():
     print("Running Stitch Console SPA endpoint tests…")
     _test_get_ticket_list()
     _test_activity_and_notes()
     _test_reports_catalog_and_drilldown()
     _test_api_js_undefined_guard()
+    _test_frontend_csrf_injection()
     frappe.set_user("Administrator")
     print("✅ Stitch Console SPA endpoint tests passed")

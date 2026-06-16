@@ -110,7 +110,7 @@ const navItems = [
   { label: 'Today’s Work', icon: 'dashboard', to: '/' },
   { label: 'Tickets', icon: 'confirmation_number', to: '/tickets' },
   { label: 'Reports', icon: 'assessment', to: '/reports' },
-  { label: 'New Ticket', icon: 'add_box', to: '/helpdesk/tickets/new', external: true },
+  { label: 'New Ticket', icon: 'add_box', to: '/new-ticket' },
 ]
 
 const logoutUrl = '/api/method/logout'

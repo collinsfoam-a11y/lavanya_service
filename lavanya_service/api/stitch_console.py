@@ -70,6 +70,106 @@ _ACTIVITY_TYPES = ("Info", "Workflow", "Edit", "Label", "Assigned", "Assignment 
 
 
 @frappe.whitelist()
+def get_new_ticket_options():
+    """Option lists for the staff New Ticket screen (brands / product types /
+    ticket types). Reuses the QR intake's safe lists."""
+    if frappe.session.user == "Guest":
+        frappe.throw("Not permitted", frappe.PermissionError)
+    from lavanya_service.api.qr_intake import get_qr_intake_options
+
+    opts = get_qr_intake_options()
+    opts["complaint_sources"] = ["Staff Entered", "Phone Call", "WhatsApp", "Direct Visit", "Email"]
+    opts["warranty_statuses"] = ["Unknown", "In Warranty", "Out of Warranty", "Extended Warranty", "Brand Denied"]
+    return opts
+
+
+@frappe.whitelist(methods=["POST"])
+def create_ticket(
+    customer_name=None,
+    mobile=None,
+    complaint_details=None,
+    product_type=None,
+    brand=None,
+    ticket_type=None,
+    model_no=None,
+    serial_no=None,
+    warranty_status=None,
+    address=None,
+    pincode=None,
+    complaint_source=None,
+):
+    """Staff-side ticket creation for the SPA New Ticket screen. Created as the
+    real staff user (permission-scoped) with complaint_source 'Staff Entered',
+    returning the ticket name so the UI can open it. Reuses the QR intake's
+    validation constants + phone normalization."""
+    if frappe.session.user == "Guest":
+        frappe.throw("Not permitted", frappe.PermissionError)
+    if not frappe.has_permission("HD Ticket", "create"):
+        frappe.throw("Not permitted to create tickets.", frappe.PermissionError)
+
+    from lavanya_service.api.qr_intake import (
+        VALID_PRODUCT_TYPES,
+        SAFE_TICKET_TYPES,
+        DEFAULT_TICKET_TYPE,
+        BRAND_DOCTYPE,
+    )
+    from lavanya_service.utils.phone import normalize_phone
+
+    def _req(value, label):
+        if not value or not str(value).strip():
+            frappe.throw(f"{label} is required.")
+        return str(value).strip()
+
+    customer_name = _req(customer_name, "Customer Name")
+    mobile = _req(mobile, "Mobile Number")
+    complaint_details = _req(complaint_details, "Complaint Details")
+    product_type = _req(product_type, "Product Type")
+    brand = _req(brand, "Brand")
+
+    phone = normalize_phone(mobile)
+    if not phone.get("is_valid_mobile"):
+        frappe.throw("Please provide a valid 10-digit mobile number.")
+    mobile = phone["normalized"]
+
+    if product_type not in VALID_PRODUCT_TYPES:
+        frappe.throw("Please select a valid product type from the list.")
+    if not frappe.db.exists(BRAND_DOCTYPE, brand):
+        frappe.throw("Please select a valid brand from the list.")
+
+    if not ticket_type or ticket_type not in SAFE_TICKET_TYPES:
+        ticket_type = DEFAULT_TICKET_TYPE
+
+    valid_sources = {"Staff Entered", "Phone Call", "WhatsApp", "Direct Visit", "Email"}
+    if complaint_source not in valid_sources:
+        complaint_source = "Staff Entered"
+
+    valid_warranty = {"Unknown", "In Warranty", "Out of Warranty", "Extended Warranty", "Brand Denied"}
+
+    doc = frappe.new_doc("HD Ticket")
+    doc.subject = f"{customer_name} / {product_type} {brand}"[:140]
+    doc.ticket_type = ticket_type
+    doc.priority = "Medium"
+    doc.complaint_source = complaint_source
+    doc.customer_name = customer_name
+    doc.phone_1 = mobile
+    doc.description = complaint_details
+    doc.product_type = product_type
+    doc.brand = brand
+    doc.warranty_status = warranty_status if warranty_status in valid_warranty else "Unknown"
+    if model_no:
+        doc.model_no = str(model_no).strip()
+    if serial_no:
+        doc.serial_no = str(serial_no).strip()
+    if address:
+        doc.address = str(address).strip()
+    if pincode:
+        doc.pincode = str(pincode).strip()
+    doc.insert()
+
+    return {"ok": True, "ticket": doc.name, "message": f"Ticket {doc.name} created"}
+
+
+@frappe.whitelist()
 def get_ticket_activity(ticket_id, limit=50):
     """Merged activity timeline for a ticket: user notes + Frappe's auto-logged
     field/status/assignment changes, newest first. Read-permission scoped."""

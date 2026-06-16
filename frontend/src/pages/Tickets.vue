@@ -11,13 +11,12 @@
         <h2 class="font-headline-lg text-headline-lg text-on-surface">Tickets</h2>
         <p class="font-body-md text-on-surface-variant">Service complaints &amp; their current state</p>
       </div>
-      <a
-        href="/helpdesk/tickets/new"
-        target="_blank"
+      <router-link
+        to="/new-ticket"
         class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary font-label-md text-body-md"
       >
         <span class="material-symbols-outlined">add</span> New Ticket
-      </a>
+      </router-link>
     </div>
 
     <!-- Search -->
