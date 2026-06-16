@@ -141,53 +141,48 @@
           <h3 class="font-headline-md text-headline-md text-on-surface">Quick Actions</h3>
         </div>
         <div class="p-4 flex flex-col gap-3">
-          
-          <button disabled class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg font-label-md text-left opacity-50 cursor-not-allowed group relative">
-            Register Brand Complaint
-            <span class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Available in Phase 2C after write-action wiring and role smoke.</span>
-          </button>
-          
-          <button @click="openNeedInvoice" class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg font-label-md text-left hover:opacity-90 active:scale-[0.98] transition-all group relative">
-            Need Invoice
-          </button>
-          
-          <button disabled class="w-full px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-label-md text-left opacity-50 cursor-not-allowed group relative">
-            Follow Up Service Center
-            <span class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Available in Phase 2C after write-action wiring and role smoke.</span>
+
+          <button @click="openAction('brand_complaint')" class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">verified</span> Register Brand Complaint
           </button>
 
-          <button disabled class="w-full px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-label-md text-left opacity-50 cursor-not-allowed group relative">
-            Waiting for Part
-            <span class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Available in Phase 2C after write-action wiring and role smoke.</span>
+          <button @click="openNeedInvoice" class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">receipt_long</span> Need Invoice
           </button>
 
-          <button @click="openProductReceipt" class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left hover:opacity-90 active:scale-[0.98] transition-all group relative">
-            Create Product Receipt
+          <button @click="openAction('follow_up_sc')" class="w-full px-4 py-3 bg-primary-container text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">support_agent</span> Follow Up Service Center
           </button>
 
-          <button 
+          <button @click="openAction('waiting_part')" class="w-full px-4 py-3 bg-primary-container text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">build</span> Waiting for Part
+          </button>
+
+          <button @click="openProductReceipt" class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">inventory_2</span> Create Product Receipt
+          </button>
+
+          <button
             :disabled="!ticket?.receipt?.number"
             @click="ticket?.receipt?.number ? openReadyForPickup() : null"
-            class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left transition-all group relative"
+            class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left flex items-center gap-2 transition-all group relative"
             :class="ticket?.receipt?.number ? 'hover:opacity-90 active:scale-[0.98]' : 'opacity-50 cursor-not-allowed'"
           >
-            Mark Ready for Pickup
+            <span class="material-symbols-outlined" style="font-size: 18px">hail</span> Mark Ready for Pickup
             <span v-if="!ticket?.receipt?.number" class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Create Product Receipt first.</span>
           </button>
 
-          <button disabled class="w-full px-4 py-3 bg-outline text-surface rounded-lg font-label-md text-left opacity-50 cursor-not-allowed group relative">
-            Customer Confirmed
-            <span class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Available in Phase 2C after write-action wiring and role smoke.</span>
+          <button @click="openAction('customer_confirmed')" class="w-full px-4 py-3 bg-tertiary text-on-tertiary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">how_to_reg</span> Customer Confirmed
           </button>
-          
-          <button disabled class="w-full px-4 py-3 bg-error text-on-error rounded-lg font-label-md text-left opacity-50 cursor-not-allowed group relative">
-            Close Ticket
-            <span class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Available in Phase 2C after write-action wiring and role smoke.</span>
+
+          <button @click="openAction('close_ticket')" class="w-full px-4 py-3 bg-error text-on-error rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">task_alt</span> Close Ticket
           </button>
 
         </div>
         <div class="p-4 mt-auto text-xs text-on-surface-variant text-center bg-surface-container-low border-t border-outline-variant">
-          Other actions disabled for read-only preview mode. Use Standard Helpdesk for real operations.
+          Actions are role-gated and validated server-side. You'll see a clear message if your role can't run one.
         </div>
       </div>
       
@@ -402,10 +397,88 @@
       </div>
     </div>
   </div>
+
+  <!-- Generic Action Modal (Register Brand / Follow-up SC / Waiting Part / Customer Confirmed / Close) -->
+  <div v-if="actionDef" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="closeAction">
+    <div class="bg-surface-container-lowest rounded-xl w-full max-w-lg shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh]">
+      <div class="px-6 py-5 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center"
+               :class="actionDef.danger ? 'bg-error-container text-error' : 'bg-primary-container text-on-primary'">
+            <span class="material-symbols-outlined">{{ actionDef.icon }}</span>
+          </div>
+          <div>
+            <h2 class="text-headline-md font-headline-md text-on-surface">{{ actionDef.title }}</h2>
+            <p class="text-body-md font-body-md text-on-surface-variant mt-1">Ticket #{{ ticketId }}</p>
+          </div>
+        </div>
+        <button @click="closeAction" class="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant/50">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="px-6 py-6 space-y-5 overflow-y-auto">
+        <div v-if="actionError" class="p-3 bg-error-container text-on-error-container rounded font-body-md">{{ actionError }}</div>
+
+        <form class="space-y-5" @submit.prevent="submitAction">
+          <div v-for="f in actionDef.fields" :key="f.key" class="space-y-1.5">
+            <label class="text-label-md font-label-md text-on-surface-variant block">
+              {{ f.label }} <span v-if="f.required" class="text-error">*</span>
+            </label>
+
+            <select
+              v-if="f.type === 'select'"
+              v-model="actionForm[f.key]"
+              class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow"
+            >
+              <option value="" disabled>Select…</option>
+              <option v-for="o in f.options" :key="o" :value="o">{{ o }}</option>
+            </select>
+
+            <textarea
+              v-else-if="f.type === 'textarea'"
+              v-model="actionForm[f.key]"
+              rows="3"
+              :placeholder="f.placeholder || ''"
+              class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none"
+            ></textarea>
+
+            <input
+              v-else
+              v-model="actionForm[f.key]"
+              :type="f.type"
+              :min="f.type === 'date' ? todayDate() : undefined"
+              :placeholder="f.placeholder || ''"
+              class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow"
+            />
+
+            <p v-if="f.hint" class="text-label-md font-label-md text-on-surface-variant">{{ f.hint }}</p>
+          </div>
+        </form>
+      </div>
+
+      <div class="px-6 py-4 bg-surface-bright border-t border-outline-variant/30 flex justify-end gap-3 rounded-b-xl">
+        <button @click="closeAction" :disabled="submitting" class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium text-on-surface-variant hover:bg-surface-variant/50 transition-colors disabled:opacity-50" type="button">
+          Cancel
+        </button>
+        <button
+          @click="submitAction"
+          :disabled="submitting || !actionValid"
+          class="px-5 h-10 rounded-lg text-body-md font-body-md font-medium text-on-primary hover:opacity-90 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+          :class="actionDef.danger ? 'bg-error' : 'bg-primary'"
+          type="button"
+        >
+          <span v-if="submitting" class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+          <span v-else class="material-symbols-outlined text-[18px]">{{ actionDef.icon }}</span>
+          {{ actionDef.submitLabel }}
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, watch, reactive } from 'vue'
+import { ref, watch, reactive, computed } from 'vue'
 import { call, post } from '@/api'
 
 const props = defineProps({
@@ -598,6 +671,128 @@ async function submitReadyPickup() {
       notes: formReady.ready_note
     })
     modals.readyPickup = false
+    emit('refresh')
+    await loadTicket()
+  } catch (err) {
+    actionError.value = err.message || 'An error occurred while saving.'
+  } finally {
+    submitting.value = false
+  }
+}
+
+// ── Generic quick-action modal ──────────────────────────────────────────────
+// Option lists mirror the backend constants in setup/hd_ticket_fields.py and
+// workflow/quick_actions.py. The server re-validates every value and the role,
+// so these are only for a good dropdown UX — drift surfaces as a clear error.
+const FOLLOW_UP_RESULTS = [
+  'Service center contacted',
+  'Technician assigned',
+  'Customer not reachable',
+  'Service completed',
+  'Part pending',
+  'Approval pending',
+]
+const PENDING_REASONS = [
+  'Invoice Proof Pending', 'Invoice Pending', 'Brand Registration Recommended',
+  'Manufacturer Registration Pending', 'Service Follow-up Required', 'Brand Ticket Number Pending',
+  'Customer Details Missing', 'Technician Not Visited', 'Service Center Delayed',
+  'Service Center Out of Area', 'Customer Not Reachable', 'Customer Reappointed', 'Part Pending',
+  'Part Warranty Pending', 'Replacement Approval Pending', 'Supplier Approval Pending',
+  'Customer Pickup Pending', 'Manager Escalation Pending', 'Local Technician Pending',
+  'Local Service Transfer Pending', 'Estimate Approval Pending', 'Brand Line Busy',
+  'Service Center Unreachable', 'Other',
+]
+const CLOSURE_TYPES = [
+  'Resolved by Brand Service', 'Resolved by Local Technician', 'Replacement Completed',
+  'Customer Collected Product', 'Customer Cancelled', 'Duplicate Ticket',
+  'Not Purchased From Lavanya - Guided Only', 'Brand Denied Warranty', 'Customer Not Responding',
+  'Closed After Manager Approval', 'Other',
+]
+
+const ACTIONS = {
+  brand_complaint: {
+    title: 'Register Brand Complaint', icon: 'verified', submitLabel: 'Register',
+    endpoint: 'lavanya_service.api.workflow_actions.register_brand_complaint',
+    fields: [
+      { key: 'brand_ticket_number', label: 'Brand Ticket Number', type: 'text', required: true },
+      { key: 'registration_date', label: 'Registration Date', type: 'date', required: true },
+      { key: 'next_follow_up_date', label: 'Next Follow-up Date', type: 'date', required: true },
+      { key: 'service_center', label: 'Service Center (optional)', type: 'text', required: false },
+    ],
+  },
+  follow_up_sc: {
+    title: 'Follow Up Service Center', icon: 'support_agent', submitLabel: 'Record Follow-up',
+    endpoint: 'lavanya_service.api.workflow_actions.follow_up_service_center',
+    fields: [
+      { key: 'follow_up_result', label: 'Follow-up Result', type: 'select', required: true, options: FOLLOW_UP_RESULTS },
+      {
+        key: 'next_follow_up_date', label: 'Next Follow-up Date', type: 'date',
+        required: (f) => f.follow_up_result !== 'Service completed',
+        hint: 'Required unless the result is “Service completed”.',
+      },
+    ],
+  },
+  waiting_part: {
+    title: 'Waiting for Part', icon: 'build', submitLabel: 'Mark Waiting on Part',
+    endpoint: 'lavanya_service.api.workflow_actions.waiting_for_part',
+    fields: [
+      { key: 'pending_reason', label: 'Pending Reason', type: 'select', required: true, options: PENDING_REASONS },
+      { key: 'next_follow_up_date', label: 'Next Follow-up Date', type: 'date', required: true },
+    ],
+  },
+  customer_confirmed: {
+    title: 'Customer Confirmed', icon: 'how_to_reg', submitLabel: 'Confirm & Close',
+    endpoint: 'lavanya_service.api.workflow_actions.customer_confirmed',
+    fields: [
+      { key: 'work_narration', label: 'Work Narration', type: 'textarea', required: true, placeholder: 'Summary of the work done…' },
+      { key: 'closure_type', label: 'Closure Type', type: 'select', required: true, options: CLOSURE_TYPES },
+    ],
+  },
+  close_ticket: {
+    title: 'Close Ticket', icon: 'task_alt', submitLabel: 'Close Ticket', danger: true,
+    endpoint: 'lavanya_service.api.workflow_actions.close_ticket',
+    fields: [
+      { key: 'work_narration', label: 'Work Narration', type: 'textarea', required: true, placeholder: 'Summary of the work done…' },
+      { key: 'closure_type', label: 'Closure Type', type: 'select', required: true, options: CLOSURE_TYPES },
+      { key: 'customer_confirmation_received', label: 'Customer Confirmation Received', type: 'select', required: true, options: ['Yes', 'No'] },
+    ],
+  },
+}
+
+const actionKey = ref(null)
+const actionDef = computed(() => (actionKey.value ? ACTIONS[actionKey.value] : null))
+const actionForm = reactive({})
+
+function isRequired(f) {
+  return typeof f.required === 'function' ? f.required(actionForm) : !!f.required
+}
+const actionValid = computed(() => {
+  const def = actionDef.value
+  if (!def) return false
+  return def.fields.every((f) => !isRequired(f) || String(actionForm[f.key] ?? '').trim() !== '')
+})
+
+function openAction(key) {
+  actionError.value = ''
+  Object.keys(actionForm).forEach((k) => delete actionForm[k])
+  for (const f of ACTIONS[key].fields) actionForm[f.key] = ''
+  actionKey.value = key
+}
+function closeAction() {
+  actionKey.value = null
+}
+async function submitAction() {
+  if (!actionValid.value) return
+  submitting.value = true
+  actionError.value = ''
+  try {
+    const payload = { ticket_name: props.ticketId }
+    for (const f of actionDef.value.fields) {
+      const v = String(actionForm[f.key] ?? '').trim()
+      if (v) payload[f.key] = v
+    }
+    await post(actionDef.value.endpoint, payload)
+    actionKey.value = null
     emit('refresh')
     await loadTicket()
   } catch (err) {
