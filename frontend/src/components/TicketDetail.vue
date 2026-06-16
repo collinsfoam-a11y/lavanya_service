@@ -29,7 +29,15 @@
               <div>Age: <span class="text-on-surface">{{ ticketAge(ticket.creation) }} days</span></div>
               <div>Assigned: <span class="text-on-surface">{{ ticket.assigned_to || 'Unassigned' }}</span></div>
             </div>
-            <div class="mt-2">
+            <div class="mt-3 flex items-center gap-3 flex-wrap">
+              <button
+                v-if="ticket.customer?.mobile"
+                @click="whatsappCustomer"
+                class="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg font-label-md text-body-md text-on-primary"
+                style="background:#25D366"
+              >
+                <span class="material-symbols-outlined" style="font-size:18px">chat</span> Message on WhatsApp
+              </button>
               <a :href="'/helpdesk/tickets/' + ticket.name" target="_blank" class="text-primary hover:underline font-label-md">
                 Open in Standard Helpdesk ↗
               </a>
@@ -113,6 +121,22 @@
               <div><span class="block text-label-md text-outline">Last Movement</span> {{ ticket.receipt?.last_movement?.substring(0,10) || '—' }}</div>
               <div><span class="block text-label-md text-outline">Ready for Pickup</span> {{ ticket.receipt?.ready_for_pickup ? 'Yes' : 'No' }}</div>
             </div>
+          </section>
+
+          <!-- Follow-up history (structured, from tagged log entries) -->
+          <section v-if="followUpLog.length" class="border-t border-outline-variant pt-4 mt-4">
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-3">
+              Follow-up history <span class="font-body-md text-on-surface-variant">· {{ followUpLog.length }} attempt{{ followUpLog.length > 1 ? 's' : '' }}</span>
+            </h3>
+            <ul class="flex flex-col gap-2">
+              <li v-for="ev in followUpLog" :key="ev.id" class="flex items-start gap-2 font-body-md">
+                <span class="material-symbols-outlined text-tertiary" style="font-size: 18px">support_agent</span>
+                <div>
+                  <div class="text-on-surface">{{ ev.text.replace('[Follow-up] ', '') }}</div>
+                  <div class="font-label-md text-label-md text-on-surface-variant">{{ ev.by }} · {{ relTime(ev.on) }}</div>
+                </div>
+              </li>
+            </ul>
           </section>
 
           <!-- Activity timeline + add note -->
@@ -553,6 +577,9 @@ const repeatCandidates = ref([])
 
 const isClosed = computed(() => ['Closed', 'Cancelled', 'Resolved'].includes(ticket.value?.status))
 
+// Structured follow-up history — derived from the tagged activity entries.
+const followUpLog = computed(() => activity.value.filter((e) => (e.text || '').startsWith('[Follow-up]')))
+
 async function loadRepeat() {
   repeatCandidates.value = []
   if (!props.ticketId) return
@@ -641,6 +668,26 @@ watch(() => props.ticketId, loadTicket)
 
 function close() {
   emit('close')
+}
+
+// WhatsApp the customer via a wa.me link (no gateway needed — opens WhatsApp with
+// the number + a status-appropriate pre-filled message; staff press send).
+function whatsappCustomer() {
+  const t = ticket.value
+  if (!t?.customer?.mobile) return
+  const digits = String(t.customer.mobile).replace(/\D/g, '')
+  const intl = digits.length === 10 ? '91' + digits : digits // default India country code
+  const product = [t.product?.brand, t.product?.item || t.product?.type].filter(Boolean).join(' ') || 'product'
+  const name = t.customer?.name ? `Hello ${t.customer.name}, ` : 'Hello, '
+  const byStatus = {
+    'Ready for Pickup': `your ${product} is repaired and ready for pickup.`,
+    'Waiting on Customer': `we need some information to proceed with your ${product} service.`,
+    Resolved: `your ${product} service is complete.`,
+    Closed: `your ${product} service is complete.`,
+  }
+  const tail = byStatus[t.status] || `here's an update on your ${product} service: ${t.status}.`
+  const msg = `${name}${tail} (Ticket ${t.name}) — Lavanya eMart Service`
+  window.open(`https://wa.me/${intl}?text=${encodeURIComponent(msg)}`, '_blank')
 }
 
 // Action state

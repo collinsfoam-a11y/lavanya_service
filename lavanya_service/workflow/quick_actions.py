@@ -258,6 +258,15 @@ def follow_up_service_center(ticket_name, follow_up_result=None, next_follow_up_
 		doc.next_follow_up_date = next_follow_up_date
 
 	_save_ticket(doc)
+
+	# Structured follow-up log entry — a tagged comment so each follow-up is a
+	# countable history item with its outcome (the SPA reads these back as the
+	# follow-up log and an attempts count).
+	entry = "[Follow-up] {0}".format(follow_up_result)
+	if next_follow_up_date:
+		entry += " · next {0}".format(next_follow_up_date)
+	doc.add_comment("Comment", entry)
+
 	return _result(doc, _("Service centre follow-up recorded: {0}").format(follow_up_result))
 
 
