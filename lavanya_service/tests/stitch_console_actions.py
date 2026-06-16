@@ -125,13 +125,16 @@ def run():
             pass
 
     # 4. Service Coordinator can create
-    frappe.set_user("uat.coordinator@lavanya.local")
     if frappe.db.exists("User", "uat.coordinator@lavanya.local"):
-        # Make sure no receipt exists for this ticket
-        existing_receipts = frappe.get_all("Service Product Receipt", filters={"ticket": store_ticket_id})
-        for r in existing_receipts:
-            frappe.delete_doc("Service Product Receipt", r.name)
-            
+        # Make sure no receipt exists for this ticket. Clean up as Administrator —
+        # coordinators can't delete receipts, and a leftover (e.g. from a custody
+        # walk) would otherwise fail this with a permission error.
+        frappe.set_user("Administrator")
+        for r in frappe.get_all("Service Product Receipt", filters={"ticket": store_ticket_id}):
+            frappe.db.set_value("HD Ticket", store_ticket_id, "service_product_receipt", None)
+            frappe.delete_doc("Service Product Receipt", r.name, force=True, ignore_permissions=True)
+
+        frappe.set_user("uat.coordinator@lavanya.local")
         res = frappe.call(api_receipt, ticket_name=store_ticket_id, accessories_received="Charger", physical_condition="Scratched")
         assert res.get("ok"), "Service Coordinator failed to create receipt"
         receipt_name = res.get("receipt")
