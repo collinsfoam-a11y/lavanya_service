@@ -1,5 +1,10 @@
 # Lavanya Service Console (SPA) — Status, Backlog & Verification
 
+> **AI agents (any tool):** this is a living doc. Per [`../AGENTS.md`](../AGENTS.md)
+> you must read it before starting, and after every step update it with **what /
+> how / why / remaining** (move done items to §2 with their commit, prune §3). Keep
+> it honest.
+
 A living record of the Vue SPA at `/frontend` (the Stitch "Lavanya Service
 Console" design realized on the frappe-ui theme). Covers **what's done**, **what's
 pending**, **how to build each pending item**, and **how to verify** — including a
