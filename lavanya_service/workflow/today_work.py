@@ -10,6 +10,14 @@ FINAL_STATUSES = {
 	"Cancelled",
 }
 
+# Unified status model: every HD Ticket Status maps to a status_category
+# (Open / Paused / Resolved), maintained by Helpdesk. Only the "Resolved"
+# category is terminal (Closed/Resolved/Cancelled all map to it); Open + Paused
+# are active. Driving active/terminal off the category — instead of a hard-coded
+# status-string list — keeps Today's Work correct for ANY status, including
+# Helpdesk-native ones (Open/Replied) and any future status, without code edits.
+TERMINAL_STATUS_CATEGORY = "Resolved"
+
 REGISTRATION_RECOMMENDED_TYPES = {
 	"Customer Complaint - Site",
 	"Customer Product at Store",
@@ -40,6 +48,7 @@ SAFE_TICKET_FIELDS = [
 ]
 
 CLASSIFICATION_FIELDS = [
+	"status_category",
 	"warranty_status",
 	"manufacturer_registered",
 	"brand_ticket_number",
@@ -208,6 +217,12 @@ def classify_ticket(row, today_date=None):
 
 
 def is_active_ticket(row):
+	# Prefer the unified status_category (terminal == "Resolved"); fall back to the
+	# status-string list only when the category isn't on the row (e.g. a hand-built
+	# dict in a unit test).
+	category = _value(row, "status_category")
+	if category:
+		return category != TERMINAL_STATUS_CATEGORY
 	return _value(row, "status") not in FINAL_STATUSES
 
 

@@ -292,6 +292,8 @@ def _run_all(get_today_work, baseline):
 	# Today's Work instead of vanishing. Regression for the "new ticket not
 	# showing after refresh" report.
 	open_ticket = _insert_ticket("TW Helpdesk Open Status", status="Open")
+	# "Replied" (Helpdesk-native, status_category "Paused") must also stay visible.
+	replied_ticket = _insert_ticket("TW Helpdesk Replied Status", status="Replied")
 
 	before_api_counts = _side_effect_counts()
 	data = get_today_work(limit=200)
@@ -364,6 +366,11 @@ def _run_all(get_today_work, baseline):
 		"TW-014b",
 		"active ticket with Helpdesk-native 'Open' status surfaces in new_complaints (was invisible on Today's Work)",
 		open_ticket.name in _names(data, "new_complaints"),
+	)
+	_assert(
+		"TW-014c",
+		"active ticket with Helpdesk-native 'Replied' status (category Paused) stays visible",
+		any(replied_ticket.name in _names(data, key) for key in GROUP_KEYS),
 	)
 	_assert("TW-015", "API returns expected group order", _group_keys(data) == GROUP_KEYS, _group_keys(data))
 
