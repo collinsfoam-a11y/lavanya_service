@@ -37,7 +37,8 @@
         </label>
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface-variant">Mobile <span class="text-error">*</span></span>
-          <input v-model="form.mobile" type="tel" class="lav-input" placeholder="10-digit mobile" />
+          <input v-model="form.mobile" type="tel" class="lav-input" placeholder="10-digit mobile" @blur="lookupCustomer" />
+          <span v-if="lookupHint" class="font-label-md text-label-md" style="color:#1a7f37">{{ lookupHint }}</span>
         </label>
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface-variant">Brand <span class="text-error">*</span></span>
@@ -123,6 +124,32 @@ const opts = ref({ brands: [], product_types: [], ticket_types: [], complaint_so
 const submitting = ref(false)
 const error = ref('')
 const created = ref(null)
+const lookupHint = ref('')
+
+async function lookupCustomer() {
+  const m = (form.mobile || '').replace(/\D/g, '')
+  if (m.length < 10) {
+    lookupHint.value = ''
+    return
+  }
+  try {
+    const res = await call('lavanya_service.api.customer_intake.lookup_customer_by_mobile', { mobile: form.mobile })
+    if (res && res.found) {
+      // Prefill empty fields only — never overwrite what staff already typed.
+      if (!form.customer_name) form.customer_name = res.customer_name || ''
+      if (!form.address) form.address = res.address || ''
+      if (!form.pincode) form.pincode = res.pincode || ''
+      if (!form.brand && res.last_brand && opts.value.brands?.includes(res.last_brand)) form.brand = res.last_brand
+      if ((!form.product_type || form.product_type === '') && res.last_product_type && opts.value.product_types?.includes(res.last_product_type)) form.product_type = res.last_product_type
+      const n = res.ticket_count || 0
+      lookupHint.value = `Returning customer${n ? ` · ${n} previous ticket${n > 1 ? 's' : ''}` : ''} — details prefilled`
+    } else {
+      lookupHint.value = ''
+    }
+  } catch (e) {
+    lookupHint.value = ''
+  }
+}
 
 const blank = () => ({
   customer_name: '', mobile: '', brand: '', product_type: '', ticket_type: '',
@@ -165,6 +192,7 @@ function reset() {
   if (opts.value.ticket_types?.length) form.ticket_type = opts.value.ticket_types[0]
   created.value = null
   error.value = ''
+  lookupHint.value = ''
 }
 
 function openCreated() {

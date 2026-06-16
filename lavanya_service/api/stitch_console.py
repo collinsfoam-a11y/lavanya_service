@@ -313,6 +313,10 @@ def get_ticket_detail(ticket_id):
             "first_responded_on": ticket.get("first_responded_on"),
             "resolution_date": ticket.get("resolution_date"),
         },
+        "repeat": {
+            "is_repeat": ticket.get("is_repeated_complaint") == "Yes",
+            "previous_ticket": ticket.get("previous_ticket_link"),
+        },
         "assigned_to": ticket._assign if ticket._assign else None,
         "creation": ticket.creation
     }

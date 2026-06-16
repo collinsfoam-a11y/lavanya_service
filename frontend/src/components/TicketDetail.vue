@@ -36,6 +36,29 @@
             </div>
           </header>
 
+          <!-- Repeat complaint banner -->
+          <div v-if="ticket.repeat?.is_repeat" class="rounded-xl p-4 flex items-center justify-between gap-3"
+               style="border:1px solid rgba(113,42,226,0.4); background:rgba(113,42,226,0.08)">
+            <div class="flex items-center gap-2 font-body-md text-on-surface">
+              <span class="material-symbols-outlined text-secondary">repeat</span>
+              Marked as repeat complaint<template v-if="ticket.repeat.previous_ticket"> · linked to <span class="font-semibold text-primary">{{ ticket.repeat.previous_ticket }}</span></template>
+            </div>
+            <button @click="clearRepeat" class="px-3 h-8 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low shrink-0">Clear</button>
+          </div>
+          <div v-else-if="repeatCandidates.length" class="rounded-xl p-4"
+               style="border:1px solid rgba(148,55,0,0.4); background:rgba(148,55,0,0.07)">
+            <div class="flex items-center gap-2 font-body-md text-on-surface mb-2">
+              <span class="material-symbols-outlined text-tertiary">repeat</span>
+              Possible repeat — {{ repeatCandidates.length }} earlier ticket(s) for this customer/product
+            </div>
+            <ul class="flex flex-col gap-1.5">
+              <li v-for="c in repeatCandidates" :key="c.ticket" class="flex items-center justify-between gap-2 font-body-md">
+                <span class="text-on-surface-variant truncate"><span class="text-primary font-semibold">{{ c.ticket }}</span> · {{ c.subject || '(no subject)' }}</span>
+                <button @click="linkRepeat(c.ticket)" class="px-3 h-8 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md shrink-0 hover:opacity-90">Link as repeat</button>
+              </li>
+            </ul>
+          </div>
+
           <!-- Customer Summary -->
           <section>
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Customer</h3>
@@ -185,6 +208,25 @@
 
           <button @click="openAction('close_ticket')" class="w-full px-4 py-3 bg-error text-on-error rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
             <span class="material-symbols-outlined" style="font-size: 18px">task_alt</span> Close Ticket
+          </button>
+
+          <!-- Product custody movements (only when a receipt exists) -->
+          <template v-if="ticket?.receipt?.number">
+            <div class="pt-2 mt-1 border-t border-outline-variant font-label-md text-label-md text-on-surface-variant uppercase tracking-wide">Product custody</div>
+            <button @click="openAction('sent_to_sc')" class="w-full px-4 py-3 bg-surface-container-highest text-on-surface rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+              <span class="material-symbols-outlined" style="font-size: 18px">local_shipping</span> Send to Service Center
+            </button>
+            <button @click="openAction('returned_from_sc')" class="w-full px-4 py-3 bg-surface-container-highest text-on-surface rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+              <span class="material-symbols-outlined" style="font-size: 18px">assignment_return</span> Returned from SC
+            </button>
+            <button @click="openAction('delivered')" class="w-full px-4 py-3 bg-surface-container-highest text-on-surface rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+              <span class="material-symbols-outlined" style="font-size: 18px">verified</span> Delivered to Customer
+            </button>
+          </template>
+
+          <!-- Reopen (only when the ticket is closed/resolved) -->
+          <button v-if="isClosed" @click="openAction('reopen')" class="w-full px-4 py-3 bg-tertiary text-on-tertiary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">restart_alt</span> Reopen Ticket
           </button>
 
         </div>
@@ -506,6 +548,45 @@ const noteText = ref('')
 const noteError = ref('')
 const postingNote = ref(false)
 
+// Repeat-complaint detection / linking
+const repeatCandidates = ref([])
+
+const isClosed = computed(() => ['Closed', 'Cancelled', 'Resolved'].includes(ticket.value?.status))
+
+async function loadRepeat() {
+  repeatCandidates.value = []
+  if (!props.ticketId) return
+  try {
+    const res = await call('lavanya_service.api.repeat_complaints.find_repeat_candidates', { ticket_name: props.ticketId })
+    repeatCandidates.value = res?.candidates || []
+  } catch (e) {
+    repeatCandidates.value = []
+  }
+}
+
+async function linkRepeat(previous) {
+  try {
+    await post('lavanya_service.api.repeat_complaints.confirm_repeat_complaint', {
+      ticket_name: props.ticketId,
+      previous_ticket_link: previous,
+    })
+    emit('refresh')
+    await loadTicket()
+  } catch (e) {
+    actionError.value = e.message || 'Could not link the repeat complaint.'
+  }
+}
+
+async function clearRepeat() {
+  try {
+    await post('lavanya_service.api.repeat_complaints.clear_repeat_complaint', { ticket_name: props.ticketId })
+    emit('refresh')
+    await loadTicket()
+  } catch (e) {
+    actionError.value = e.message || 'Could not clear the repeat flag.'
+  }
+}
+
 const loadActivity = async () => {
   if (!props.ticketId) return
   activityLoading.value = true
@@ -552,6 +633,7 @@ const loadTicket = async () => {
       loading.value = false
     }
     loadActivity()
+    loadRepeat()
   }
 }
 
@@ -765,6 +847,33 @@ const ACTIONS = {
       { key: 'customer_confirmation_received', label: 'Customer Confirmation Received', type: 'select', required: true, options: ['Yes', 'No'] },
     ],
   },
+  // Product-custody movements — operate on the linked Service Product Receipt.
+  sent_to_sc: {
+    title: 'Send to Service Center', icon: 'local_shipping', submitLabel: 'Mark Sent', target: 'receipt',
+    endpoint: 'lavanya_service.api.product_receipt_actions.mark_product_sent_to_sc',
+    fields: [
+      { key: 'expected_return_date', label: 'Expected Return Date', type: 'date', required: false },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  returned_from_sc: {
+    title: 'Returned from Service Center', icon: 'assignment_return', submitLabel: 'Mark Returned', target: 'receipt',
+    endpoint: 'lavanya_service.api.product_receipt_actions.mark_product_returned_from_sc',
+    fields: [
+      { key: 'actual_return_date', label: 'Actual Return Date', type: 'date', required: false },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  delivered: {
+    title: 'Delivered to Customer', icon: 'verified', submitLabel: 'Mark Delivered', target: 'receipt',
+    endpoint: 'lavanya_service.api.product_receipt_actions.mark_delivered_to_customer',
+    fields: [{ key: 'notes', label: 'Handover notes', type: 'textarea', required: false }],
+  },
+  reopen: {
+    title: 'Reopen Ticket', icon: 'restart_alt', submitLabel: 'Reopen', danger: true, target: 'ticket',
+    endpoint: 'lavanya_service.api.product_receipt_actions.reopen_ticket',
+    fields: [{ key: 'reopen_reason', label: 'Reason for reopening', type: 'textarea', required: true, placeholder: 'e.g. Customer reports the issue persists' }],
+  },
 }
 
 const actionKey = ref(null)
@@ -791,15 +900,23 @@ function closeAction() {
 }
 async function submitAction() {
   if (!actionValid.value) return
+  const def = actionDef.value
+  // Receipt-targeted actions (custody movements) need the linked receipt.
+  if (def.target === 'receipt' && !ticket.value?.receipt?.number) {
+    actionError.value = 'This action needs a Product Receipt. Create one first.'
+    return
+  }
   submitting.value = true
   actionError.value = ''
   try {
-    const payload = { ticket_name: props.ticketId }
-    for (const f of actionDef.value.fields) {
+    const payload = def.target === 'receipt'
+      ? { receipt_name: ticket.value.receipt.number }
+      : { ticket_name: props.ticketId }
+    for (const f of def.fields) {
       const v = String(actionForm[f.key] ?? '').trim()
       if (v) payload[f.key] = v
     }
-    await post(actionDef.value.endpoint, payload)
+    await post(def.endpoint, payload)
     actionKey.value = null
     emit('refresh')
     await loadTicket()
