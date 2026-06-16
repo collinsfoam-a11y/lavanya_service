@@ -85,12 +85,52 @@
             </div>
           </section>
 
-          <!-- Timeline Placeholder -->
+          <!-- Activity timeline + add note -->
           <section class="border-t border-outline-variant pt-4 mt-4">
-            <h3 class="font-headline-md text-headline-md text-on-surface mb-3">Timeline</h3>
-            <div class="p-4 rounded-xl border border-dashed border-outline-variant text-center text-on-surface-variant text-body-md bg-surface-bright">
-              Timeline events and communications will appear here.
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-3">Activity</h3>
+
+            <!-- Add note -->
+            <div class="mb-5">
+              <textarea
+                v-model="noteText"
+                rows="2"
+                placeholder="Add an internal note…"
+                class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none"
+              ></textarea>
+              <div v-if="noteError" class="text-error font-label-md text-label-md mt-1">{{ noteError }}</div>
+              <div class="flex justify-end mt-2">
+                <button
+                  @click="addNote"
+                  :disabled="postingNote || !noteText.trim()"
+                  class="px-4 h-9 rounded-lg bg-primary text-on-primary font-label-md text-body-md flex items-center gap-1.5 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  <span class="material-symbols-outlined" :class="postingNote ? 'animate-spin' : ''" style="font-size: 18px">
+                    {{ postingNote ? 'progress_activity' : 'post_add' }}
+                  </span>
+                  Post note
+                </button>
+              </div>
             </div>
+
+            <!-- Timeline -->
+            <div v-if="activityLoading" class="text-on-surface-variant text-body-md py-4">Loading activity…</div>
+            <ul v-else-if="activity.length" class="flex flex-col">
+              <li v-for="(ev, i) in activity" :key="ev.id" class="flex gap-3">
+                <div class="flex flex-col items-center">
+                  <span
+                    class="material-symbols-outlined w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                    :class="ev.kind === 'note' ? 'bg-primary-container text-on-primary' : 'bg-surface-container-highest text-on-surface-variant'"
+                    style="font-size: 18px"
+                  >{{ ev.kind === 'note' ? 'sticky_note_2' : 'history' }}</span>
+                  <span v-if="i < activity.length - 1" class="flex-1 w-px bg-outline-variant my-1"></span>
+                </div>
+                <div class="flex-1 pb-5 -mt-0.5">
+                  <div class="font-body-md text-on-surface whitespace-pre-line">{{ ev.text || '—' }}</div>
+                  <div class="font-label-md text-label-md text-on-surface-variant mt-0.5">{{ ev.by }} · {{ relTime(ev.on) }}</div>
+                </div>
+              </li>
+            </ul>
+            <div v-else class="text-on-surface-variant text-body-md py-2">No activity yet.</div>
           </section>
         </div>
       </div>
@@ -378,10 +418,51 @@ const ticket = ref(null)
 const loading = ref(false)
 const error = ref(false)
 
+// Activity timeline + add-note state
+const activity = ref([])
+const activityLoading = ref(false)
+const noteText = ref('')
+const noteError = ref('')
+const postingNote = ref(false)
+
+const loadActivity = async () => {
+  if (!props.ticketId) return
+  activityLoading.value = true
+  try {
+    const res = await call('lavanya_service.api.stitch_console.get_ticket_activity', { ticket_id: props.ticketId })
+    activity.value = res?.events || []
+  } catch (e) {
+    activity.value = []
+  } finally {
+    activityLoading.value = false
+  }
+}
+
+async function addNote() {
+  const text = noteText.value.trim()
+  if (!text) return
+  postingNote.value = true
+  noteError.value = ''
+  try {
+    const ev = await post('lavanya_service.api.stitch_console.add_ticket_note', {
+      ticket_id: props.ticketId,
+      note: text,
+    })
+    activity.value = [ev, ...activity.value]
+    noteText.value = ''
+  } catch (err) {
+    noteError.value = err.message || 'Could not post note.'
+  } finally {
+    postingNote.value = false
+  }
+}
+
 const loadTicket = async () => {
   if (props.ticketId) {
     loading.value = true
     error.value = false
+    noteText.value = ''
+    noteError.value = ''
     try {
       ticket.value = await call('lavanya_service.api.stitch_console.get_ticket_detail', { ticket_id: props.ticketId })
     } catch (e) {
@@ -389,6 +470,7 @@ const loadTicket = async () => {
     } finally {
       loading.value = false
     }
+    loadActivity()
   }
 }
 
@@ -553,6 +635,19 @@ function ticketAge(creationDate) {
   const created = new Date(creationDate)
   const diffTime = Math.abs(new Date() - created)
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+}
+function relTime(value) {
+  if (!value) return ''
+  const d = new Date(String(value).replace(' ', 'T'))
+  const secs = Math.round((Date.now() - d.getTime()) / 1000)
+  if (secs < 60) return 'just now'
+  const mins = Math.round(secs / 60)
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.round(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.round(hrs / 24)
+  if (days < 30) return `${days}d ago`
+  return d.toLocaleDateString()
 }
 </script>
 
