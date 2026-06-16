@@ -49,7 +49,8 @@ All on the frappe-ui theme base. Newest first.
 
 | Commit | What | Verified |
 |---|---|---|
-| _(new)_ | **In-console New Ticket screen** (`/new-ticket`) replacing the external link; `create_ticket` + `get_new_ticket_options` (staff actor, reuses QR intake validation). | create_ticket works as uat.frontdesk (0026); screen renders |
+| `c516fcd` | **Complete ticket lifecycle**: custody moves (Send to SC / Returned from SC / Delivered), Reopen, repeat-complaint detect+link banner, and New Ticket customer auto-fill by mobile — all reusing existing backends. | full custody chain create→delivered runs as uat.coordinator; SPA tests pass |
+| _(prev)_ | **In-console New Ticket screen** (`/new-ticket`) replacing the external link; `create_ticket` + `get_new_ticket_options` (staff actor, reuses QR intake validation). | create_ticket works as uat.frontdesk (0026); screen renders |
 | `9161ede` | **Critical fix**: `/frontend` served the literal `{{ csrf_token }}` placeholder → every POST 400'd for non-Administrator users (Admin bypasses CSRF, masking it). Controller now injects `frappe.sessions.get_csrf_token()`. | verified as uat.coordinator: real token, action returns 200; source-guard test added |
 | `0d3a649` | **Reporting depth** (gap-analysis change #7): Reports overview gains a 30-day created-vs-resolved trend (SVG), status + closure-type breakdown bars (manager-only), and per-report CSV export. New `get_report_trends`/`get_report_breakdowns`. | SPA + report tests; browser screenshot shows trend + breakdowns |
 | `cc013fc` | **SLA visibility** (gap-analysis change #2): shared `SlaBadge` shows Helpdesk SLA state (breached/met/paused/due) on Tickets, Today's Work, and the ticket drawer. SLA fields added to the list/today-work/detail payloads. | 24 today_work + SPA tests; browser screenshots show breached/due badges |

@@ -82,6 +82,11 @@ Fill in the form:
 - **Required:** Customer Name, Mobile, Brand, Product Type, Complaint Details.
 - **Optional:** Ticket Type, Warranty, Model No., Serial No., Source, Address, Pincode.
 
+> **Returning customer?** Type the **mobile number first** — if the customer is on
+> record, the console auto-fills their name, address, and pincode (and suggests their
+> last brand/product), with a "returning customer" note. It only fills empty fields,
+> so anything you've already typed is kept.
+
 The **Create Ticket** button stays greyed out until the required fields are filled.
 After you submit, you'll see a confirmation with the new ticket number and two choices:
 
@@ -124,9 +129,32 @@ you'll get a clear message naming who can.
 | **Mark Ready for Pickup** | Marks the repaired product ready for the customer. | Manager, Coordinator, Front Desk |
 | **Customer Confirmed** | Records customer confirmation and closes the ticket. | Manager, Coordinator |
 | **Close Ticket** | Closes with a closure type and work summary. | Manager, Coordinator |
+| **Reopen Ticket** | Reopens a closed/resolved ticket (e.g. the customer says it's still not fixed). Shown only on closed tickets. | Manager, Coordinator |
+
+### Product custody (when a product is taken into the store)
+
+For *Customer Product at Store* tickets, after **Create Product Receipt** the drawer
+shows a **Product custody** group to track the item's journey:
+
+| Step | What it records | Who can run it |
+|---|---|---|
+| **Send to Service Center** | Product handed to the brand/service centre (with expected return date). | Manager, Coordinator, Front Desk |
+| **Returned from SC** | Product received back at the store (with actual return date). | Manager, Coordinator, Front Desk |
+| **Mark Ready for Pickup** | Repaired product ready for the customer. | Manager, Coordinator, Front Desk |
+| **Delivered to Customer** | Product handed back — completes the custody trail. | Manager, Coordinator, Front Desk |
+
+So the full at-store journey is: **Receive → Send to SC → Returned from SC → Ready for
+Pickup → Delivered.**
 
 Every action checks the rules on the server — required fields, valid stage, and your
 permission — so you can't accidentally skip a step.
+
+### Repeat complaints
+
+When you open a ticket, the console checks for **earlier tickets from the same
+customer/product**. If it finds any, a banner appears at the top listing them with a
+**Link as repeat** button. Once linked, the ticket shows a "repeat complaint" tag
+(with a **Clear** option). This helps spot products that keep coming back.
 
 ---
 
