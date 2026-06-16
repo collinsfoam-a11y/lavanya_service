@@ -183,9 +183,44 @@ def _test_frontend_csrf_injection():
     )
 
 
+def _test_create_ticket():
+    """create_ticket: Guest rejected, required-field validation, and a valid
+    staff create returns the ticket name (cleaned up after)."""
+    print("  create_ticket…")
+    CREATE = "lavanya_service.api.stitch_console.create_ticket"
+
+    frappe.set_user("Guest")
+    try:
+        frappe.call(CREATE, customer_name="X", mobile="9876500022", complaint_details="d", product_type="AC", brand="Z")
+        assert False, "Guest could create a ticket"
+    except frappe.PermissionError:
+        pass
+
+    frappe.set_user("Administrator")
+    # Missing required field is rejected.
+    try:
+        frappe.call(CREATE, customer_name="X", mobile="9876500022", product_type="AC", brand="Z")
+        assert False, "missing complaint_details should be rejected"
+    except frappe.ValidationError:
+        pass
+
+    brand = (frappe.get_all("Brand Service Master", pluck="name", limit=1) or [None])[0]
+    if not brand:
+        return
+    res = frappe.call(
+        CREATE, customer_name="SPA Create Test", mobile="9876500033",
+        complaint_details="Test complaint", product_type="AC", brand=brand,
+    )
+    assert res.get("ok") and res.get("ticket"), "create_ticket should return ok + ticket name"
+    name = res["ticket"]
+    assert frappe.db.get_value("HD Ticket", name, "complaint_source") == "Staff Entered", "source should be Staff Entered"
+    frappe.delete_doc("HD Ticket", name, force=True, ignore_permissions=True)
+
+
 def run():
     print("Running Stitch Console SPA endpoint tests…")
     _test_get_ticket_list()
+    _test_create_ticket()
     _test_activity_and_notes()
     _test_reports_catalog_and_drilldown()
     _test_api_js_undefined_guard()

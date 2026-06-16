@@ -165,9 +165,14 @@ The **Reports** screen (managers and coordinators) opens with an **overview**:
 - **Last 30 days** — a trend line of tickets **created** vs **resolved** per day.
 - **By status** and **By closure type** — bar breakdowns of the current workload.
 
-Below the overview is the **report catalog** — a card per report (Daily Follow-Up,
-Brand Pending, Waiting on Customer/Part, Ready for Pickup, Product-at-Store Aging,
-Closure, Repeat Complaints, Warranty Overrides), each showing a live count.
+Below the overview is the **report catalog** — a card per report (**Escalations**,
+Daily Follow-Up, Brand Pending, Waiting on Customer/Part, Ready for Pickup,
+Product-at-Store Aging, Closure, Repeat Complaints, Warranty Overrides), each showing
+a live count.
+
+> **Escalations** lists tickets that need management attention — SLA failed, or
+> follow-up overdue by 3+ days. Managers and coordinators also get a daily in-app
+> notification for each escalated ticket, so nothing slips.
 
 - **Click a card** to drill into its exact list of tickets.
 - **Click a row** to open that ticket.
