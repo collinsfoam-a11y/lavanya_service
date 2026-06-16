@@ -111,10 +111,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { call } from '@/api'
 import AppShell from '@/components/AppShell.vue'
 import TicketDetail from '@/components/TicketDetail.vue'
+
+const route = useRoute()
 
 const STATUSES = [
   'All',
@@ -135,9 +138,21 @@ const tickets = ref([])
 const loading = ref(false)
 const error = ref(false)
 const hasMore = ref(false)
-const search = ref('')
+const search = ref(route.query.search || '')
 const status = ref('All')
 const selectedTicket = ref(null)
+
+// Keep the list in sync when the header search (or any link) changes ?search=.
+watch(
+  () => route.query.search,
+  (term) => {
+    const next = term || ''
+    if (next !== search.value) {
+      search.value = next
+      reload()
+    }
+  },
+)
 
 async function fetchPage(start) {
   loading.value = true

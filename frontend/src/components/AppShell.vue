@@ -52,8 +52,21 @@
         <h2 class="font-headline-md text-headline-md font-bold text-primary md:hidden">Lavanya</h2>
         <div class="hidden md:block font-body-md text-on-surface-variant">{{ headerTitle }}</div>
         <div class="flex items-center gap-3">
-          <span class="font-body-md text-on-surface-variant hidden sm:inline">{{ today }}</span>
-          <div class="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center">
+          <form
+            class="hidden sm:flex items-center gap-2 h-9 px-3 rounded-lg border border-outline-variant bg-surface-container-lowest focus-within:border-primary transition-colors"
+            style="min-width: 240px"
+            @submit.prevent="goSearch"
+          >
+            <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 18px">search</span>
+            <input
+              v-model="q"
+              type="search"
+              placeholder="Search tickets…"
+              class="flex-1 min-w-0 bg-transparent border-none outline-none font-body-md text-on-surface"
+              aria-label="Search tickets"
+            />
+          </form>
+          <div class="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center shrink-0">
             <span class="material-symbols-outlined">person</span>
           </div>
         </div>
@@ -81,10 +94,17 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
+const router = useRouter()
+const q = ref('')
+
+function goSearch() {
+  const term = q.value.trim()
+  router.push({ path: '/tickets', query: term ? { search: term } : {} })
+}
 
 const navItems = [
   { label: 'Today’s Work', icon: 'dashboard', to: '/' },

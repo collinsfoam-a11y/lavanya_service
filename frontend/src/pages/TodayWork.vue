@@ -22,7 +22,10 @@
       >
         <span class="material-symbols-outlined lav-metric__icon">{{ m.icon }}</span>
         <div class="lav-metric__label">{{ m.label }}</div>
-        <div class="lav-metric__num">{{ metricCount(m.key) }}</div>
+        <div>
+          <div class="lav-metric__num">{{ metricCount(m.key) }}</div>
+          <div v-if="metricSub(m.key)" class="lav-metric__sub">{{ metricSub(m.key) }}</div>
+        </div>
       </div>
     </div>
 
@@ -138,6 +141,43 @@ function metricGroup(key) {
 function metricCount(key) {
   const g = metricGroup(key)
   return g ? (g.count != null ? g.count : g.tickets.length) : 0
+}
+
+// Honest sub-detail lines derived from each group's loaded tickets (matches the
+// Stitch metric cards' second line). Computed client-side — no extra API call.
+function daysSince(value) {
+  if (!value) return null
+  const d = new Date(String(value).slice(0, 10))
+  const today = new Date(new Date().toISOString().slice(0, 10))
+  return Math.round((today - d) / 86400000)
+}
+function oldestFollowUpDays(g) {
+  const dates = (g?.tickets || []).map((t) => t.next_follow_up_date).filter(Boolean)
+  if (!dates.length) return null
+  return daysSince(dates.reduce((a, b) => (a < b ? a : b)))
+}
+function highPriorityCount(g) {
+  return (g?.tickets || []).filter((t) => t.priority === 'High' || t.priority === 'Urgent').length
+}
+function metricSub(key) {
+  const g = metricGroup(key)
+  if (!g || !metricCount(key)) return ''
+  if (key === 'overdue_follow_up') {
+    const n = oldestFollowUpDays(g)
+    return n != null ? `Oldest: ${n}d overdue` : ''
+  }
+  if (key === 'due_today') {
+    const n = highPriorityCount(g)
+    return n ? `${n} high priority` : 'On schedule'
+  }
+  if (key === 'waiting_on_customer') {
+    const n = oldestFollowUpDays(g)
+    return n != null ? `Oldest: ${n}d` : 'Awaiting reply'
+  }
+  if (key === 'registration_pending') return 'Action required'
+  if (key === 'ready_for_pickup') return 'Ready to hand over'
+  if (key === 'new_complaints') return 'Needs triage'
+  return ''
 }
 function scrollToBucket(key) {
   const el = document.getElementById('bucket-' + key)
