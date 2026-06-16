@@ -61,6 +61,49 @@ def get_staff_recipients():
     return sorted(recipients)
 
 
+def get_manager_recipients():
+    """Managers + coordinators only — the audience for escalations."""
+    recipients = set()
+    for role in ["Lavanya Manager", "Lavanya Service Coordinator"]:
+        for holder in frappe.get_all(
+            "Has Role", filters={"role": role, "parenttype": "User"}, fields=["parent"], limit=500
+        ):
+            if _is_enabled_user(holder.parent):
+                recipients.add(holder.parent)
+    return sorted(recipients)
+
+
+def create_escalation_notifications(recipients=None):
+    """In-app HD Notification to managers for each escalated ticket (SLA failed or
+    follow-up overdue >= threshold), deduped per day. No email side effects."""
+    from lavanya_service.reports.manager_dashboard import get_escalation_report
+
+    recipients = recipients or get_manager_recipients()
+    results = {"recipients": recipients, "created": [], "deduped": [], "skipped": []}
+    if not recipients:
+        results["skipped"].append({"reason": "no_recipients"})
+        return results
+
+    tickets = get_escalation_report()
+    for user in recipients:
+        for row in tickets:
+            ticket_name = row.get("ticket")
+            if not ticket_name:
+                continue
+            reason = "SLA failed" if row.get("agreement_status") == "Failed" else f"overdue {row.get('overdue_days')}d"
+            parts = ["[Escalation]", f"Ticket: {ticket_name}", f"Reason: {reason}"]
+            if row.get("customer_name"):
+                parts.append(f"Customer: {row.get('customer_name')}")
+            res = create_hd_notification(user, ticket_name, "escalation", " | ".join(parts))
+            (results["created"] if res.get("created") else results["deduped"]).append(res)
+    return results
+
+
+def run_escalation_notifications_dry_safe():
+    """Scheduled (daily): in-app escalation reminders to managers; no email/task side effects."""
+    return create_escalation_notifications()
+
+
 def build_reminder_message(category, row):
     label = REMINDER_CATEGORIES.get(category, category)
     ticket_name = _ticket_name(row)

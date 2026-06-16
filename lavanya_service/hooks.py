@@ -560,6 +560,7 @@ fixtures.extend(
 scheduler_events = {
 	"daily": [
 		"lavanya_service.reminders.notification_output.run_daily_reminder_notifications_dry_safe",
+		"lavanya_service.reminders.notification_output.run_escalation_notifications_dry_safe",
 	],
 }
 # Lavanya Service print format fixtures

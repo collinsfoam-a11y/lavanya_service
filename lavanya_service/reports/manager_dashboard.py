@@ -1,6 +1,33 @@
 import frappe
 from frappe.utils import today, date_diff, getdate, add_days
 
+# A ticket escalates when its follow-up is overdue by at least this many days, or
+# its SLA has failed. Default 3 days — adjust here (or move to HD Settings) to suit
+# the service desk's policy.
+ESCALATION_OVERDUE_DAYS = 3
+
+
+def get_escalation_report():
+	"""Active tickets that need management attention: SLA failed, or follow-up
+	overdue by >= ESCALATION_OVERDUE_DAYS days. Worst (oldest) first."""
+	return frappe.db.sql(
+		"""
+		SELECT
+			name as ticket, customer_name, phone_1, brand, product_type, status,
+			agreement_status, pending_reason, next_follow_up_date,
+			DATEDIFF(%s, next_follow_up_date) as overdue_days, priority
+		FROM `tabHD Ticket`
+		WHERE status NOT IN ('Closed', 'Cancelled', 'Resolved')
+		  AND (
+			agreement_status = 'Failed'
+			OR (next_follow_up_date IS NOT NULL AND DATEDIFF(%s, next_follow_up_date) >= %s)
+		  )
+		ORDER BY next_follow_up_date ASC
+		""",
+		(today(), today(), ESCALATION_OVERDUE_DAYS),
+		as_dict=True,
+	)
+
 def get_daily_follow_up_report():
 	return frappe.db.sql("""
 		SELECT

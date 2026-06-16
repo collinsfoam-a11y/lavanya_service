@@ -10,7 +10,8 @@ from lavanya_service.reports.manager_dashboard import (
 	get_closure_report,
 	get_repeat_complaint_report,
 	get_warranty_override_report,
-	get_cancelled_tickets_report
+	get_cancelled_tickets_report,
+	get_escalation_report,
 )
 
 @frappe.whitelist()
@@ -74,6 +75,18 @@ def get_manager_dashboard(from_date=None, to_date=None):
 _MANAGER_ROLES = {"System Manager", "Lavanya Manager", "Lavanya Service Coordinator", "Lavanya Viewer"}
 
 REPORTS = {
+	"escalations": {
+		"title": "Escalations",
+		"description": "SLA failed, or follow-up overdue 3+ days — needs management action",
+		"icon": "priority_high",
+		"fn": get_escalation_report,
+		"manager_only": True,
+		"columns": [
+			("ticket", "Ticket"), ("customer_name", "Customer"), ("brand", "Brand"),
+			("status", "Status"), ("agreement_status", "SLA"),
+			("overdue_days", "Overdue (d)"), ("next_follow_up_date", "Follow-up"),
+		],
+	},
 	"daily_follow_up": {
 		"title": "Daily Follow-Up",
 		"description": "Active tickets needing follow-up today or overdue",
