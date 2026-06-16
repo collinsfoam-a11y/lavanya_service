@@ -1,7 +1,14 @@
 // Minimal Frappe API helper. Whitelisted GET methods don't need CSRF; the
 // browser session cookie authenticates. Returns the unwrapped `message`.
 export async function call(method, params = {}) {
-  const qs = new URLSearchParams(params).toString()
+  // Drop null/undefined so they aren't serialized as the literal strings
+  // "null"/"undefined" (URLSearchParams stringifies everything) — otherwise an
+  // optional filter like search=undefined silently matches nothing.
+  const clean = {}
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== null) clean[k] = v
+  }
+  const qs = new URLSearchParams(clean).toString()
   const res = await fetch(`/api/method/${method}${qs ? '?' + qs : ''}`, {
     method: 'GET',
     headers: { Accept: 'application/json' },
