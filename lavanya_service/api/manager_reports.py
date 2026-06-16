@@ -217,6 +217,77 @@ def get_report_catalog():
 
 
 @frappe.whitelist()
+def get_report_trends(days=30):
+	"""30-day (configurable) created-vs-resolved daily series + window totals.
+	Org-wide analytics — manager-gated; returns allowed:False for others."""
+	user = frappe.session.user
+	if not frappe.has_permission("HD Ticket", "read", user=user):
+		frappe.throw("Not permitted to read HD Ticket.", frappe.PermissionError)
+
+	if not set(frappe.get_roles(user)).intersection(_MANAGER_ROLES):
+		return {"allowed": False, "series": [], "totals": {}}
+
+	days = min(max(frappe.utils.cint(days) or 30, 7), 90)
+	start = frappe.utils.getdate(frappe.utils.add_days(frappe.utils.today(), -(days - 1)))
+
+	created = {
+		str(d): int(c)
+		for d, c in frappe.db.sql(
+			"SELECT DATE(creation), COUNT(*) FROM `tabHD Ticket` WHERE DATE(creation) >= %s GROUP BY DATE(creation)",
+			(start,),
+		)
+	}
+	resolved = {
+		str(d): int(c)
+		for d, c in frappe.db.sql(
+			"SELECT DATE(resolution_date), COUNT(*) FROM `tabHD Ticket` "
+			"WHERE resolution_date IS NOT NULL AND DATE(resolution_date) >= %s GROUP BY DATE(resolution_date)",
+			(start,),
+		)
+	}
+
+	series = []
+	for i in range(days):
+		ds = str(frappe.utils.getdate(frappe.utils.add_days(start, i)))
+		series.append({"date": ds, "created": created.get(ds, 0), "resolved": resolved.get(ds, 0)})
+
+	return {
+		"allowed": True,
+		"days": days,
+		"series": series,
+		"totals": {
+			"created": sum(p["created"] for p in series),
+			"resolved": sum(p["resolved"] for p in series),
+		},
+	}
+
+
+@frappe.whitelist()
+def get_report_breakdowns():
+	"""Counts by status and by closure type (closed/resolved tickets).
+	Org-wide analytics — manager-gated."""
+	user = frappe.session.user
+	if not frappe.has_permission("HD Ticket", "read", user=user):
+		frappe.throw("Not permitted to read HD Ticket.", frappe.PermissionError)
+
+	if not set(frappe.get_roles(user)).intersection(_MANAGER_ROLES):
+		return {"allowed": False, "by_status": [], "by_closure_type": []}
+
+	by_status = frappe.db.sql(
+		"SELECT status, COUNT(*) FROM `tabHD Ticket` GROUP BY status ORDER BY COUNT(*) DESC",
+	)
+	by_closure = frappe.db.sql(
+		"SELECT IFNULL(NULLIF(closure_type, ''), '(unset)'), COUNT(*) FROM `tabHD Ticket` "
+		"WHERE status IN ('Closed', 'Resolved') GROUP BY closure_type ORDER BY COUNT(*) DESC",
+	)
+	return {
+		"allowed": True,
+		"by_status": [{"label": k, "count": int(v)} for k, v in by_status],
+		"by_closure_type": [{"label": k, "count": int(v)} for k, v in by_closure],
+	}
+
+
+@frappe.whitelist()
 def get_report(report):
 	"""Return the column spec + rows for a single report (the drill-down list)."""
 	user = frappe.session.user

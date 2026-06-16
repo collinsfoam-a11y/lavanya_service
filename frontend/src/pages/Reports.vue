@@ -15,6 +15,50 @@
         <p class="font-body-md text-on-surface-variant">Open a report to drill into its tickets</p>
       </div>
 
+      <!-- Overview: trend + breakdowns (manager-only) -->
+      <section v-if="overview.allowed" class="mb-6 flex flex-col gap-4">
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-headline-md text-headline-md text-on-surface">Last {{ overview.days }} days</h3>
+            <div class="flex items-center gap-4 font-label-md text-label-md text-on-surface-variant">
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#004ac6"></span> Created {{ overview.totals?.created ?? 0 }}</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#1a7f37"></span> Resolved {{ overview.totals?.resolved ?? 0 }}</span>
+            </div>
+          </div>
+          <svg v-if="trend" :viewBox="`0 0 ${trend.W} ${trend.H}`" class="w-full" style="height: 130px" preserveAspectRatio="none">
+            <path :d="trend.created" fill="none" stroke="#004ac6" stroke-width="2" vector-effect="non-scaling-stroke" />
+            <path :d="trend.resolved" fill="none" stroke="#1a7f37" stroke-width="2" vector-effect="non-scaling-stroke" />
+          </svg>
+          <div v-if="trend" class="flex justify-between font-label-md text-label-md text-on-surface-variant mt-1">
+            <span>{{ trend.first }}</span><span>{{ trend.last }}</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-3">By status</h3>
+            <div v-for="b in overview.by_status" :key="b.label" class="flex items-center gap-2 mb-1.5">
+              <span class="font-label-md text-label-md text-on-surface-variant w-36 truncate">{{ b.label }}</span>
+              <div class="flex-1 h-3 bg-surface-container rounded-full overflow-hidden">
+                <div class="h-full bg-primary rounded-full" :style="{ width: barPct(b.count, overview.by_status) }"></div>
+              </div>
+              <span class="font-label-md text-label-md w-7 text-right text-on-surface">{{ b.count }}</span>
+            </div>
+          </div>
+          <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-3">By closure type</h3>
+            <div v-if="!overview.by_closure_type?.length" class="font-body-md text-on-surface-variant">No closed tickets yet.</div>
+            <div v-for="b in overview.by_closure_type" :key="b.label" class="flex items-center gap-2 mb-1.5">
+              <span class="font-label-md text-label-md text-on-surface-variant w-36 truncate" :title="b.label">{{ b.label }}</span>
+              <div class="flex-1 h-3 bg-surface-container rounded-full overflow-hidden">
+                <div class="h-full rounded-full" style="background:#1a7f37" :style="{ width: barPct(b.count, overview.by_closure_type) }"></div>
+              </div>
+              <span class="font-label-md text-label-md w-7 text-right text-on-surface">{{ b.count }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div v-if="loadingCatalog" class="text-on-surface-variant font-body-md py-12 text-center">
         Loading reports…
       </div>
@@ -58,13 +102,20 @@
 
       <div class="mb-gutter flex items-center gap-3">
         <span class="material-symbols-outlined text-primary" style="font-size: 28px">{{ active.icon }}</span>
-        <div>
+        <div class="flex-1">
           <h2 class="font-headline-lg text-headline-lg text-on-surface">
             {{ active.title }}
             <span class="font-body-md text-on-surface-variant">· {{ active.count }}</span>
           </h2>
           <p class="font-body-md text-on-surface-variant">{{ active.description }}</p>
         </div>
+        <button
+          v-if="active.count > 0"
+          @click="exportCsv"
+          class="flex items-center gap-1.5 px-4 h-9 rounded-lg border border-outline-variant text-primary font-label-md text-body-md hover:bg-surface-container-low"
+        >
+          <span class="material-symbols-outlined" style="font-size: 18px">download</span> Export CSV
+        </button>
       </div>
 
       <div v-if="loadingReport" class="text-on-surface-variant font-body-md py-12 text-center">
@@ -115,7 +166,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { call } from '@/api'
 import AppShell from '@/components/AppShell.vue'
 import TicketDetail from '@/components/TicketDetail.vue'
@@ -127,6 +178,62 @@ const catalogError = ref(false)
 const active = ref(null)
 const loadingReport = ref(false)
 const selectedTicket = ref(null)
+
+// ── Overview: trend + breakdowns (manager-only; silently hidden otherwise) ──
+const overview = ref({ allowed: false, series: [], by_status: [], by_closure_type: [], totals: {}, days: 30 })
+async function loadOverview() {
+  try {
+    const [t, b] = await Promise.all([
+      call('lavanya_service.api.manager_reports.get_report_trends'),
+      call('lavanya_service.api.manager_reports.get_report_breakdowns'),
+    ])
+    overview.value = { ...(t || {}), ...(b || {}), allowed: !!(t && t.allowed) }
+  } catch (e) {
+    overview.value = { ...overview.value, allowed: false }
+  }
+}
+
+const trend = computed(() => {
+  const s = overview.value.series || []
+  if (!s.length) return null
+  const W = 700
+  const H = 130
+  const max = Math.max(1, ...s.map((p) => Math.max(p.created, p.resolved)))
+  const x = (i) => (s.length === 1 ? W / 2 : (i / (s.length - 1)) * W)
+  const y = (v) => H - 6 - (v / max) * (H - 12)
+  const path = (k) => s.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p[k]).toFixed(1)}`).join(' ')
+  return { W, H, created: path('created'), resolved: path('resolved'), first: s[0].date, last: s[s.length - 1].date }
+})
+
+function barPct(count, list) {
+  const max = Math.max(1, ...(list || []).map((x) => x.count))
+  return `${Math.round((count / max) * 100)}%`
+}
+
+function exportCsv() {
+  if (!active.value?.rows?.length) return
+  const cols = active.value.columns
+  const esc = (v) => {
+    const s = v == null ? '' : String(v)
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+  }
+  const raw = (row, key) => {
+    const v = row[key]
+    if (v == null || v === '') return ''
+    return DATE_KEYS.test(key) ? String(v).slice(0, 10) : v
+  }
+  const lines = [cols.map((c) => esc(c.label)).join(',')]
+  for (const row of active.value.rows) lines.push(cols.map((c) => esc(raw(row, c.key))).join(','))
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${active.value.key}-${new Date().toISOString().slice(0, 10)}.csv`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
 
 async function loadCatalog() {
   loadingCatalog.value = true
@@ -161,6 +268,7 @@ function onRefresh() {
 }
 
 loadCatalog()
+loadOverview()
 
 // ── cell formatting ────────────────────────────────────────────────────────
 const DATE_KEYS = /(_date|_on|modified|closure_date|registration_date|receipt_date)$/
