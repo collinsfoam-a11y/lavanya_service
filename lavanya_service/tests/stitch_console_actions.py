@@ -61,11 +61,21 @@ def run():
 
     assert "Need Invoice Modal" in detail_content, "Need Invoice modal component missing"
     assert "post('lavanya_service.api.workflow_actions.need_invoice_from_customer'" in detail_content, "Need Invoice action not wired correctly"
-    
-    # Ensure others remain disabled (except Need Invoice)
-    # The string "Available in Phase 2C after write-action wiring" was used for disabled buttons
-    count_disabled = detail_content.count("Available in Phase 2C after write-action wiring and role smoke.")
-    assert count_disabled >= 4, f"Expected other actions to remain disabled, found {count_disabled} disabled actions"
+
+    # Phase 2 wired ALL remaining quick actions via the generic action modal, so
+    # the old "Available in Phase 2C" disabled placeholders must be gone and each
+    # action must be wired to openAction(...) + its endpoint.
+    assert "Available in Phase 2C" not in detail_content, "Stale disabled-action placeholder still present"
+    for key in ("brand_complaint", "follow_up_sc", "waiting_part", "customer_confirmed", "close_ticket"):
+        assert f"openAction('{key}')" in detail_content, f"Quick action '{key}' not wired to openAction"
+    for endpoint in (
+        "register_brand_complaint",
+        "follow_up_service_center",
+        "waiting_for_part",
+        "customer_confirmed",
+        "close_ticket",
+    ):
+        assert endpoint in detail_content, f"Action endpoint '{endpoint}' not referenced in drawer"
 
     # --- Product Receipt Tests ---
     print("Running Product Receipt tests...")
