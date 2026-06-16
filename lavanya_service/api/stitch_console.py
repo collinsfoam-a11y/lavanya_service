@@ -14,6 +14,11 @@ _LIST_FIELDS = [
     "pending_reason",
     "modified",
     "creation",
+    # SLA (Helpdesk-maintained) — surfaced as due/breach badges in the SPA.
+    "agreement_status",
+    "response_by",
+    "resolution_by",
+    "first_responded_on",
 ]
 
 
@@ -199,6 +204,14 @@ def get_ticket_detail(ticket_id):
             "custody_status": custody_status,
             "last_movement": last_movement,
             "ready_for_pickup": ready_for_pickup
+        },
+        "sla": {
+            "name": ticket.get("sla"),
+            "agreement_status": ticket.get("agreement_status"),
+            "response_by": ticket.get("response_by"),
+            "resolution_by": ticket.get("resolution_by"),
+            "first_responded_on": ticket.get("first_responded_on"),
+            "resolution_date": ticket.get("resolution_date"),
         },
         "assigned_to": ticket._assign if ticket._assign else None,
         "creation": ticket.creation

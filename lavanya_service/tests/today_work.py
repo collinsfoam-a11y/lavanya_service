@@ -38,6 +38,10 @@ SAFE_TICKET_FIELDS = {
 	"next_follow_up_date",
 	"service_product_receipt",
 	"modified",
+	"agreement_status",
+	"response_by",
+	"resolution_by",
+	"first_responded_on",
 }
 
 FOLLOW_UP_STATUSES = {

@@ -45,6 +45,11 @@ SAFE_TICKET_FIELDS = [
 	"next_follow_up_date",
 	"service_product_receipt",
 	"modified",
+	# SLA (Helpdesk-maintained) — surfaced as due/breach badges in the SPA.
+	"agreement_status",
+	"response_by",
+	"resolution_by",
+	"first_responded_on",
 ]
 
 CLASSIFICATION_FIELDS = [

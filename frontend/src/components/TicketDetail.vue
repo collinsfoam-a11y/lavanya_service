@@ -13,9 +13,10 @@
             <div class="flex items-start justify-between">
               <div>
                 <h2 class="font-headline-lg text-headline-lg text-on-surface">{{ ticket.name }}</h2>
-                <div class="flex gap-2 mt-2">
+                <div class="flex flex-wrap gap-2 mt-2">
                   <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="chip(ticket.status)">{{ ticket.status }}</span>
                   <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md bg-surface-variant text-on-surface-variant">{{ ticket.priority }}</span>
+                  <SlaBadge :agreement-status="ticket.sla?.agreement_status" :response-by="ticket.sla?.response_by" :resolution-by="ticket.sla?.resolution_by" />
                 </div>
               </div>
               <button @click="close" class="p-2 rounded hover:bg-surface-container-low">
@@ -71,6 +72,12 @@
               <div><span class="block text-label-md text-outline">Service Center</span> {{ ticket.workflow?.service_center || '—' }}</div>
               <div><span class="block text-label-md text-outline">Brand Ticket</span> {{ ticket.workflow?.brand_ticket_number || '—' }}</div>
               <div><span class="block text-label-md text-outline">Brand Reg Date</span> {{ ticket.workflow?.brand_registration_date || '—' }}</div>
+              <div>
+                <span class="block text-label-md text-outline">SLA</span>
+                <SlaBadge v-if="ticket.sla?.agreement_status" :agreement-status="ticket.sla.agreement_status" :response-by="ticket.sla.response_by" :resolution-by="ticket.sla.resolution_by" />
+                <template v-else>—</template>
+              </div>
+              <div><span class="block text-label-md text-outline">Resolution Due</span> {{ ticket.sla?.resolution_by?.substring(0,16) || '—' }}</div>
             </div>
           </section>
 
@@ -480,6 +487,7 @@
 <script setup>
 import { ref, watch, reactive, computed } from 'vue'
 import { call, post } from '@/api'
+import SlaBadge from '@/components/SlaBadge.vue'
 
 const props = defineProps({
   ticketId: { type: String, default: null }

@@ -78,6 +78,7 @@
             </div>
             <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md"
                   :style="chip(t.status)">{{ t.status }}</span>
+            <SlaBadge :agreement-status="t.agreement_status" :response-by="t.response_by" :resolution-by="t.resolution_by" />
             <div class="flex-1 min-w-[130px] font-label-md text-label-md text-on-surface-variant">
               {{ t.pending_reason || '' }}
             </div>
@@ -102,6 +103,7 @@ import { ref, computed, onMounted } from 'vue'
 import { call } from '@/api'
 import AppShell from '@/components/AppShell.vue'
 import TicketDetail from '@/components/TicketDetail.vue'
+import SlaBadge from '@/components/SlaBadge.vue'
 
 const raw = ref({})
 const loading = ref(true)
