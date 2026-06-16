@@ -7,16 +7,24 @@ They exist so the project stays self-documenting and every change is traceable.
 This is the canonical rule file. Tool-specific files (`CLAUDE.md`, `.cursorrules`,
 `.github/copilot-instructions.md`) just point here — edit *this* file.
 
-## Rule 1 — Read the status doc FIRST
+## Rule 0 — Never assume requirements
 
-Before doing anything else in this app, **read
-[`doc/lavanya-spa-status.md`](doc/lavanya-spa-status.md)** in full. It is the
-single source of truth for:
-- what is already built (and the commit that built it),
-- what is pending (P1–Pn) and how to build each,
-- the architecture/file map and the build/serve loop,
-- the verification playbook (build grep → `bench execute` → serve `200` →
-  authenticated screenshots).
+Requirements are defined in
+**[`doc/lavanya-requirements.md`](doc/lavanya-requirements.md)** — source-grounded,
+with every claim citing the file it came from. If something you need is not stated
+there and not verifiable in code, it is an **open question** (§10 of that doc):
+**ask a human; do not invent, guess, or assume it.** When you resolve an open
+question, write it into the requirements doc with its source.
+
+## Rule 1 — Read the docs FIRST
+
+Before doing anything else in this app, read **both**:
+1. **[`doc/lavanya-requirements.md`](doc/lavanya-requirements.md)** — what the app
+   is for, roles, domain model, authoritative option lists, lifecycle, business
+   rules, and the open-questions you must not assume.
+2. **[`doc/lavanya-spa-status.md`](doc/lavanya-spa-status.md)** — what is built
+   (with commits), what is pending (P1–Pn) and how to build each, the architecture/
+   file map, the build/serve loop, and the verification playbook.
 
 Do not re-derive any of this from scratch or duplicate work already listed there.
 
