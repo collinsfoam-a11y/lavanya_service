@@ -49,6 +49,7 @@ All on the frappe-ui theme base. Newest first.
 
 | Commit | What | Verified |
 |---|---|---|
+| `0d3a649` | **Reporting depth** (gap-analysis change #7): Reports overview gains a 30-day created-vs-resolved trend (SVG), status + closure-type breakdown bars (manager-only), and per-report CSV export. New `get_report_trends`/`get_report_breakdowns`. | SPA + report tests; browser screenshot shows trend + breakdowns |
 | `cc013fc` | **SLA visibility** (gap-analysis change #2): shared `SlaBadge` shows Helpdesk SLA state (breached/met/paused/due) on Tickets, Today's Work, and the ticket drawer. SLA fields added to the list/today-work/detail payloads. | 24 today_work + SPA tests; browser screenshots show breached/due badges |
 | `4e6b972` | **Status-model unification** (gap-analysis change #1): Today's Work derives active/terminal from the unified `status_category` (Resolved=terminal) instead of hard-coded status strings — robust to any status incl. Helpdesk-native Open/Replied. | 24 today_work tests (incl. Replied TW-014c) + live check; payload doesn't leak status_category |
 | `43c0ca0` | **Fix**: `cache: 'no-store'` on API reads so a refresh always shows live data (no-cache-header responses could be served stale by the browser heuristic cache). | browser diag: pages load live data |
