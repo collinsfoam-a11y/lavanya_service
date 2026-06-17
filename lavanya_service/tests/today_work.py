@@ -54,6 +54,13 @@ SAFE_TICKET_FIELDS = {
 	"customer_informed",
 	"customer_promised_update_at",
 	"customer_promise_status",
+	# Reminder-engine resolver output (Step 3) — additive, non-sensitive.
+	"reminder_rule_applied",
+	"computed_next_followup_at",
+	"computed_due_soon_at",
+	"computed_stage_due_at",
+	"computed_escalation_level",
+	"customer_update_due",
 }
 
 FOLLOW_UP_STATUSES = {

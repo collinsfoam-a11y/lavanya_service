@@ -75,6 +75,12 @@ CLASSIFICATION_FIELDS = [
 	"closure_type",
 	"creation",
 	"is_repeated_complaint",
+	# Reminder-engine resolver inputs (Step 3) — selected so rule matching /
+	# escalation / customer-update-due are accurate. NOT exposed in the payload
+	# (only SAFE_TICKET_FIELDS keys are returned), so no operator-field leak.
+	"customer_informed_at",
+	"customer_priority",
+	"warranty_route",
 ]
 
 GROUPS = [
@@ -372,7 +378,36 @@ def _safe_ticket_payload(row):
 		_value(row, "next_follow_up_date"),
 		is_repeat=(_value(row, "is_repeated_complaint") == "Yes"),
 	)
+	_attach_reminder_state(payload, row)
 	return payload
+
+
+# Resolver-backed fields exposed on the payload (Step 3). Additive and safe — they
+# never replace the existing due-today / overdue classification, which still drives
+# grouping. Computed in-memory from cached active rules (no per-row DB query).
+REMINDER_STATE_FIELDS = (
+	"reminder_rule_applied",
+	"computed_next_followup_at",
+	"computed_due_soon_at",
+	"computed_stage_due_at",
+	"computed_escalation_level",
+	"customer_update_due",
+)
+
+
+def _attach_reminder_state(payload, row):
+	"""Best-effort: add Reminder-engine values to the row. Wrapped so a resolver
+	error can never break Today's Work (the canonical classification stands)."""
+	try:
+		from lavanya_service.reminder_engine import refresh_ticket_reminder_state, get_active_rules
+
+		state = refresh_ticket_reminder_state(row, save=False, rules=get_active_rules())
+		for field in REMINDER_STATE_FIELDS:
+			payload[field] = state.get(field)
+	except Exception:
+		frappe.log_error(title="lavanya reminder_state (today_work)", message=frappe.get_traceback())
+		for field in REMINDER_STATE_FIELDS:
+			payload.setdefault(field, None)
 
 
 def _summary(groups):
