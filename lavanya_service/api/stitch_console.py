@@ -236,6 +236,31 @@ def add_ticket_note(ticket_id, note):
     }
 
 
+@frappe.whitelist(methods=["POST"])
+def schedule_appointment(ticket_name, appointment_datetime, technician=None, notes=None):
+    """Schedule a site-visit appointment for a ticket (date+time+technician).
+    Stored in the Lavanya Service Appointment doctype — no HD Ticket schema change."""
+    if frappe.session.user == "Guest":
+        frappe.throw("Not permitted", frappe.PermissionError)
+    if not frappe.db.exists("HD Ticket", ticket_name):
+        frappe.throw("Ticket not found.")
+    if not frappe.has_permission("HD Ticket", "write", doc=ticket_name):
+        frappe.throw("Not permitted", frappe.PermissionError)
+
+    dt = (appointment_datetime or "").replace("T", " ").strip()
+    if not dt:
+        frappe.throw("Appointment date & time is required.")
+
+    appt = frappe.new_doc("Lavanya Service Appointment")
+    appt.ticket = ticket_name
+    appt.appointment_datetime = dt
+    appt.technician = (technician or "").strip() or None
+    appt.notes = (notes or "").strip() or None
+    appt.status = "Scheduled"
+    appt.insert()
+    return {"ok": True, "appointment": appt.name, "message": "Appointment scheduled"}
+
+
 @frappe.whitelist()
 def get_ticket_detail(ticket_id):
     if frappe.session.user == "Guest":
@@ -317,6 +342,15 @@ def get_ticket_detail(ticket_id):
             "is_repeat": ticket.get("is_repeated_complaint") == "Yes",
             "previous_ticket": ticket.get("previous_ticket_link"),
         },
+        "appointment": (lambda a: a[0] if a else None)(
+            frappe.get_all(
+                "Lavanya Service Appointment",
+                filters={"ticket": ticket_id, "status": "Scheduled"},
+                fields=["name", "appointment_datetime", "technician"],
+                order_by="appointment_datetime asc",
+                limit=1,
+            )
+        ),
         "assigned_to": ticket._assign if ticket._assign else None,
         "creation": ticket.creation
     }

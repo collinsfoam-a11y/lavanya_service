@@ -109,6 +109,13 @@
                 <template v-else>—</template>
               </div>
               <div><span class="block text-label-md text-outline">Resolution Due</span> {{ ticket.sla?.resolution_by?.substring(0,16) || '—' }}</div>
+              <div v-if="ticket.appointment" class="col-span-2">
+                <span class="block text-label-md text-outline">Appointment</span>
+                <span class="inline-flex items-center gap-1 text-on-surface">
+                  <span class="material-symbols-outlined text-primary" style="font-size:16px">event</span>
+                  {{ ticket.appointment.appointment_datetime?.substring(0,16) }}<template v-if="ticket.appointment.technician"> · {{ ticket.appointment.technician }}</template>
+                </span>
+              </div>
             </div>
           </section>
 
@@ -210,6 +217,10 @@
 
           <button @click="openAction('waiting_part')" class="w-full px-4 py-3 bg-primary-container text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
             <span class="material-symbols-outlined" style="font-size: 18px">build</span> Waiting for Part
+          </button>
+
+          <button @click="openAction('schedule_appointment')" class="w-full px-4 py-3 bg-primary-container text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">event</span> Schedule Appointment
           </button>
 
           <button @click="openProductReceipt" class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
@@ -920,6 +931,15 @@ const ACTIONS = {
     title: 'Reopen Ticket', icon: 'restart_alt', submitLabel: 'Reopen', danger: true, target: 'ticket',
     endpoint: 'lavanya_service.api.product_receipt_actions.reopen_ticket',
     fields: [{ key: 'reopen_reason', label: 'Reason for reopening', type: 'textarea', required: true, placeholder: 'e.g. Customer reports the issue persists' }],
+  },
+  schedule_appointment: {
+    title: 'Schedule Appointment', icon: 'event', submitLabel: 'Schedule', target: 'ticket',
+    endpoint: 'lavanya_service.api.stitch_console.schedule_appointment',
+    fields: [
+      { key: 'appointment_datetime', label: 'Date & Time', type: 'datetime-local', required: true },
+      { key: 'technician', label: 'Technician', type: 'text', required: false, placeholder: 'Name of the technician' },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
   },
 }
 

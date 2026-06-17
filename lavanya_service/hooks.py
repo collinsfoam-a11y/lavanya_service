@@ -91,8 +91,14 @@ required_apps = ["helpdesk"]
 # enforced after every install/migrate. Master records (brands, etc.) are seeded
 # here by code rather than via record fixtures, which failed on fresh installs
 # (controller resolution before the custom DocType was visible).
-after_install = "lavanya_service.setup.install.after_install"
-after_migrate = "lavanya_service.setup.install.after_migrate"
+after_install = [
+	"lavanya_service.setup.install.after_install",
+	"lavanya_service.setup.appointment.create_appointment_doctype",
+]
+after_migrate = [
+	"lavanya_service.setup.install.after_migrate",
+	"lavanya_service.setup.appointment.create_appointment_doctype",
+]
 
 # Uninstallation
 # ------------
