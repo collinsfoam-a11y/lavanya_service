@@ -2,16 +2,18 @@
 
 {% block page_content %}
 <style>
+  /* Stitch "Lavanya Service Console" design tokens — matches the staff SPA. */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
   :root {
-    --lv-primary: #1a73e8;
-    --lv-primary-dark: #1557b0;
-    --lv-bg: #f8f9fa;
+    --lv-primary: #004ac6;
+    --lv-primary-dark: #003a9e;
+    --lv-bg: #f8f9ff;
     --lv-card-bg: #ffffff;
-    --lv-border: #dadce0;
-    --lv-text: #202124;
-    --lv-text-muted: #5f6368;
-    --lv-success: #0d9e5f;
-    --lv-error: #d93025;
+    --lv-border: #c3c6d7;
+    --lv-text: #121c28;
+    --lv-text-muted: #434655;
+    --lv-success: #1a7f37;
+    --lv-error: #ba1a1a;
     --lv-radius: 12px;
   }
 
@@ -19,8 +21,9 @@
     max-width: 560px;
     margin: 0 auto;
     padding: 24px 16px 48px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: var(--lv-text);
+    -webkit-font-smoothing: antialiased;
   }
 
   .qr-header {
@@ -84,7 +87,7 @@
   .qr-field select:focus,
   .qr-field textarea:focus {
     border-color: var(--lv-primary);
-    box-shadow: 0 0 0 2px rgba(26,115,232,.15);
+    box-shadow: 0 0 0 2px rgba(0,74,198,.15);
   }
 
   .qr-field textarea {
