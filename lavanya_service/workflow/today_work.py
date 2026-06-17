@@ -50,6 +50,17 @@ SAFE_TICKET_FIELDS = [
 	"response_by",
 	"resolution_by",
 	"first_responded_on",
+	# Stage layer (delta Sprint 2) — surfaced + used for grouping/Due-Soon.
+	"service_flow_type",
+	"current_service_stage",
+	"next_action",
+	"next_action_owner",
+	"next_action_role",
+	"stage_due_at",
+	"pre_overdue_alert_at",
+	"overdue_status",
+	"escalation_level",
+	"customer_informed",
 ]
 
 CLASSIFICATION_FIELDS = [
@@ -61,6 +72,7 @@ CLASSIFICATION_FIELDS = [
 	"customer_confirmation_received",
 	"closure_type",
 	"creation",
+	"is_repeated_complaint",
 ]
 
 GROUPS = [
@@ -339,7 +351,23 @@ def _is_closure_pending(row):
 
 
 def _safe_ticket_payload(row):
-	return {fieldname: _json_safe(_value(row, fieldname)) for fieldname in SAFE_TICKET_FIELDS}
+	from lavanya_service.stage_rules import compute_overdue_status, compute_escalation_level
+
+	payload = {fieldname: _json_safe(_value(row, fieldname)) for fieldname in SAFE_TICKET_FIELDS}
+	# Live Due-Soon / escalation (delta Sprint 2): stage-SLA first, falling back to
+	# the existing next_follow_up_date so old tickets without stage fields still work.
+	# These override any stale stored value in the returned payload.
+	payload["overdue_status"] = compute_overdue_status(
+		_value(row, "stage_due_at"),
+		_value(row, "pre_overdue_alert_at"),
+		_value(row, "next_follow_up_date"),
+	)
+	payload["escalation_level"] = compute_escalation_level(
+		_value(row, "stage_due_at"),
+		_value(row, "next_follow_up_date"),
+		is_repeat=(_value(row, "is_repeated_complaint") == "Yes"),
+	)
+	return payload
 
 
 def _summary(groups):

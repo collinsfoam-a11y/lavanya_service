@@ -67,6 +67,25 @@
             </ul>
           </div>
 
+          <!-- Service Stage (delta Sprint 2) — read display, blank-safe -->
+          <section v-if="ticket.stage">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Service Stage</h3>
+            <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
+              <div><span class="block text-label-md text-outline">Flow</span> {{ ticket.stage.service_flow_type || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Stage</span> {{ ticket.stage.current_service_stage || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Next Action</span> {{ ticket.stage.next_action || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Owner</span> {{ ticket.stage.next_action_owner || ticket.stage.next_action_role || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Next Follow-up</span> {{ ticket.stage.next_follow_up_date || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Stage Due</span> {{ ticket.stage.stage_due_at?.substring(0,16) || '—' }}</div>
+              <div>
+                <span class="block text-label-md text-outline">Due Status</span>
+                <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="dueChip(ticket.stage.overdue_status)">{{ ticket.stage.overdue_status || '—' }}</span>
+              </div>
+              <div><span class="block text-label-md text-outline">Escalation</span> {{ ticket.stage.escalation_level && ticket.stage.escalation_level !== 'None' ? ticket.stage.escalation_level : '—' }}</div>
+              <div><span class="block text-label-md text-outline">Customer Informed</span> {{ ticket.stage.customer_informed || '—' }}</div>
+            </div>
+          </section>
+
           <!-- Customer Summary -->
           <section>
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Customer</h3>
@@ -1015,6 +1034,11 @@ function hexToRgba(hex, a) {
 }
 function chip(status) {
   const hue = STATUS_HUE[status] || '#434655'
+  return { color: hue, background: hexToRgba(hue, 0.12) }
+}
+const DUE_HUE = { 'Due Soon': '#943700', Overdue: '#ba1a1a', Breached: '#93000a', 'Not Due': '#1a7f37' }
+function dueChip(status) {
+  const hue = DUE_HUE[status] || '#434655'
   return { color: hue, background: hexToRgba(hue, 0.12) }
 }
 function ticketAge(creationDate) {

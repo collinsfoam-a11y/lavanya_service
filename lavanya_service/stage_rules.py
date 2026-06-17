@@ -148,6 +148,56 @@ def flow_for_ticket_type(ticket_type):
 	return TICKET_TYPE_TO_FLOW.get(ticket_type, "Customer Complaint - Site")
 
 
+# ── Due-Soon / overdue / escalation (delta plan §7, Sprint 2) ──────────────────
+# Stage-SLA first (stage_due_at / pre_overdue_alert_at); fall back to the existing
+# date-based next_follow_up_date so old tickets without stage fields keep working.
+def compute_overdue_status(stage_due_at=None, pre_overdue_alert_at=None, next_follow_up_date=None, now=None):
+	from frappe.utils import getdate, get_datetime, now_datetime, today as _today
+
+	now = now or now_datetime()
+	if stage_due_at:
+		due = get_datetime(stage_due_at)
+		if now >= due:
+			return "Overdue"
+		if pre_overdue_alert_at and get_datetime(pre_overdue_alert_at) <= now < due:
+			return "Due Soon"
+		return "Not Due"
+	# Fallback: existing date-based due-today / overdue.
+	if next_follow_up_date:
+		d, t = getdate(next_follow_up_date), getdate(_today())
+		if d < t:
+			return "Overdue"
+		if d == t:
+			return "Due Soon"
+	return "Not Due"
+
+
+def overdue_days(stage_due_at=None, next_follow_up_date=None, now=None):
+	from frappe.utils import getdate, get_datetime, now_datetime, today as _today, date_diff
+
+	now = now or now_datetime()
+	if stage_due_at:
+		return max(0, int((now - get_datetime(stage_due_at)).total_seconds() // 86400))
+	if next_follow_up_date:
+		return max(0, date_diff(getdate(_today()), getdate(next_follow_up_date)))
+	return 0
+
+
+def compute_escalation_level(stage_due_at=None, next_follow_up_date=None, is_repeat=False, now=None):
+	"""Derive escalation_level from how overdue a ticket is (delta plan mapping).
+	Used for filtering/reporting only — NOT a second escalation engine."""
+	od = overdue_days(stage_due_at, next_follow_up_date, now)
+	if od >= 4:
+		return "Owner"
+	if od >= 2:
+		return "Manager"
+	if od >= 1:
+		return "Coordinator"
+	if is_repeat:
+		return "Manager"
+	return "None"
+
+
 def assign_defaults(doc):
 	"""Populate stage fields for a new/unstaged ticket without overriding anything
 	staff already set. Safe to call on validate — never touches terminal tickets."""

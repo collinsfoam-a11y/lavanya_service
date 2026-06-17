@@ -1,5 +1,24 @@
 import frappe
 
+
+def _stage_overdue_status(ticket):
+    from lavanya_service.stage_rules import compute_overdue_status
+
+    return compute_overdue_status(
+        ticket.get("stage_due_at"), ticket.get("pre_overdue_alert_at"), ticket.get("next_follow_up_date")
+    )
+
+
+def _stage_escalation_level(ticket):
+    from lavanya_service.stage_rules import compute_escalation_level
+
+    return compute_escalation_level(
+        ticket.get("stage_due_at"),
+        ticket.get("next_follow_up_date"),
+        is_repeat=(ticket.get("is_repeated_complaint") == "Yes"),
+    )
+
+
 # Ticket fields safe to surface in the SPA list view.
 _LIST_FIELDS = [
     "name",
@@ -351,6 +370,19 @@ def get_ticket_detail(ticket_id):
                 limit=1,
             )
         ),
+        "stage": {
+            "service_flow_type": ticket.get("service_flow_type"),
+            "current_service_stage": ticket.get("current_service_stage"),
+            "next_action": ticket.get("next_action"),
+            "next_action_owner": ticket.get("next_action_owner"),
+            "next_action_role": ticket.get("next_action_role"),
+            "next_follow_up_date": ticket.get("next_follow_up_date"),
+            "stage_due_at": ticket.get("stage_due_at"),
+            "pre_overdue_alert_at": ticket.get("pre_overdue_alert_at"),
+            "overdue_status": _stage_overdue_status(ticket),
+            "escalation_level": _stage_escalation_level(ticket),
+            "customer_informed": ticket.get("customer_informed"),
+        },
         "assigned_to": ticket._assign if ticket._assign else None,
         "creation": ticket.creation
     }

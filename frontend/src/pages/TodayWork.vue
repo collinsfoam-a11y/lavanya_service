@@ -41,13 +41,35 @@
       <div class="text-on-surface-variant font-body-lg">All clear — no pending work right now.</div>
     </div>
 
-    <!-- Action Queue -->
-    <div v-else class="lav-queue">
+    <!-- Action Queue + stage/flow filters (delta Sprint 2) -->
+    <template v-else>
+      <div class="flex flex-wrap items-center gap-2 mb-gutter">
+        <select v-model="filters.flow" class="lav-input" style="width:auto;min-width:150px;height:36px">
+          <option value="">All flows</option>
+          <option v-for="o in filterOptions.flow" :key="o" :value="o">{{ o }}</option>
+        </select>
+        <select v-model="filters.stage" class="lav-input" style="width:auto;min-width:160px;height:36px">
+          <option value="">All stages</option>
+          <option v-for="o in filterOptions.stage" :key="o" :value="o">{{ o }}</option>
+        </select>
+        <select v-model="filters.due" class="lav-input" style="width:auto;min-width:130px;height:36px">
+          <option value="">Any due status</option>
+          <option v-for="o in DUE_OPTIONS" :key="o" :value="o">{{ o }}</option>
+        </select>
+        <select v-model="filters.escalation" class="lav-input" style="width:auto;min-width:140px;height:36px">
+          <option value="">Any escalation</option>
+          <option v-for="o in ESC_OPTIONS" :key="o" :value="o">{{ o }}</option>
+        </select>
+        <button v-if="anyFilter" @click="clearFilters" class="lav-chip">Clear filters</button>
+        <span class="font-label-md text-label-md text-on-surface-variant ml-auto">{{ filteredCount }} shown</span>
+      </div>
+
+      <div class="lav-queue">
       <div class="lav-queue__title">
         <span class="material-symbols-outlined">checklist</span> Action Queue
       </div>
       <div
-        v-for="group in groups"
+        v-for="group in filteredGroups"
         :key="group.key"
         :id="'bucket-' + group.key"
         class="lav-bucket"
@@ -79,6 +101,7 @@
             <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md"
                   :style="chip(t.status)">{{ t.status }}</span>
             <SlaBadge :agreement-status="t.agreement_status" :response-by="t.response_by" :resolution-by="t.resolution_by" />
+            <span v-if="t.overdue_status && t.overdue_status !== 'Not Due'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="dueChip(t.overdue_status)">{{ t.overdue_status }}</span>
             <div class="flex-1 min-w-[130px] font-label-md text-label-md text-on-surface-variant">
               {{ t.pending_reason || '' }}
             </div>
@@ -91,7 +114,8 @@
           </li>
         </ul>
       </div>
-    </div>
+      </div>
+    </template>
 
     <!-- Ticket Detail Drawer -->
     <TicketDetail :ticketId="selectedTicket" @close="selectedTicket = null" @refresh="loadTodayWork" />
@@ -99,7 +123,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { call } from '@/api'
 import AppShell from '@/components/AppShell.vue'
 import TicketDetail from '@/components/TicketDetail.vue'
@@ -127,6 +151,43 @@ onMounted(loadTodayWork)
 const data = computed(() => raw.value || {})
 const groups = computed(() => data.value.groups || [])
 const summary = computed(() => data.value.summary || { total: 0, overdue: 0, due_today: 0 })
+
+// ── Stage / flow / due / escalation filtering (delta Sprint 2) ─────────────────
+const filters = reactive({ flow: '', stage: '', due: '', escalation: '' })
+const DUE_OPTIONS = ['Due Soon', 'Overdue', 'Breached', 'Not Due']
+const ESC_OPTIONS = ['Coordinator', 'Manager', 'Owner']
+const allTickets = computed(() => groups.value.flatMap((g) => g.tickets || []))
+const filterOptions = computed(() => ({
+  flow: [...new Set(allTickets.value.map((t) => t.service_flow_type).filter(Boolean))].sort(),
+  stage: [...new Set(allTickets.value.map((t) => t.current_service_stage).filter(Boolean))].sort(),
+}))
+const anyFilter = computed(() => !!(filters.flow || filters.stage || filters.due || filters.escalation))
+function matchesFilters(t) {
+  if (filters.flow && t.service_flow_type !== filters.flow) return false
+  if (filters.stage && t.current_service_stage !== filters.stage) return false
+  if (filters.due && t.overdue_status !== filters.due) return false
+  if (filters.escalation && t.escalation_level !== filters.escalation) return false
+  return true
+}
+const filteredGroups = computed(() => {
+  if (!anyFilter.value) return groups.value
+  return groups.value.map((g) => {
+    const tickets = (g.tickets || []).filter(matchesFilters)
+    return { ...g, tickets, count: tickets.length }
+  })
+})
+const filteredCount = computed(() => filteredGroups.value.reduce((n, g) => n + (g.tickets?.length || 0), 0))
+function clearFilters() {
+  filters.flow = ''
+  filters.stage = ''
+  filters.due = ''
+  filters.escalation = ''
+}
+const DUE_HUE = { 'Due Soon': '#943700', Overdue: '#ba1a1a', Breached: '#93000a', 'Not Due': '#1a7f37' }
+function dueChip(status) {
+  const hue = DUE_HUE[status] || '#434655'
+  return { color: hue, background: hexToRgba(hue, 0.12) }
+}
 
 // 6 priority metric cards (Stitch "Today's Work Dashboard").
 const METRICS = [

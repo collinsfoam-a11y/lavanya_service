@@ -42,6 +42,16 @@ SAFE_TICKET_FIELDS = {
 	"response_by",
 	"resolution_by",
 	"first_responded_on",
+	"service_flow_type",
+	"current_service_stage",
+	"next_action",
+	"next_action_owner",
+	"next_action_role",
+	"stage_due_at",
+	"pre_overdue_alert_at",
+	"overdue_status",
+	"escalation_level",
+	"customer_informed",
 }
 
 FOLLOW_UP_STATUSES = {
