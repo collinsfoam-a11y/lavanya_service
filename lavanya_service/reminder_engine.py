@@ -327,9 +327,11 @@ def _persist_state(ticket, stage_due, due_soon, escalation, status, next_followu
 		return
 	meta = frappe.get_meta("HD Ticket")
 	values = {}
-	if meta.has_field("stage_due_at"):
+	# Only write stage_due / pre-overdue when we actually computed one — a ticket
+	# with no stage SLA yields None, and we must not wipe an existing value.
+	if stage_due is not None and meta.has_field("stage_due_at"):
 		values["stage_due_at"] = stage_due
-	if meta.has_field("pre_overdue_alert_at"):
+	if due_soon is not None and meta.has_field("pre_overdue_alert_at"):
 		values["pre_overdue_alert_at"] = due_soon
 	if meta.has_field("escalation_level"):
 		values["escalation_level"] = escalation

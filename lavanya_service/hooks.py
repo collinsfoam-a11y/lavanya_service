@@ -568,6 +568,12 @@ fixtures.extend(
 
 # Lavanya Service scheduler events
 scheduler_events = {
+	"hourly": [
+		# Reminder engine Step 4: persist computed reminder state (stage_due,
+		# pre-overdue, overdue_status, escalation_level, promise breach) for active
+		# tickets. Idempotent + batched + non-destructive (no messages, no closures).
+		"lavanya_service.tasks.reminder_refresh.refresh_active_ticket_reminders",
+	],
 	"daily": [
 		"lavanya_service.reminders.notification_output.run_daily_reminder_notifications_dry_safe",
 		"lavanya_service.reminders.notification_output.run_escalation_notifications_dry_safe",
