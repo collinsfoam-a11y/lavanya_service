@@ -95,11 +95,13 @@ after_install = [
 	"lavanya_service.setup.install.after_install",
 	"lavanya_service.setup.appointment.create_appointment_doctype",
 	"lavanya_service.setup.service_stages.create_service_stage_fields",
+	"lavanya_service.setup.reminder_rule.create_reminder_rule_doctype",
 ]
 after_migrate = [
 	"lavanya_service.setup.install.after_migrate",
 	"lavanya_service.setup.appointment.create_appointment_doctype",
 	"lavanya_service.setup.service_stages.create_service_stage_fields",
+	"lavanya_service.setup.reminder_rule.create_reminder_rule_doctype",
 ]
 
 # Uninstallation
