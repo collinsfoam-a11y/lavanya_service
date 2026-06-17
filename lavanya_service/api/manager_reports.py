@@ -12,6 +12,7 @@ from lavanya_service.reports.manager_dashboard import (
 	get_warranty_override_report,
 	get_cancelled_tickets_report,
 	get_escalation_report,
+	get_stage_missing_report,
 )
 
 @frappe.whitelist()
@@ -75,6 +76,17 @@ def get_manager_dashboard(from_date=None, to_date=None):
 _MANAGER_ROLES = {"System Manager", "Lavanya Manager", "Lavanya Service Coordinator", "Lavanya Viewer"}
 
 REPORTS = {
+	"stage_missing": {
+		"title": "Stage Missing",
+		"description": "Active tickets without a service stage — assign so they follow the flow",
+		"icon": "rule",
+		"fn": get_stage_missing_report,
+		"manager_only": True,
+		"columns": [
+			("ticket", "Ticket"), ("customer_name", "Customer"), ("ticket_type", "Ticket Type"),
+			("service_flow_type", "Flow"), ("status", "Status"), ("creation", "Created"),
+		],
+	},
 	"escalations": {
 		"title": "Escalations",
 		"description": "SLA failed, or follow-up overdue 3+ days — needs management action",

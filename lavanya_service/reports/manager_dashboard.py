@@ -7,6 +7,25 @@ from frappe.utils import today, date_diff, getdate, add_days
 ESCALATION_OVERDUE_DAYS = 3
 
 
+def get_stage_missing_report():
+	"""Active tickets without a current_service_stage — they won't follow the stage
+	flow until assigned. Cleanup queue for the delta stage rollout."""
+	if not frappe.get_meta("HD Ticket").has_field("current_service_stage"):
+		return []
+	return frappe.db.sql(
+		"""
+		SELECT
+			name as ticket, customer_name, phone_1, brand, ticket_type,
+			service_flow_type, status, creation
+		FROM `tabHD Ticket`
+		WHERE status NOT IN ('Closed', 'Cancelled', 'Resolved')
+		  AND (current_service_stage IS NULL OR current_service_stage = '')
+		ORDER BY creation DESC
+		""",
+		as_dict=True,
+	)
+
+
 def get_escalation_report():
 	"""Active tickets that need management attention: SLA failed, or follow-up
 	overdue by >= ESCALATION_OVERDUE_DAYS days. Worst (oldest) first."""

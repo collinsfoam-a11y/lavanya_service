@@ -16,6 +16,11 @@ class LavanyaHDTicket(HDTicket):
 	def validate(self):
 		super().validate()
 		validate_ticket(self)
+		# Stage layer (delta plan): default service_flow_type / current_service_stage
+		# / next_action for new or unstaged active tickets. Only fills empties.
+		from lavanya_service.stage_rules import assign_defaults
+
+		assign_defaults(self)
 
 	def on_update(self):
 		super().on_update()

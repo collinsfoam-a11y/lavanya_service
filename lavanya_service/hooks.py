@@ -94,10 +94,12 @@ required_apps = ["helpdesk"]
 after_install = [
 	"lavanya_service.setup.install.after_install",
 	"lavanya_service.setup.appointment.create_appointment_doctype",
+	"lavanya_service.setup.service_stages.create_service_stage_fields",
 ]
 after_migrate = [
 	"lavanya_service.setup.install.after_migrate",
 	"lavanya_service.setup.appointment.create_appointment_doctype",
+	"lavanya_service.setup.service_stages.create_service_stage_fields",
 ]
 
 # Uninstallation
