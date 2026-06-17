@@ -7,6 +7,29 @@ from frappe.utils import today, date_diff, getdate, add_days
 ESCALATION_OVERDUE_DAYS = 3
 
 
+def get_customer_promise_breach_report():
+	"""Active tickets where a customer-promised update time has passed and the
+	promise wasn't marked Kept — these must be handled first."""
+	if not frappe.get_meta("HD Ticket").has_field("customer_promised_update_at"):
+		return []
+	return frappe.db.sql(
+		"""
+		SELECT
+			name as ticket, customer_name, phone_1, brand, status,
+			current_service_stage, customer_promised_update_at,
+			TIMESTAMPDIFF(HOUR, customer_promised_update_at, %s) as hours_late
+		FROM `tabHD Ticket`
+		WHERE status NOT IN ('Closed', 'Cancelled', 'Resolved')
+		  AND customer_promised_update_at IS NOT NULL
+		  AND customer_promised_update_at < %s
+		  AND IFNULL(customer_promise_status, '') != 'Kept'
+		ORDER BY customer_promised_update_at ASC
+		""",
+		(frappe.utils.now_datetime(), frappe.utils.now_datetime()),
+		as_dict=True,
+	)
+
+
 def get_stage_missing_report():
 	"""Active tickets without a current_service_stage — they won't follow the stage
 	flow until assigned. Cleanup queue for the delta stage rollout."""

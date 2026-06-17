@@ -52,6 +52,8 @@ SAFE_TICKET_FIELDS = {
 	"overdue_status",
 	"escalation_level",
 	"customer_informed",
+	"customer_promised_update_at",
+	"customer_promise_status",
 }
 
 FOLLOW_UP_STATUSES = {

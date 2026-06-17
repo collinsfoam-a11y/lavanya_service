@@ -61,6 +61,8 @@ SAFE_TICKET_FIELDS = [
 	"overdue_status",
 	"escalation_level",
 	"customer_informed",
+	"customer_promised_update_at",
+	"customer_promise_status",
 ]
 
 CLASSIFICATION_FIELDS = [
@@ -351,9 +353,12 @@ def _is_closure_pending(row):
 
 
 def _safe_ticket_payload(row):
-	from lavanya_service.stage_rules import compute_overdue_status, compute_escalation_level
+	from lavanya_service.stage_rules import compute_overdue_status, compute_escalation_level, compute_promise_status
 
 	payload = {fieldname: _json_safe(_value(row, fieldname)) for fieldname in SAFE_TICKET_FIELDS}
+	payload["customer_promise_status"] = compute_promise_status(
+		_value(row, "customer_promised_update_at"), _value(row, "customer_promise_status")
+	)
 	# Live Due-Soon / escalation (delta Sprint 2): stage-SLA first, falling back to
 	# the existing next_follow_up_date so old tickets without stage fields still work.
 	# These override any stale stored value in the returned payload.

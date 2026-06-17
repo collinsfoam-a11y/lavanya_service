@@ -13,6 +13,7 @@ from lavanya_service.reports.manager_dashboard import (
 	get_cancelled_tickets_report,
 	get_escalation_report,
 	get_stage_missing_report,
+	get_customer_promise_breach_report,
 )
 
 @frappe.whitelist()
@@ -76,6 +77,18 @@ def get_manager_dashboard(from_date=None, to_date=None):
 _MANAGER_ROLES = {"System Manager", "Lavanya Manager", "Lavanya Service Coordinator", "Lavanya Viewer"}
 
 REPORTS = {
+	"promise_breach": {
+		"title": "Customer Promise Breach",
+		"description": "Promised-update time passed and not marked kept — handle first",
+		"icon": "running_with_errors",
+		"fn": get_customer_promise_breach_report,
+		"manager_only": True,
+		"columns": [
+			("ticket", "Ticket"), ("customer_name", "Customer"), ("brand", "Brand"),
+			("current_service_stage", "Stage"), ("customer_promised_update_at", "Promised"),
+			("hours_late", "Late (h)"),
+		],
+	},
 	"stage_missing": {
 		"title": "Stage Missing",
 		"description": "Active tickets without a service stage — assign so they follow the flow",

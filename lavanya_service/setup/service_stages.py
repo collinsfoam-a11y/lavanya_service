@@ -34,6 +34,10 @@ def create_service_stage_fields():
 			{"fieldname": "customer_informed_channel", "label": "Customer Informed Channel", "fieldtype": "Select", "options": _opts(sr.CUSTOMER_INFORMED_CHANNELS), "insert_after": "customer_informed"},
 			{"fieldname": "customer_informed_at", "label": "Customer Informed At", "fieldtype": "Datetime", "insert_after": "customer_informed_channel"},
 			{"fieldname": "customer_informed_by", "label": "Customer Informed By", "fieldtype": "Link", "options": "User", "insert_after": "customer_informed_at"},
+			# Customer-promise tracking (reminder engine, Step 2).
+			{"fieldname": "customer_promised_update_at", "label": "Customer Promised Update At", "fieldtype": "Datetime", "insert_after": "customer_informed_by"},
+			{"fieldname": "customer_promise_status", "label": "Customer Promise Status", "fieldtype": "Select", "options": "\nNone\nPending\nKept\nBreached", "default": "None", "insert_after": "customer_promised_update_at"},
+			{"fieldname": "promise_breach_reason", "label": "Promise Breach Reason", "fieldtype": "Small Text", "insert_after": "customer_promise_status"},
 		]
 	}
 	create_custom_fields(fields, update=True)

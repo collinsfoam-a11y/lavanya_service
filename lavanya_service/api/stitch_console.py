@@ -19,6 +19,49 @@ def _stage_escalation_level(ticket):
     )
 
 
+def _stage_promise_status(ticket):
+    from lavanya_service.stage_rules import compute_promise_status
+
+    return compute_promise_status(
+        ticket.get("customer_promised_update_at"), ticket.get("customer_promise_status")
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def set_customer_promise(ticket_name, promised_at=None, status=None):
+    """Record a customer-promised update time (status -> Pending), or mark it Kept /
+    Clear. The reminder engine flips Pending -> Breached once the time passes.
+    Write-permission scoped; logs a [Customer Informed] comment (Comment stays the
+    canonical activity log)."""
+    if frappe.session.user == "Guest":
+        frappe.throw("Not permitted", frappe.PermissionError)
+    if not frappe.db.exists("HD Ticket", ticket_name):
+        frappe.throw("Ticket not found.")
+    if not frappe.has_permission("HD Ticket", "write", doc=ticket_name):
+        frappe.throw("Not permitted", frappe.PermissionError)
+
+    doc = frappe.get_doc("HD Ticket", ticket_name)
+    if status == "Kept":
+        doc.customer_promise_status = "Kept"
+        note = "[Customer Informed] Promised update kept"
+    elif status == "Clear":
+        doc.customer_promised_update_at = None
+        doc.customer_promise_status = "None"
+        note = "[Customer Informed] Promise cleared"
+    else:
+        dt = (promised_at or "").replace("T", " ").strip()
+        if not dt:
+            frappe.throw("Promised update date & time is required.")
+        doc.customer_promised_update_at = dt
+        doc.customer_promise_status = "Pending"
+        note = f"[Customer Informed] Promised an update by {dt}"
+
+    doc.flags.ignore_lavanya_field_guard = True
+    doc.save(ignore_permissions=True)
+    doc.add_comment("Comment", note)
+    return {"ok": True, "ticket": ticket_name, "promise_status": doc.customer_promise_status}
+
+
 # Ticket fields safe to surface in the SPA list view.
 _LIST_FIELDS = [
     "name",
@@ -382,6 +425,8 @@ def get_ticket_detail(ticket_id):
             "overdue_status": _stage_overdue_status(ticket),
             "escalation_level": _stage_escalation_level(ticket),
             "customer_informed": ticket.get("customer_informed"),
+            "customer_promised_update_at": ticket.get("customer_promised_update_at"),
+            "customer_promise_status": _stage_promise_status(ticket),
         },
         "assigned_to": ticket._assign if ticket._assign else None,
         "creation": ticket.creation

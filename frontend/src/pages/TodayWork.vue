@@ -60,6 +60,10 @@
           <option value="">Any escalation</option>
           <option v-for="o in ESC_OPTIONS" :key="o" :value="o">{{ o }}</option>
         </select>
+        <select v-model="filters.promise" class="lav-input" style="width:auto;min-width:140px;height:36px">
+          <option value="">Any promise</option>
+          <option v-for="o in PROMISE_OPTIONS" :key="o" :value="o">{{ o }}</option>
+        </select>
         <button v-if="anyFilter" @click="clearFilters" class="lav-chip">Clear filters</button>
         <span class="font-label-md text-label-md text-on-surface-variant ml-auto">{{ filteredCount }} shown</span>
       </div>
@@ -102,6 +106,7 @@
                   :style="chip(t.status)">{{ t.status }}</span>
             <SlaBadge :agreement-status="t.agreement_status" :response-by="t.response_by" :resolution-by="t.resolution_by" />
             <span v-if="t.overdue_status && t.overdue_status !== 'Not Due'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="dueChip(t.overdue_status)">{{ t.overdue_status }}</span>
+            <span v-if="t.customer_promise_status === 'Breached'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" style="color:#ba1a1a;background:rgba(186,26,26,0.12)">Promise breach</span>
             <div class="flex-1 min-w-[130px] font-label-md text-label-md text-on-surface-variant">
               {{ t.pending_reason || '' }}
             </div>
@@ -153,20 +158,22 @@ const groups = computed(() => data.value.groups || [])
 const summary = computed(() => data.value.summary || { total: 0, overdue: 0, due_today: 0 })
 
 // ── Stage / flow / due / escalation filtering (delta Sprint 2) ─────────────────
-const filters = reactive({ flow: '', stage: '', due: '', escalation: '' })
+const filters = reactive({ flow: '', stage: '', due: '', escalation: '', promise: '' })
 const DUE_OPTIONS = ['Due Soon', 'Overdue', 'Breached', 'Not Due']
 const ESC_OPTIONS = ['Coordinator', 'Manager', 'Owner']
+const PROMISE_OPTIONS = ['Breached', 'Pending', 'Kept']
 const allTickets = computed(() => groups.value.flatMap((g) => g.tickets || []))
 const filterOptions = computed(() => ({
   flow: [...new Set(allTickets.value.map((t) => t.service_flow_type).filter(Boolean))].sort(),
   stage: [...new Set(allTickets.value.map((t) => t.current_service_stage).filter(Boolean))].sort(),
 }))
-const anyFilter = computed(() => !!(filters.flow || filters.stage || filters.due || filters.escalation))
+const anyFilter = computed(() => !!(filters.flow || filters.stage || filters.due || filters.escalation || filters.promise))
 function matchesFilters(t) {
   if (filters.flow && t.service_flow_type !== filters.flow) return false
   if (filters.stage && t.current_service_stage !== filters.stage) return false
   if (filters.due && t.overdue_status !== filters.due) return false
   if (filters.escalation && t.escalation_level !== filters.escalation) return false
+  if (filters.promise && t.customer_promise_status !== filters.promise) return false
   return true
 }
 const filteredGroups = computed(() => {
@@ -182,6 +189,7 @@ function clearFilters() {
   filters.stage = ''
   filters.due = ''
   filters.escalation = ''
+  filters.promise = ''
 }
 const DUE_HUE = { 'Due Soon': '#943700', Overdue: '#ba1a1a', Breached: '#93000a', 'Not Due': '#1a7f37' }
 function dueChip(status) {

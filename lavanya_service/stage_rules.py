@@ -198,6 +198,21 @@ def compute_escalation_level(stage_due_at=None, next_follow_up_date=None, is_rep
 	return "None"
 
 
+def compute_promise_status(promised_at=None, stored_status=None, now=None):
+	"""Live customer-promise status: a Pending promise whose time has passed is
+	Breached (unless staff already marked it Kept). None/Pending/Kept/Breached."""
+	if stored_status == "Kept":
+		return "Kept"
+	if not promised_at:
+		return stored_status or "None"
+	from frappe.utils import get_datetime, now_datetime
+
+	now = now or now_datetime()
+	if now > get_datetime(promised_at):
+		return "Breached"
+	return "Pending"
+
+
 def assign_defaults(doc):
 	"""Populate stage fields for a new/unstaged ticket without overriding anything
 	staff already set. Safe to call on validate — never touches terminal tickets."""

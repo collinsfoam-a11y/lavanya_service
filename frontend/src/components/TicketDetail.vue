@@ -83,6 +83,12 @@
               </div>
               <div><span class="block text-label-md text-outline">Escalation</span> {{ ticket.stage.escalation_level && ticket.stage.escalation_level !== 'None' ? ticket.stage.escalation_level : '—' }}</div>
               <div><span class="block text-label-md text-outline">Customer Informed</span> {{ ticket.stage.customer_informed || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Promised Update</span> {{ ticket.stage.customer_promised_update_at?.substring(0,16) || '—' }}</div>
+              <div>
+                <span class="block text-label-md text-outline">Promise</span>
+                <span v-if="ticket.stage.customer_promise_status && ticket.stage.customer_promise_status !== 'None'" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="promiseChip(ticket.stage.customer_promise_status)">{{ ticket.stage.customer_promise_status }}</span>
+                <template v-else>—</template>
+              </div>
             </div>
           </section>
 
@@ -240,6 +246,10 @@
 
           <button @click="openAction('schedule_appointment')" class="w-full px-4 py-3 bg-primary-container text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
             <span class="material-symbols-outlined" style="font-size: 18px">event</span> Schedule Appointment
+          </button>
+
+          <button @click="openAction('set_promise')" class="w-full px-4 py-3 bg-primary-container text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+            <span class="material-symbols-outlined" style="font-size: 18px">schedule_send</span> Set Customer Promise
           </button>
 
           <button @click="openProductReceipt" class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
@@ -960,6 +970,11 @@ const ACTIONS = {
       { key: 'notes', label: 'Notes', type: 'textarea', required: false },
     ],
   },
+  set_promise: {
+    title: 'Set Customer Promise', icon: 'schedule_send', submitLabel: 'Save Promise', target: 'ticket',
+    endpoint: 'lavanya_service.api.stitch_console.set_customer_promise',
+    fields: [{ key: 'promised_at', label: 'Promised an update by', type: 'datetime-local', required: true }],
+  },
 }
 
 const actionKey = ref(null)
@@ -1039,6 +1054,11 @@ function chip(status) {
 const DUE_HUE = { 'Due Soon': '#943700', Overdue: '#ba1a1a', Breached: '#93000a', 'Not Due': '#1a7f37' }
 function dueChip(status) {
   const hue = DUE_HUE[status] || '#434655'
+  return { color: hue, background: hexToRgba(hue, 0.12) }
+}
+const PROMISE_HUE = { Breached: '#ba1a1a', Pending: '#0053db', Kept: '#1a7f37' }
+function promiseChip(status) {
+  const hue = PROMISE_HUE[status] || '#434655'
   return { color: hue, background: hexToRgba(hue, 0.12) }
 }
 function ticketAge(creationDate) {
