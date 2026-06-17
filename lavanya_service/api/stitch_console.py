@@ -27,6 +27,33 @@ def _stage_promise_status(ticket):
     )
 
 
+def _reminder_intelligence(ticket):
+    """Read-only Reminder Engine state for the drawer (Step 5). Blank-safe —
+    never raises, so a resolver issue can't break the ticket detail."""
+    try:
+        from lavanya_service.reminder_engine import refresh_ticket_reminder_state
+
+        state = refresh_ticket_reminder_state(ticket, save=False)
+        manual = ticket.get("next_follow_up_date")
+        return {
+            "reminder_rule_applied": state.get("reminder_rule_applied"),
+            "next_follow_up_date": manual,  # manual / staff-facing
+            "computed_next_followup_at": state.get("computed_next_followup_at"),
+            "computed_due_soon_at": state.get("computed_due_soon_at"),
+            "computed_stage_due_at": state.get("computed_stage_due_at"),
+            "overdue_status": state.get("overdue_status"),
+            "escalation_level": state.get("computed_escalation_level"),
+            "customer_promise_status": state.get("customer_promise_status"),
+            "customer_promised_update_at": ticket.get("customer_promised_update_at"),
+            "promise_breach_reason": ticket.get("promise_breach_reason"),
+            "customer_update_due": state.get("customer_update_due"),
+            "manual_followup": bool(manual),
+        }
+    except Exception:
+        frappe.log_error(title="lavanya reminder_intelligence (drawer)", message=frappe.get_traceback())
+        return {}
+
+
 @frappe.whitelist(methods=["POST"])
 def set_customer_promise(ticket_name, promised_at=None, status=None):
     """Record a customer-promised update time (status -> Pending), or mark it Kept /
@@ -428,6 +455,7 @@ def get_ticket_detail(ticket_id):
             "customer_promised_update_at": ticket.get("customer_promised_update_at"),
             "customer_promise_status": _stage_promise_status(ticket),
         },
+        "reminder": _reminder_intelligence(ticket),
         "assigned_to": ticket._assign if ticket._assign else None,
         "creation": ticket.creation
     }

@@ -29,6 +29,22 @@
       </div>
     </div>
 
+    <!-- Reminder Intelligence cards (Step 5) — click to filter the queue -->
+    <div v-if="!loading && !error && summary.total > 0" class="flex flex-wrap gap-2 mb-gutter">
+      <button
+        v-for="c in intel"
+        :key="c.key"
+        class="lav-intel"
+        :class="{ 'lav-intel--on': intelActive(c.key) }"
+        :style="{ '--lav-accent': c.hue }"
+        @click="intelActive(c.key) ? clearFilters() : applyIntel(c.key)"
+      >
+        <span class="material-symbols-outlined" style="font-size:18px">{{ c.icon }}</span>
+        <span class="font-label-lg text-label-lg">{{ c.label }}</span>
+        <span class="lav-intel__num">{{ c.count }}</span>
+      </button>
+    </div>
+
     <!-- States -->
     <div v-if="loading" class="text-on-surface-variant font-body-md py-12 text-center">
       Loading Today’s Work…
@@ -64,6 +80,21 @@
           <option value="">Any promise</option>
           <option v-for="o in PROMISE_OPTIONS" :key="o" :value="o">{{ o }}</option>
         </select>
+        <select v-if="filterOptions.brand.length" v-model="filters.brand" class="lav-input" style="width:auto;min-width:120px;height:36px">
+          <option value="">All brands</option>
+          <option v-for="o in filterOptions.brand" :key="o" :value="o">{{ o }}</option>
+        </select>
+        <select v-if="filterOptions.productType.length" v-model="filters.productType" class="lav-input" style="width:auto;min-width:130px;height:36px">
+          <option value="">All products</option>
+          <option v-for="o in filterOptions.productType" :key="o" :value="o">{{ o }}</option>
+        </select>
+        <select v-if="filterOptions.nextAction.length" v-model="filters.nextAction" class="lav-input" style="width:auto;min-width:150px;height:36px">
+          <option value="">Any next action</option>
+          <option v-for="o in filterOptions.nextAction" :key="o" :value="o">{{ o }}</option>
+        </select>
+        <label class="lav-chip" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+          <input type="checkbox" v-model="filters.updateDue" style="margin:0" /> Update due
+        </label>
         <button v-if="anyFilter" @click="clearFilters" class="lav-chip">Clear filters</button>
         <span class="font-label-md text-label-md text-on-surface-variant ml-auto">{{ filteredCount }} shown</span>
       </div>
@@ -107,6 +138,8 @@
             <SlaBadge :agreement-status="t.agreement_status" :response-by="t.response_by" :resolution-by="t.resolution_by" />
             <span v-if="t.overdue_status && t.overdue_status !== 'Not Due'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="dueChip(t.overdue_status)">{{ t.overdue_status }}</span>
             <span v-if="t.customer_promise_status === 'Breached'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" style="color:#ba1a1a;background:rgba(186,26,26,0.12)">Promise breach</span>
+            <span v-if="['Manager','Owner'].includes(escLevel(t))" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="escChip(escLevel(t))">{{ escLevel(t) }}</span>
+            <span v-if="t.customer_update_due" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" style="color:#0053db;background:rgba(0,83,219,0.12)">Update due</span>
             <div class="flex-1 min-w-[130px] font-label-md text-label-md text-on-surface-variant">
               {{ t.pending_reason || '' }}
             </div>
@@ -157,39 +190,107 @@ const data = computed(() => raw.value || {})
 const groups = computed(() => data.value.groups || [])
 const summary = computed(() => data.value.summary || { total: 0, overdue: 0, due_today: 0 })
 
-// ── Stage / flow / due / escalation filtering (delta Sprint 2) ─────────────────
-const filters = reactive({ flow: '', stage: '', due: '', escalation: '', promise: '' })
-const DUE_OPTIONS = ['Due Soon', 'Overdue', 'Breached', 'Not Due']
+// ── Reminder Intelligence filtering (Sprint 2 + Step 5) ────────────────────────
+// Prefer the Step-3 richer escalation (promise/repeat bumps) with Sprint-2 fallback.
+function escLevel(t) {
+  return t.computed_escalation_level || t.escalation_level || 'None'
+}
+const filters = reactive({
+  flow: '', stage: '', due: '', escalation: '', promise: '',
+  brand: '', productType: '', nextAction: '', updateDue: false,
+})
+const DUE_OPTIONS = ['Due Soon', 'Overdue', 'Not Due']
 const ESC_OPTIONS = ['Coordinator', 'Manager', 'Owner']
 const PROMISE_OPTIONS = ['Breached', 'Pending', 'Kept']
 const allTickets = computed(() => groups.value.flatMap((g) => g.tickets || []))
+const uniq = (vals) => [...new Set(vals.filter(Boolean))].sort()
 const filterOptions = computed(() => ({
-  flow: [...new Set(allTickets.value.map((t) => t.service_flow_type).filter(Boolean))].sort(),
-  stage: [...new Set(allTickets.value.map((t) => t.current_service_stage).filter(Boolean))].sort(),
+  flow: uniq(allTickets.value.map((t) => t.service_flow_type)),
+  stage: uniq(allTickets.value.map((t) => t.current_service_stage)),
+  brand: uniq(allTickets.value.map((t) => t.brand)),
+  productType: uniq(allTickets.value.map((t) => t.product_type)),
+  nextAction: uniq(allTickets.value.map((t) => t.next_action)),
 }))
-const anyFilter = computed(() => !!(filters.flow || filters.stage || filters.due || filters.escalation || filters.promise))
+const anyFilter = computed(() =>
+  !!(filters.flow || filters.stage || filters.due || filters.escalation || filters.promise ||
+     filters.brand || filters.productType || filters.nextAction || filters.updateDue))
 function matchesFilters(t) {
   if (filters.flow && t.service_flow_type !== filters.flow) return false
   if (filters.stage && t.current_service_stage !== filters.stage) return false
   if (filters.due && t.overdue_status !== filters.due) return false
-  if (filters.escalation && t.escalation_level !== filters.escalation) return false
+  if (filters.escalation) {
+    const lvl = escLevel(t)
+    if (filters.escalation === 'Escalated') { if (!['Manager', 'Owner'].includes(lvl)) return false }
+    else if (lvl !== filters.escalation) return false
+  }
   if (filters.promise && t.customer_promise_status !== filters.promise) return false
+  if (filters.brand && t.brand !== filters.brand) return false
+  if (filters.productType && t.product_type !== filters.productType) return false
+  if (filters.nextAction && t.next_action !== filters.nextAction) return false
+  if (filters.updateDue && !t.customer_update_due) return false
   return true
 }
-const filteredGroups = computed(() => {
-  if (!anyFilter.value) return groups.value
-  return groups.value.map((g) => {
-    const tickets = (g.tickets || []).filter(matchesFilters)
+// Urgency-first ordering within each bucket (Step 5):
+// Promise Breach → Owner → Manager → Overdue → Due Soon → rest.
+function reminderRank(t) {
+  if (t.customer_promise_status === 'Breached') return 6
+  const e = escLevel(t)
+  if (e === 'Owner') return 5
+  if (e === 'Manager') return 4
+  if (t.overdue_status === 'Overdue') return 3
+  if (t.overdue_status === 'Due Soon') return 2
+  return 0
+}
+function sortByUrgency(tickets) {
+  return [...tickets].sort((a, b) => reminderRank(b) - reminderRank(a))
+}
+const filteredGroups = computed(() =>
+  groups.value.map((g) => {
+    const tickets = sortByUrgency((g.tickets || []).filter(matchesFilters))
     return { ...g, tickets, count: tickets.length }
   })
-})
+)
 const filteredCount = computed(() => filteredGroups.value.reduce((n, g) => n + (g.tickets?.length || 0), 0))
 function clearFilters() {
-  filters.flow = ''
-  filters.stage = ''
-  filters.due = ''
-  filters.escalation = ''
-  filters.promise = ''
+  Object.assign(filters, { flow: '', stage: '', due: '', escalation: '', promise: '', brand: '', productType: '', nextAction: '', updateDue: false })
+}
+
+// Reminder Intelligence summary cards (Step 5) — derived client-side; click filters.
+const intel = computed(() => {
+  const t = allTickets.value
+  return [
+    { key: 'promise_breach', label: 'Promise Breach', icon: 'gpp_bad', hue: '#ba1a1a',
+      count: t.filter((x) => x.customer_promise_status === 'Breached').length },
+    { key: 'escalated', label: 'Escalated', icon: 'priority_high', hue: '#943700',
+      count: t.filter((x) => ['Manager', 'Owner'].includes(escLevel(x))).length },
+    { key: 'overdue', label: 'Overdue', icon: 'error', hue: '#ba1a1a',
+      count: t.filter((x) => x.overdue_status === 'Overdue').length },
+    { key: 'due_soon', label: 'Due Soon', icon: 'schedule', hue: '#943700',
+      count: t.filter((x) => x.overdue_status === 'Due Soon').length },
+    { key: 'update_due', label: 'Customer Update Due', icon: 'campaign', hue: '#0053db',
+      count: t.filter((x) => x.customer_update_due).length },
+  ]
+})
+function applyIntel(key) {
+  clearFilters()
+  if (key === 'promise_breach') filters.promise = 'Breached'
+  else if (key === 'escalated') filters.escalation = 'Escalated'
+  else if (key === 'overdue') filters.due = 'Overdue'
+  else if (key === 'due_soon') filters.due = 'Due Soon'
+  else if (key === 'update_due') filters.updateDue = true
+}
+function intelActive(key) {
+  if (key === 'promise_breach') return filters.promise === 'Breached'
+  if (key === 'escalated') return filters.escalation === 'Escalated'
+  if (key === 'overdue') return filters.due === 'Overdue'
+  if (key === 'due_soon') return filters.due === 'Due Soon'
+  if (key === 'update_due') return filters.updateDue === true
+  return false
+}
+const ESC_HUE_TW = { Coordinator: '#0053db', Manager: '#943700', Owner: '#ba1a1a' }
+function escChip(level) {
+  const hue = ESC_HUE_TW[level] || '#434655'
+  return { color: hue, background: hexToRgba(hue, 0.12) }
 }
 const DUE_HUE = { 'Due Soon': '#943700', Overdue: '#ba1a1a', Breached: '#93000a', 'Not Due': '#1a7f37' }
 function dueChip(status) {

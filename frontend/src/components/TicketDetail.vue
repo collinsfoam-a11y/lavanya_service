@@ -92,6 +92,47 @@
             </div>
           </section>
 
+          <!-- Reminder Intelligence (Step 5) — read-only, blank-safe -->
+          <section v-if="ticket.reminder && Object.keys(ticket.reminder).length">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Reminder Intelligence</h3>
+            <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
+              <div>
+                <span class="block text-label-md text-outline">Due Status</span>
+                <span v-if="ticket.reminder.overdue_status" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="dueChip(ticket.reminder.overdue_status)">{{ ticket.reminder.overdue_status }}</span>
+                <template v-else>—</template>
+              </div>
+              <div>
+                <span class="block text-label-md text-outline">Escalation</span>
+                <span v-if="reminderEsc !== 'None'" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="escChip(reminderEsc)">{{ reminderEsc }}</span>
+                <template v-else>—</template>
+              </div>
+              <div>
+                <span class="block text-label-md text-outline">Customer Promise</span>
+                <span v-if="ticket.reminder.customer_promise_status && ticket.reminder.customer_promise_status !== 'None'" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="promiseChip(ticket.reminder.customer_promise_status)">{{ ticket.reminder.customer_promise_status }}</span>
+                <template v-else>—</template>
+              </div>
+              <div>
+                <span class="block text-label-md text-outline">Customer Update Due</span>
+                <span v-if="ticket.reminder.customer_update_due" class="px-2 py-0.5 rounded-full font-label-md text-label-md" style="color:#943700;background:rgba(148,55,0,0.12)">Due now</span>
+                <template v-else>No</template>
+              </div>
+              <div><span class="block text-label-md text-outline">Reminder Rule</span> {{ ticket.reminder.reminder_rule_applied || 'No rule (fallback)' }}</div>
+              <div>
+                <span class="block text-label-md text-outline">Next Follow-up</span>
+                {{ fmtDT(ticket.reminder.next_follow_up_date) }}
+                <span v-if="ticket.reminder.manual_followup" class="ml-1 px-1.5 py-0.5 rounded font-label-md text-label-md" style="color:#0053db;background:rgba(0,83,219,0.12)">manual</span>
+              </div>
+              <div><span class="block text-label-md text-outline">Due Soon At</span> {{ fmtDT(ticket.reminder.computed_due_soon_at) }}</div>
+              <div><span class="block text-label-md text-outline">Stage Due At</span> {{ fmtDT(ticket.reminder.computed_stage_due_at) }}</div>
+              <div v-if="reminderShowComputed"><span class="block text-label-md text-outline">Computed Follow-up</span> {{ fmtDT(ticket.reminder.computed_next_followup_at) }}</div>
+              <div><span class="block text-label-md text-outline">Promised Update At</span> {{ fmtDT(ticket.reminder.customer_promised_update_at) }}</div>
+              <div v-if="ticket.reminder.promise_breach_reason" class="col-span-2">
+                <span class="block text-label-md text-outline">Promise Breach Reason</span>
+                <span style="color:#ba1a1a">{{ ticket.reminder.promise_breach_reason }}</span>
+              </div>
+            </div>
+          </section>
+
           <!-- Customer Summary -->
           <section>
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Customer</h3>
@@ -1060,6 +1101,20 @@ const PROMISE_HUE = { Breached: '#ba1a1a', Pending: '#0053db', Kept: '#1a7f37' }
 function promiseChip(status) {
   const hue = PROMISE_HUE[status] || '#434655'
   return { color: hue, background: hexToRgba(hue, 0.12) }
+}
+// Reminder Intelligence (Step 5) helpers — blank-safe.
+const ESC_HUE = { Coordinator: '#0053db', Manager: '#943700', Owner: '#ba1a1a' }
+function escChip(level) {
+  const hue = ESC_HUE[level] || '#434655'
+  return { color: hue, background: hexToRgba(hue, 0.12) }
+}
+const reminderEsc = computed(() => ticket.value?.reminder?.escalation_level || 'None')
+// Show the rule-computed follow-up only when a manual date is overriding it.
+const reminderShowComputed = computed(() => !!ticket.value?.reminder?.manual_followup)
+function fmtDT(value) {
+  if (!value) return '—'
+  const s = String(value).replace('T', ' ')
+  return s.length >= 16 ? s.substring(0, 16) : s
 }
 function ticketAge(creationDate) {
   if (!creationDate) return 0
