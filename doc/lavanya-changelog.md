@@ -92,6 +92,34 @@ P2.2 needed an independent state audit and hardening before it could be safely c
 
 ---
 
+## 2026-06-20 22:00 — P2.4 ERPNext safe integration scaffold reviewed and documented
+
+### What changed
+- `doc/lavanya-changelog.md` — added this closure entry for the already-committed P2.4 ERPNext scaffold.
+- `doc/lavanya-spa-status.md` — added P2.4 closure row and updated P2.1/P2.2 rows from "uncommitted" to committed status.
+- `doc/p2_erpnext_scaffold_defects_found.md` — added a post-commit review section confirming independent verification, no write-side ERP behavior, and the changelog gap fix.
+
+### Previous state
+P2.4 ERPNext scaffold was committed by a parallel agent (`35c387c`) with implementation and safety docs, but the required changelog entry was missing and the SPA status table did not reflect the closure.
+
+### Current state
+P2.4 scaffold is reviewed and documented. The scaffold remains disabled-by-default, read-only, and safe when ERPNext is absent. No ERP document creation paths exist.
+
+### Why changed
+AGENTS.md Rule 1 requires every change to be documented in the changelog. The parallel P2.4 commit omitted this, so the gap is being closed before moving on.
+
+### What was obtained
+- `lavanya_service.tests.p2_erp_scaffold_tests.run`: 14 pass, 0 fail.
+- Frontend production build: PASS.
+- Static verification: no ERPNext imports, no write-side ERP document creation, all defaults disabled.
+
+### Compatibility notes
+- No ERPNext module or doctype is required for the scaffold to load safely.
+- No accounting, stock, sales, purchase, or payment posting code was introduced.
+- The scaffold is intentionally disabled (`erpnext_enabled=0`, `mode=Disabled`) until an admin explicitly enables it.
+
+---
+
 ## 2026-06-20 20:00 — P2.1 Supplier Penalty Computation closed
 
 ### What changed

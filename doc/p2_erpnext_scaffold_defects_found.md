@@ -33,6 +33,18 @@
   - Mitigation: Existing tests pass. Standard Frappe test suite also passes.
   - Status: Low risk.
 
+## Post-Commit Review (2026-06-20)
+
+- Commit `35c387c` was reviewed after it was created by a parallel agent.
+- Independent verification run: `lavanya_service.tests.p2_erp_scaffold_tests.run` → **14 pass, 0 fail**.
+- Static re-check confirmed:
+  - No `import erpnext` or `from erpnext` statements.
+  - No creation of Sales Invoice, Purchase Invoice, Payment Entry, Journal Entry, Stock Entry, or GL Entry.
+  - `Lavanya ERP Integration Settings` defaults to `erpnext_enabled=0`, `mode=Disabled`, `allow_accounting_posting=0`, `allow_draft_creation=0`.
+  - Preview APIs (`preview_ticket_erp_mapping`, `preview_supplier_penalty_erp_mapping`, `preview_stock_complaint_erp_mapping`) are read-only and return empty `would_create` lists when ERPNext is absent or disabled.
+- No write-side ERP behavior found.
+- Changelog gap identified and fixed separately.
+
 ## Static Verification
 
 No ERPNext module imports found in Lavanya Service codebase. All code paths use only Frappe framework APIs (`frappe.get_all`, `frappe.db.exists`, `frappe.get_installed_apps`). No accounting/stock/sales/purchase document creation code exists.
