@@ -1,6 +1,7 @@
 <template>
-  <div v-if="ticketId" class="fixed inset-0 z-50 flex justify-end bg-on-surface/20" @click.self="close">
-    <div class="w-full max-w-4xl bg-surface-container-lowest h-full shadow-xl flex flex-col md:flex-row overflow-hidden animate-slide-in">
+  <Transition name="drawer">
+    <div v-if="ticketId" class="fixed inset-0 z-50 flex justify-end bg-on-surface/20" @click.self="close">
+      <div class="w-full max-w-4xl bg-surface-container-lowest h-full shadow-xl flex flex-col md:flex-row overflow-hidden drawer__panel">
       
       <!-- Main Detail Area -->
       <div class="flex-1 overflow-y-auto border-r border-outline-variant flex flex-col">
@@ -44,6 +45,11 @@
             </div>
           </header>
 
+          <!-- Sticky section nav -->
+          <nav class="sticky top-0 z-10 -mx-6 md:-mx-8 px-6 md:px-8 py-2 bg-surface-container-lowest/95 backdrop-blur flex gap-4 border-b border-outline-variant overflow-x-auto">
+            <a v-for="s in SECTIONS" :key="s.id" :href="'#' + s.id" class="whitespace-nowrap font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" @click.prevent="scrollToSection(s.id)">{{ s.label }}</a>
+          </nav>
+
           <!-- Repeat complaint banner -->
           <div v-if="ticket.repeat?.is_repeat" class="rounded-xl p-4 flex items-center justify-between gap-3"
                style="border:1px solid rgba(113,42,226,0.4); background:rgba(113,42,226,0.08)">
@@ -68,7 +74,7 @@
           </div>
 
           <!-- Service Stage (delta Sprint 2) — read display, blank-safe -->
-          <section v-if="ticket.stage">
+          <section id="sec-stage" v-if="ticket.stage">
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Service Stage</h3>
             <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
               <div><span class="block text-label-md text-outline">Flow</span> {{ ticket.stage.service_flow_type || '—' }}</div>
@@ -93,7 +99,7 @@
           </section>
 
           <!-- Reminder Intelligence (Step 5) — read-only, blank-safe -->
-          <section v-if="ticket.reminder && Object.keys(ticket.reminder).length">
+          <section id="sec-reminder" v-if="ticket.reminder && Object.keys(ticket.reminder).length">
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Reminder Intelligence</h3>
             <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
               <div>
@@ -133,8 +139,185 @@
             </div>
           </section>
 
+          <!-- AI Advisory (Step 6) — read-only suggestions from the engine -->
+          <section id="sec-ai-advisory" v-if="ticket.ai && ticket.ai.review_status && ticket.ai.review_status !== 'Not Required'">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center gap-2">
+              <span class="material-symbols-outlined" style="font-size:22px">psychology</span>
+              AI Advisory
+            </h3>
+            <div class="bg-surface-container p-4 rounded-xl space-y-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="aiStatusChip(ticket.ai.review_status)">{{ ticket.ai.review_status }}</span>
+                <span v-if="ticket.ai.advisory_source" class="font-label-md text-outline">{{ ticket.ai.advisory_source }}</span>
+              </div>
+              <div v-if="ticket.ai.suggested_next_action">
+                <span class="block text-label-md text-outline">Suggested Next Action</span>
+                <p class="font-body-md text-on-surface mt-0.5">{{ ticket.ai.suggested_next_action }}</p>
+              </div>
+              <div v-if="ticket.ai.risk_reason">
+                <span class="block text-label-md text-outline">Risk Reason</span>
+                <p class="font-body-md text-on-surface mt-0.5" style="color:#ba1a1a">{{ ticket.ai.risk_reason }}</p>
+              </div>
+              <div v-if="ticket.ai.manager_summary">
+                <span class="block text-label-md text-outline">Manager Summary</span>
+                <p class="font-body-md text-on-surface mt-0.5">{{ ticket.ai.manager_summary }}</p>
+              </div>
+              <div v-if="ticket.ai.suggested_customer_message" class="bg-surface-container-highest p-3 rounded-lg">
+                <span class="block text-label-md text-outline mb-1">Suggested Customer Message</span>
+                <p class="font-body-md text-on-surface italic">{{ ticket.ai.suggested_customer_message }}</p>
+              </div>
+              <div v-if="ticket.ai.review_status === 'Suggested'" class="flex gap-2 pt-2">
+                <button @click="acceptAiSuggestion" :disabled="aiBusy"
+                  class="px-4 py-2 rounded-lg font-label-md flex items-center gap-1.5 bg-tertiary text-on-tertiary transition-all hover:opacity-90 active:scale-[0.97] disabled:opacity-50">
+                  <span class="material-symbols-outlined" style="font-size:16px">check</span> Accept
+                </button>
+                <button @click="ignoreAiSuggestion" :disabled="aiBusy"
+                  class="px-4 py-2 rounded-lg font-label-md flex items-center gap-1.5 bg-error-container text-error transition-all hover:opacity-90 active:scale-[0.97] disabled:opacity-50">
+                  <span class="material-symbols-outlined" style="font-size:16px">close</span> Ignore
+                </button>
+              </div>
+              <div v-if="ticket.ai.reviewed_by && ticket.ai.last_reviewed_at" class="text-label-md text-outline pt-2 mt-1 border-t border-outline-variant flex gap-4">
+                <span>Reviewed by: {{ ticket.ai.reviewed_by }}</span>
+                <span>At: {{ fmtDT(ticket.ai.last_reviewed_at) }}</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Follow-up Tracking (Phase 1N-6B) -->
+          <section id="sec-followup-tracking" v-if="ticket.stage && (ticket.stage.service_path || ticket.stage.followup_stage || ticket.stage.service_charge_type)">
+            <h3 class="font-headline-md text-headline-md text-primary mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined" style="font-size:22px">support_agent</span>
+              Follow-up Tracking
+            </h3>
+
+            <!-- Status Banner -->
+            <div class="rounded-xl p-4 mb-4 flex items-center gap-3 transition-all" :style="{ background: followupBanner.bg, color: followupBanner.fg, borderLeft: '4px solid ' + followupBanner.fg }">
+              <span class="material-symbols-outlined" style="font-size:28px">{{ followupBanner.icon }}</span>
+              <div>
+                <div class="font-label-lg text-label-lg font-semibold">{{ followupBanner.title }}</div>
+                <div class="font-body-md text-body-md" style="opacity:0.8">{{ followupBanner.sub }}</div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Service Info -->
+              <div class="rounded-xl p-4 bg-surface-container">
+                <div class="font-label-md text-label-md text-outline mb-3 flex items-center gap-1.5">
+                  <span class="material-symbols-outlined" style="font-size:16px">route</span>
+                  Service Path
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span v-if="ticket.stage.service_path" class="px-2.5 py-1 rounded-full font-label-md text-label-md" :style="stageChip(ticket.stage.service_path)">{{ ticket.stage.service_path }}</span>
+                  <span v-if="ticket.stage.service_path && ticket.stage.followup_stage" class="text-outline font-label-md">→</span>
+                  <span v-if="ticket.stage.followup_stage" class="px-2.5 py-1 rounded-full font-label-md text-label-md" :style="stageChip(ticket.stage.followup_stage)">{{ ticket.stage.followup_stage }}</span>
+                  <span v-if="!ticket.stage.service_path && !ticket.stage.followup_stage" class="text-on-surface-variant font-body-md">—</span>
+                </div>
+                <div v-if="ticket.stage.service_charge_type" class="mt-3 pt-3 border-t border-outline-variant flex items-center gap-2">
+                  <span class="material-symbols-outlined text-outline" style="font-size:16px">payments</span>
+                  <span class="text-on-surface-variant font-body-md">Charge:</span>
+                  <span class="font-semibold text-on-surface font-body-md">{{ ticket.stage.service_charge_type }}</span>
+                </div>
+              </div>
+
+              <!-- Customer Communication -->
+              <div class="rounded-xl p-4 bg-surface-container">
+                <div class="font-label-md text-label-md text-outline mb-3 flex items-center gap-1.5">
+                  <span class="material-symbols-outlined" style="font-size:16px">contact_support</span>
+                  Customer Communication
+                </div>
+                <div class="space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-on-surface-variant font-body-md">Satisfaction</span>
+                    <span v-if="ticket.stage.customer_satisfaction_status" class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="satisfactionChip(ticket.stage.customer_satisfaction_status)">{{ ticket.stage.customer_satisfaction_status }}</span>
+                    <span v-else class="text-outline">—</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-on-surface-variant font-body-md">Informed Status</span>
+                    <span v-if="ticket.stage.customer_informed_status" class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="informedChip(ticket.stage.customer_informed_status)">{{ ticket.stage.customer_informed_status }}</span>
+                    <span v-else class="text-outline">—</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-on-surface-variant font-body-md">No Update Count</span>
+                    <span class="font-semibold text-on-surface font-body-md">{{ ticket.stage.no_update_count ?? '0' }}</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-on-surface-variant font-body-md">Last SC Follow-up</span>
+                    <span class="text-on-surface font-body-md">{{ ticket.stage.last_service_center_followup?.substring(0,16) || '—' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Part Tracking (conditional) -->
+              <div v-if="ticket.stage.part_required" class="rounded-xl p-4 bg-surface-container" style="border-left:4px solid #943700">
+                <div class="font-label-md text-label-md text-outline mb-3 flex items-center gap-1.5">
+                  <span class="material-symbols-outlined" style="font-size:16px">build</span>
+                  Part Tracking
+                </div>
+                <div class="space-y-2">
+                  <div v-if="ticket.stage.part_name" class="flex items-center justify-between">
+                    <span class="text-on-surface-variant font-body-md">Part</span>
+                    <span class="font-semibold text-on-surface font-body-md">{{ ticket.stage.part_name }}</span>
+                  </div>
+                  <div v-if="ticket.stage.part_expected_date" class="flex items-center justify-between">
+                    <span class="text-on-surface-variant font-body-md">Expected</span>
+                    <span class="text-on-surface font-body-md">{{ ticket.stage.part_expected_date }}</span>
+                  </div>
+                  <div v-if="ticket.stage.part_delay_reason" class="pt-2 border-t border-outline-variant">
+                    <span class="text-on-surface-variant font-body-md block">Delay Reason</span>
+                    <span class="text-on-surface font-body-md block mt-0.5">{{ ticket.stage.part_delay_reason }}</span>
+                  </div>
+                  <div v-if="ticket.stage.customer_informed_about_part_delay" class="flex items-center justify-between pt-2 border-t border-outline-variant">
+                    <span class="text-on-surface-variant font-body-md">Customer Informed</span>
+                    <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="informedChip(ticket.stage.customer_informed_about_part_delay)">{{ ticket.stage.customer_informed_about_part_delay }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Financial (conditional) -->
+              <div v-if="ticket.stage.estimated_amount || ticket.stage.customer_approved_amount || (ticket.stage.payment_status && ticket.stage.payment_status !== 'Not Applicable')" class="rounded-xl p-4 bg-surface-container" style="border-left:4px solid #1a7f37">
+                <div class="font-label-md text-label-md text-outline mb-3 flex items-center gap-1.5">
+                  <span class="material-symbols-outlined" style="font-size:16px">payments</span>
+                  Financial
+                </div>
+                <div class="space-y-2.5">
+                  <div v-if="ticket.stage.estimated_amount" class="flex items-center justify-between">
+                    <span class="text-on-surface-variant font-body-md">Estimate</span>
+                    <span class="font-semibold text-on-surface font-body-md">₹{{ ticket.stage.estimated_amount }}</span>
+                  </div>
+                  <div v-if="ticket.stage.customer_approved_amount" class="flex items-center justify-between">
+                    <span class="text-on-surface-variant font-body-md">Approved</span>
+                    <span class="font-semibold text-on-surface font-body-md">₹{{ ticket.stage.customer_approved_amount }}</span>
+                  </div>
+                  <div v-if="ticket.stage.technician_payable" class="flex items-center justify-between">
+                    <span class="text-on-surface-variant font-body-md">Technician Payable</span>
+                    <span class="font-semibold text-on-surface font-body-md">₹{{ ticket.stage.technician_payable }}</span>
+                  </div>
+                  <div v-if="ticket.stage.payment_status && ticket.stage.payment_status !== 'Not Applicable'" class="flex items-center justify-between pt-2 border-t border-outline-variant">
+                    <span class="text-on-surface-variant font-body-md">Payment</span>
+                    <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="informedChip(ticket.stage.payment_status)">{{ ticket.stage.payment_status }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Last Follow-up Summary -->
+            <div v-if="ticket.stage.last_followup_summary || ticket.stage.last_followup_at" class="mt-4 rounded-xl p-4 bg-surface-container-low border border-outline-variant">
+              <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-outline" style="font-size:20px">history</span>
+                <div class="flex-1 min-w-0">
+                  <div class="font-label-md text-label-md text-outline">Last Follow-up</div>
+                  <div class="text-on-surface font-body-md mt-0.5 break-words">{{ ticket.stage.last_followup_summary || '—' }}</div>
+                  <div v-if="ticket.stage.last_followup_at" class="text-on-surface-variant font-label-md text-label-md mt-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined" style="font-size:14px">schedule</span>
+                    {{ relTime(ticket.stage.last_followup_at) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <!-- Customer Summary -->
-          <section>
+          <section id="sec-customer">
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Customer</h3>
             <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
               <div><span class="block text-label-md text-outline">Name</span> {{ ticket.customer?.name || '—' }}</div>
@@ -145,7 +328,7 @@
           </section>
 
           <!-- Product Summary -->
-          <section>
+          <section id="sec-product">
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Product</h3>
             <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
               <div><span class="block text-label-md text-outline">Type</span> {{ ticket.product?.type || '—' }}</div>
@@ -160,7 +343,7 @@
           </section>
 
           <!-- Workflow Summary -->
-          <section>
+          <section id="sec-workflow">
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Workflow</h3>
             <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
               <div><span class="block text-label-md text-outline">Current Status</span> {{ ticket.workflow?.status || '—' }}</div>
@@ -186,7 +369,7 @@
           </section>
 
           <!-- Product Receipt Summary -->
-          <section>
+          <section id="sec-receipt">
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Product Custody</h3>
             <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
               <div><span class="block text-label-md text-outline">Receipt No.</span> {{ ticket.receipt?.number || '—' }}</div>
@@ -197,23 +380,44 @@
           </section>
 
           <!-- Follow-up history (structured, from tagged log entries) -->
-          <section v-if="followUpLog.length" class="border-t border-outline-variant pt-4 mt-4">
-            <h3 class="font-headline-md text-headline-md text-on-surface mb-3">
-              Follow-up history <span class="font-body-md text-on-surface-variant">· {{ followUpLog.length }} attempt{{ followUpLog.length > 1 ? 's' : '' }}</span>
+          <section id="sec-followup" v-if="followUpLog.length" class="border-t border-outline-variant pt-4 mt-4">
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-3 flex items-center gap-2">
+              <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px">timeline</span>
+              Follow-up history
+              <span class="font-body-md text-on-surface-variant font-normal">· {{ followUpLog.length }} attempt{{ followUpLog.length > 1 ? 's' : '' }}</span>
             </h3>
-            <ul class="flex flex-col gap-2">
-              <li v-for="ev in followUpLog" :key="ev.id" class="flex items-start gap-2 font-body-md">
-                <span class="material-symbols-outlined text-tertiary" style="font-size: 18px">support_agent</span>
-                <div>
-                  <div class="text-on-surface">{{ ev.text.replace('[Follow-up] ', '') }}</div>
-                  <div class="font-label-md text-label-md text-on-surface-variant">{{ ev.by }} · {{ relTime(ev.on) }}</div>
-                </div>
-              </li>
-            </ul>
+            <div class="relative">
+              <!-- Timeline vertical line -->
+              <div class="absolute left-[19px] top-3 bottom-3 w-0.5 bg-outline-variant rounded-full"></div>
+              <ul class="flex flex-col">
+                <li v-for="ev in followUpLog" :key="ev.id" class="flex items-start gap-4 pl-0 pb-5 relative">
+                  <!-- Timeline dot + icon -->
+                  <div class="relative z-10 flex items-center justify-center w-[38px] h-[38px] rounded-full shrink-0"
+                    :style="{ background: followupActionBg(ev.text), color: followupActionFg(ev.text) }">
+                    <span class="material-symbols-outlined" style="font-size:18px">{{ followupActionIcon(ev.text) }}</span>
+                  </div>
+                  <!-- Content -->
+                  <div class="flex-1 min-w-0 pt-1">
+                    <div class="text-on-surface font-body-md break-words">{{ ev.text.replace('[Follow-up] ', '') }}</div>
+                    <div class="font-label-md text-label-md text-on-surface-variant mt-1 flex items-center gap-2">
+                      <span class="inline-flex items-center gap-1">
+                        <span class="material-symbols-outlined" style="font-size:14px">person</span>
+                        {{ ev.by }}
+                      </span>
+                      <span class="text-outline">·</span>
+                      <span class="inline-flex items-center gap-1">
+                        <span class="material-symbols-outlined" style="font-size:14px">schedule</span>
+                        {{ relTime(ev.on) }}
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
           </section>
 
           <!-- Activity timeline + add note -->
-          <section class="border-t border-outline-variant pt-4 mt-4">
+          <section id="sec-activity" class="border-t border-outline-variant pt-4 mt-4">
             <h3 class="font-headline-md text-headline-md text-on-surface mb-3">Activity</h3>
 
             <!-- Add note -->
@@ -223,6 +427,7 @@
                 rows="2"
                 placeholder="Add an internal note…"
                 class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none"
+                @keydown.ctrl.enter="addNote"
               ></textarea>
               <div v-if="noteError" class="text-error font-label-md text-label-md mt-1">{{ noteError }}</div>
               <div class="flex justify-end mt-2">
@@ -263,7 +468,7 @@
       </div>
 
       <!-- Quick Action Panel -->
-      <div class="w-full md:w-80 bg-surface flex flex-col overflow-y-auto border-t md:border-t-0 md:border-l border-outline-variant">
+      <div id="sec-actions" class="w-full md:w-80 bg-surface flex flex-col overflow-y-auto border-t md:border-t-0 md:border-l border-outline-variant">
         <div class="p-4 border-b border-outline-variant bg-surface-container-low sticky top-0 z-10">
           <h3 class="font-headline-md text-headline-md text-on-surface">Quick Actions</h3>
         </div>
@@ -292,6 +497,59 @@
           <button @click="openAction('set_promise')" class="w-full px-4 py-3 bg-primary-container text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
             <span class="material-symbols-outlined" style="font-size: 18px">schedule_send</span> Set Customer Promise
           </button>
+
+          <!-- Follow-up Journey Flow (Phase 1N-6B) -->
+          <div class="pt-2 mt-1 border-t border-outline-variant font-label-md text-label-md text-on-surface-variant uppercase tracking-wide">Follow-up Journey</div>
+
+          <div class="relative pl-4 mt-3">
+            <!-- Vertical connector line -->
+            <div class="absolute left-[23px] top-0 bottom-0 w-0.5 bg-outline-variant rounded-full"></div>
+            <ul class="flex flex-col gap-0">
+              <li v-for="(step, si) in followupFlowSteps" :key="step.key" class="relative flex items-start gap-4 pb-6 last:pb-0">
+                <!-- Step indicator -->
+                <div class="relative z-10 flex items-center justify-center w-[46px] h-[46px] rounded-full shrink-0 shadow-sm transition-all"
+                  :class="step.status === 'completed' ? 'bg-[#1a7f37] text-white' : step.status === 'current' ? 'bg-primary text-white ring-4 ring-primary/20' : 'bg-surface-container-highest text-outline'">
+                  <span v-if="step.status === 'completed'" class="material-symbols-outlined" style="font-size:22px">check</span>
+                  <span v-else class="material-symbols-outlined" style="font-size:22px">{{ step.icon }}</span>
+                </div>
+                <!-- Step content -->
+                <div class="flex-1 min-w-0 pt-2">
+                  <div class="font-body-md font-semibold"
+                    :class="step.status === 'completed' ? 'text-[#1a7f37]' : step.status === 'current' ? 'text-primary' : 'text-on-surface-variant'">
+                    {{ step.label }}
+                  </div>
+                  <div v-if="step.status === 'current' && step.action" class="mt-2">
+                    <button @click="openAction(step.action)" 
+                      class="px-4 py-2 rounded-lg font-label-md text-label-md flex items-center gap-1.5 transition-all hover:opacity-90 active:scale-[0.97]"
+                      :class="step.buttonClass || 'bg-primary text-on-primary'">
+                      <span class="material-symbols-outlined" style="font-size:16px">{{ step.icon }}</span>
+                      {{ step.buttonLabel || step.label }}
+                    </button>
+                  </div>
+                  <div v-else-if="step.status === 'completed' && step.completedLabel" class="font-label-md text-label-md text-[#1a7f37] mt-0.5 flex items-center gap-1">
+                    <span class="material-symbols-outlined" style="font-size:14px">done</span>
+                    {{ step.completedLabel }}
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Side note: Mark No Update / Escalate (always shown as alt path) -->
+          <div v-if="followupAltActions.length" class="mt-3 pt-3 border-t border-outline-variant">
+            <div class="font-label-md text-label-md text-outline mb-2 flex items-center gap-1.5">
+              <span class="material-symbols-outlined" style="font-size:16px">alt_route</span>
+              Alternative Actions
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button v-for="alt in followupAltActions" :key="alt.action" @click="openAction(alt.action)"
+                class="px-3 py-1.5 rounded-lg font-label-md text-label-md flex items-center gap-1.5 transition-all hover:opacity-90 active:scale-[0.97]"
+                :class="alt.buttonClass">
+                <span class="material-symbols-outlined" style="font-size:16px">{{ alt.icon }}</span>
+                {{ alt.label }}
+              </button>
+            </div>
+          </div>
 
           <button @click="openProductReceipt" class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
             <span class="material-symbols-outlined" style="font-size: 18px">inventory_2</span> Create Product Receipt
@@ -344,7 +602,7 @@
   </div>
 
   <!-- Need Invoice Modal -->
-  <div v-if="modals.needInvoice" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="modals.needInvoice = false">
+  <div v-if="modals.needInvoice" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="modals.needInvoice = false" @keydown.escape="modals.needInvoice = false">
     <div class="bg-surface-container-lowest rounded-xl w-full max-w-lg shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
       <!-- Modal Header -->
       <div class="px-6 py-5 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
@@ -411,7 +669,7 @@
     </div>
   </div>
   <!-- Create Product Receipt Modal -->
-  <div v-if="modals.createReceipt" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="modals.createReceipt = false">
+  <div v-if="modals.createReceipt" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="modals.createReceipt = false" @keydown.escape="modals.createReceipt = false">
     <div class="bg-surface-container-lowest rounded-xl w-full max-w-2xl shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh]">
       <!-- Modal Header -->
       <div class="px-6 py-5 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
@@ -492,7 +750,7 @@
   </div>
 
   <!-- Mark Ready for Pickup Modal -->
-  <div v-if="modals.readyPickup" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="modals.readyPickup = false">
+  <div v-if="modals.readyPickup" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="modals.readyPickup = false" @keydown.escape="modals.readyPickup = false">
     <div class="bg-surface-container-lowest rounded-xl w-full max-w-lg shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
       <!-- Modal Header -->
       <div class="px-6 py-5 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
@@ -553,7 +811,7 @@
   </div>
 
   <!-- Generic Action Modal (Register Brand / Follow-up SC / Waiting Part / Customer Confirmed / Close) -->
-  <div v-if="actionDef" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="closeAction">
+  <div v-if="actionDef" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" @click.self="closeAction" @keydown.escape="closeAction">
     <div class="bg-surface-container-lowest rounded-xl w-full max-w-lg shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh]">
       <div class="px-6 py-5 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
         <div class="flex items-center gap-3">
@@ -627,20 +885,25 @@
           {{ actionDef.submitLabel }}
         </button>
       </div>
+      </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <script setup>
-import { ref, watch, reactive, computed } from 'vue'
+import { ref, watch, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { call, post } from '@/api'
 import SlaBadge from '@/components/SlaBadge.vue'
+import { chip, dueChip, promiseChip, escChip, stageChip, satisfactionChip, informedChip, fmtDT, ticketAge, relTime } from '@/utils'
+import { useToast } from '@/utils/toast'
 
 const props = defineProps({
   ticketId: { type: String, default: null }
 })
 
 const emit = defineEmits(['close', 'refresh'])
+
+const { show: showToast } = useToast()
 
 const ticket = ref(null)
 const loading = ref(false)
@@ -658,8 +921,120 @@ const repeatCandidates = ref([])
 
 const isClosed = computed(() => ['Closed', 'Cancelled', 'Resolved'].includes(ticket.value?.status))
 
+const SECTIONS = [
+  { id: 'sec-stage', label: 'Stage' },
+  { id: 'sec-reminder', label: 'Reminder' },
+  { id: 'sec-ai-advisory', label: 'AI Advisory' },
+  { id: 'sec-followup-tracking', label: 'Follow-up Tracking' },
+  { id: 'sec-customer', label: 'Customer' },
+  { id: 'sec-product', label: 'Product' },
+  { id: 'sec-workflow', label: 'Workflow' },
+  { id: 'sec-receipt', label: 'Custody' },
+  { id: 'sec-followup', label: 'Follow-ups' },
+  { id: 'sec-activity', label: 'Activity' },
+  { id: 'sec-actions', label: 'Actions' },
+]
+function scrollToSection(id) {
+  const el = document.getElementById(id)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 // Structured follow-up history — derived from the tagged activity entries.
 const followUpLog = computed(() => activity.value.filter((e) => (e.text || '').startsWith('[Follow-up]')))
+
+// Follow-up journey flow stepper — served by AI engine on the server.
+const followupFlowSteps = ref([])
+const followupAltActions = ref([])
+
+const loadFollowupFlow = async () => {
+	if (!props.ticketId) { followupFlowSteps.value = []; followupAltActions.value = []; return }
+	try {
+		const res = await call('lavanya_service.ai_advisory.get_followup_flow', { ticket_name: props.ticketId })
+		followupFlowSteps.value = res?.steps || []
+		followupAltActions.value = res?.alt_actions || []
+	} catch (e) {
+		followupFlowSteps.value = []
+		followupAltActions.value = []
+	}
+}
+const aiBusy = ref(false)
+function aiStatusChip(s) {
+	if (s === 'Suggested') return { background: 'rgba(0,83,219,0.12)', color: '#0053db' }
+	if (s === 'Accepted') return { background: 'rgba(26,127,55,0.12)', color: '#1a7f37' }
+	if (s === 'Ignored') return { background: 'rgba(67,70,85,0.12)', color: '#434655' }
+	if (s === 'Review Needed') return { background: 'rgba(186,26,26,0.12)', color: '#ba1a1a' }
+	return { background: 'rgba(67,70,85,0.08)', color: '#434655' }
+}
+async function acceptAiSuggestion() {
+	aiBusy.value = true
+	try {
+		await post('lavanya_service.ai_advisory.accept_ai_suggestion', { ticket_name: props.ticketId, accepted_field: 'ai_suggested_next_action' })
+		await loadTicket()
+		showToast('AI suggestion accepted')
+	} catch (e) {
+		showToast(e.message || 'Could not accept suggestion.', 'error')
+	} finally {
+		aiBusy.value = false
+	}
+}
+async function ignoreAiSuggestion() {
+	aiBusy.value = true
+	try {
+		await post('lavanya_service.ai_advisory.ignore_ai_suggestion', { ticket_name: props.ticketId })
+		await loadTicket()
+		showToast('AI suggestion ignored')
+	} catch (e) {
+		showToast(e.message || 'Could not ignore suggestion.', 'error')
+	} finally {
+		aiBusy.value = false
+	}
+}
+
+const FOLLOWUP_ACTION_STYLES = {
+	'Verify Technician Called': { icon: 'phone_in_talk', bg: 'rgba(0,74,198,0.12)', fg: '#004ac6' },
+	'Verify Technician Visit': { icon: 'handyman', bg: 'rgba(37,99,235,0.12)', fg: '#2563eb' },
+	'Record SC Follow-up': { icon: 'support_agent', bg: 'rgba(0,83,219,0.12)', fg: '#0053db' },
+	'Inform Customer': { icon: 'campaign', bg: 'rgba(26,127,55,0.12)', fg: '#1a7f37' },
+	'Mark No Update': { icon: 'warning', bg: 'rgba(148,55,0,0.12)', fg: '#943700' },
+	'Escalate Case': { icon: 'escalator_warning', bg: 'rgba(186,26,26,0.12)', fg: '#ba1a1a' },
+	'Record Satisfaction': { icon: 'sentiment_satisfied', bg: 'rgba(26,127,55,0.12)', fg: '#1a7f37' },
+	'Record Customer Approval': { icon: 'contract', bg: 'rgba(113,42,226,0.12)', fg: '#712ae2' },
+}
+function followupActionStyle(text) {
+	for (const [key, style] of Object.entries(FOLLOWUP_ACTION_STYLES)) {
+		if (text.includes(key)) return style
+	}
+	return { icon: 'support_agent', bg: 'rgba(67,70,85,0.12)', fg: '#434655' }
+}
+function followupActionIcon(text) { return followupActionStyle(text).icon }
+function followupActionBg(text) { return followupActionStyle(text).bg }
+function followupActionFg(text) { return followupActionStyle(text).fg }
+
+// Follow-up tracking banner state
+const followupBanner = computed(() => {
+	const s = ticket.value?.stage || {}
+	if (s.customer_satisfaction_status === 'Satisfied' || s.customer_satisfaction_status === 'Not Required')
+		return { bg: 'rgba(26,127,55,0.12)', fg: '#1a7f37', icon: 'sentiment_satisfied', title: 'Customer Satisfied', sub: 'No further follow-up needed.' }
+	if (s.customer_satisfaction_status === 'Not Satisfied')
+		return { bg: 'rgba(186,26,26,0.12)', fg: '#ba1a1a', icon: 'sentiment_dissatisfied', title: 'Customer Not Satisfied', sub: 'Escalate or follow up to resolve concerns.' }
+	if (s.escalation_level && s.escalation_level !== 'None')
+		return { bg: 'rgba(186,26,26,0.12)', fg: '#ba1a1a', icon: 'escalator_warning', title: `Escalated — ${s.escalation_level}`, sub: 'Case requires higher-level attention.' }
+	if (s.followup_stage === 'no_technician_update')
+		return { bg: 'rgba(148,55,0,0.12)', fg: '#943700', icon: 'warning', title: 'No Update from Technician', sub: 'No response from service center — escalation may be needed.' }
+	if (s.followup_stage === 'part_pending')
+		return { bg: 'rgba(148,55,0,0.12)', fg: '#943700', icon: 'build', title: 'Awaiting Part', sub: s.part_delay_reason || 'Part not yet received.' }
+	if (!s.customer_informed_status || s.customer_informed_status === 'Pending')
+		return { bg: 'rgba(148,55,0,0.12)', fg: '#943700', icon: 'campaign', title: 'Customer Not Informed', sub: 'Customer needs to be contacted about their service status.' }
+	if (s.customer_informed_status === 'Customer Not Reachable')
+		return { bg: 'rgba(186,26,26,0.12)', fg: '#ba1a1a', icon: 'person_off', title: 'Customer Not Reachable', sub: 'Multiple attempts failed — document efforts.' }
+	if (s.followup_stage === 'technician_call_pending')
+		return { bg: 'rgba(0,74,198,0.08)', fg: '#004ac6', icon: 'phone_in_talk', title: 'Technician Call Pending', sub: 'Verify if technician has called the customer.' }
+	if (s.followup_stage === 'technician_visit_pending')
+		return { bg: 'rgba(0,74,198,0.08)', fg: '#004ac6', icon: 'handyman', title: 'Technician Visit Pending', sub: 'Verify if technician has visited the customer.' }
+	if (s.followup_stage === 'customer_confirmation_pending')
+		return { bg: 'rgba(113,42,226,0.12)', fg: '#712ae2', icon: 'how_to_reg', title: 'Awaiting Customer Confirmation', sub: 'Waiting for customer to confirm service completion.' }
+	return { bg: 'rgba(0,74,198,0.08)', fg: '#004ac6', icon: 'support_agent', title: 'Follow-up in Progress', sub: 'Ticket is actively being followed up.' }
+})
 
 async function loadRepeat() {
   repeatCandidates.value = []
@@ -720,8 +1095,10 @@ async function addNote() {
     })
     activity.value = [ev, ...activity.value]
     noteText.value = ''
+    showToast('Note added')
   } catch (err) {
     noteError.value = err.message || 'Could not post note.'
+    showToast(err.message || 'Could not post note.', 'error')
   } finally {
     postingNote.value = false
   }
@@ -742,6 +1119,7 @@ const loadTicket = async () => {
     }
     loadActivity()
     loadRepeat()
+    loadFollowupFlow()
   }
 }
 
@@ -749,6 +1127,12 @@ watch(() => props.ticketId, loadTicket)
 
 function close() {
   emit('close')
+}
+
+onMounted(() => document.addEventListener('keydown', onKeyDown))
+onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
+function onKeyDown(e) {
+  if (e.key === 'Escape' && props.ticketId) close()
 }
 
 // WhatsApp the customer via a wa.me link (no gateway needed — opens WhatsApp with
@@ -1016,11 +1400,77 @@ const ACTIONS = {
     endpoint: 'lavanya_service.api.stitch_console.set_customer_promise',
     fields: [{ key: 'promised_at', label: 'Promised an update by', type: 'datetime-local', required: true }],
   },
+  // Follow-up tracking actions (Phase 1N-6B)
+  verify_tech_called: {
+    title: 'Verify Technician Called', icon: 'phone_in_talk', submitLabel: 'Verify Called',
+    endpoint: 'lavanya_service.api.workflow_actions.verify_technician_called',
+    fields: [
+      { key: 'technician_name', label: 'Technician Name', type: 'text', required: false },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  verify_tech_visit: {
+    title: 'Verify Technician Visit', icon: 'handyman', submitLabel: 'Verify Visit',
+    endpoint: 'lavanya_service.api.workflow_actions.verify_technician_visit',
+    fields: [
+      { key: 'technician_name', label: 'Technician Name', type: 'text', required: false },
+      { key: 'visit_result', label: 'Visit Result', type: 'text', required: false },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  record_sc_followup: {
+    title: 'Record SC Follow-up', icon: 'support_agent', submitLabel: 'Record',
+    endpoint: 'lavanya_service.api.workflow_actions.record_sc_followup',
+    fields: [
+      { key: 'follow_up_result', label: 'Follow-up Result', type: 'select', required: true, options: FOLLOW_UP_RESULTS },
+      { key: 'next_follow_up_date', label: 'Next Follow-up Date', type: 'date', required: false },
+      { key: 'customer_informed_status', label: 'Customer Informed', type: 'select', required: true, options: ['Informed by Call', 'Informed by WhatsApp', 'Informed by SMS', 'Pending', 'Customer Not Reachable', 'Not Required'] },
+    ],
+  },
+  inform_customer: {
+    title: 'Inform Customer', icon: 'campaign', submitLabel: 'Mark Informed',
+    endpoint: 'lavanya_service.api.workflow_actions.inform_customer',
+    fields: [
+      { key: 'channel', label: 'Channel', type: 'select', required: true, options: ['Phone', 'WhatsApp', 'Direct', 'SMS', 'Email'] },
+      { key: 'message', label: 'Message', type: 'textarea', required: false },
+    ],
+  },
+  mark_no_update: {
+    title: 'Mark No Update', icon: 'warning', submitLabel: 'Mark & Escalate',
+    endpoint: 'lavanya_service.api.workflow_actions.mark_no_update',
+    fields: [
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  escalate_case: {
+    title: 'Escalate Case', icon: 'escalator_warning', submitLabel: 'Escalate',
+    endpoint: 'lavanya_service.api.workflow_actions.escalate_case',
+    fields: [
+      { key: 'reason', label: 'Reason', type: 'textarea', required: true, placeholder: 'Why is this being escalated?' },
+    ],
+  },
+  record_satisfaction: {
+    title: 'Record Satisfaction', icon: 'sentiment_satisfied', submitLabel: 'Record',
+    endpoint: 'lavanya_service.api.workflow_actions.record_satisfaction',
+    fields: [
+      { key: 'satisfaction_status', label: 'Satisfaction Status', type: 'select', required: true, options: ['Satisfied', 'Not Satisfied', 'Customer Not Reachable', 'Not Required'] },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  record_approval: {
+    title: 'Record Customer Approval', icon: 'contract', submitLabel: 'Record Approval',
+    endpoint: 'lavanya_service.api.workflow_actions.record_customer_approval',
+    fields: [
+      { key: 'approved_amount', label: 'Approved Amount', type: 'number', required: true },
+      { key: 'payment_status', label: 'Payment Status', type: 'select', required: false, options: ['Not Applicable', 'Pending', 'Approved', 'Paid'] },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
 }
 
 const actionKey = ref(null)
 const actionDef = computed(() => (actionKey.value ? ACTIONS[actionKey.value] : null))
-const actionForm = reactive({})
+const actionForm = reactive({}); watch(actionForm, () => { if (actionError.value) actionError.value = '' })
 
 function isRequired(f) {
   return typeof f.required === 'function' ? f.required(actionForm) : !!f.required
@@ -1043,6 +1493,7 @@ function closeAction() {
 async function submitAction() {
   if (!actionValid.value) return
   const def = actionDef.value
+  if (def.danger && !confirm(`Are you sure you want to ${def.submitLabel.toLowerCase()} this ticket?`)) return
   // Receipt-targeted actions (custody movements) need the linked receipt.
   if (def.target === 'receipt' && !ticket.value?.receipt?.number) {
     actionError.value = 'This action needs a Product Receipt. Create one first.'
@@ -1062,87 +1513,40 @@ async function submitAction() {
     actionKey.value = null
     emit('refresh')
     await loadTicket()
+    showToast(def.submitLabel + ' completed')
   } catch (err) {
     actionError.value = err.message || 'An error occurred while saving.'
+    showToast(err.message || 'Action failed', 'error')
   } finally {
     submitting.value = false
   }
 }
 
-const STATUS_HUE = {
-  New: '#004ac6',
-  'Registration Pending': '#2563eb',
-  'Brand Registered': '#0053db',
-  'In Progress': '#004ac6',
-  'Waiting on Customer': '#943700',
-  'Waiting on Part / Approval': '#943700',
-  'Ready for Pickup': '#1a7f37',
-  Resolved: '#1a7f37',
-  Closed: '#434655',
-  Cancelled: '#ba1a1a',
-}
-function hexToRgba(hex, a) {
-  const h = hex.replace('#', '')
-  const r = parseInt(h.slice(0, 2), 16)
-  const g = parseInt(h.slice(2, 4), 16)
-  const b = parseInt(h.slice(4, 6), 16)
-  return `rgba(${r}, ${g}, ${b}, ${a})`
-}
-function chip(status) {
-  const hue = STATUS_HUE[status] || '#434655'
-  return { color: hue, background: hexToRgba(hue, 0.12) }
-}
-const DUE_HUE = { 'Due Soon': '#943700', Overdue: '#ba1a1a', Breached: '#93000a', 'Not Due': '#1a7f37' }
-function dueChip(status) {
-  const hue = DUE_HUE[status] || '#434655'
-  return { color: hue, background: hexToRgba(hue, 0.12) }
-}
-const PROMISE_HUE = { Breached: '#ba1a1a', Pending: '#0053db', Kept: '#1a7f37' }
-function promiseChip(status) {
-  const hue = PROMISE_HUE[status] || '#434655'
-  return { color: hue, background: hexToRgba(hue, 0.12) }
-}
-// Reminder Intelligence (Step 5) helpers — blank-safe.
-const ESC_HUE = { Coordinator: '#0053db', Manager: '#943700', Owner: '#ba1a1a' }
-function escChip(level) {
-  const hue = ESC_HUE[level] || '#434655'
-  return { color: hue, background: hexToRgba(hue, 0.12) }
-}
 const reminderEsc = computed(() => ticket.value?.reminder?.escalation_level || 'None')
-// Show the rule-computed follow-up only when a manual date is overriding it.
 const reminderShowComputed = computed(() => !!ticket.value?.reminder?.manual_followup)
-function fmtDT(value) {
-  if (!value) return '—'
-  const s = String(value).replace('T', ' ')
-  return s.length >= 16 ? s.substring(0, 16) : s
-}
-function ticketAge(creationDate) {
-  if (!creationDate) return 0
-  const created = new Date(creationDate)
-  const diffTime = Math.abs(new Date() - created)
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-}
-function relTime(value) {
-  if (!value) return ''
-  const d = new Date(String(value).replace(' ', 'T'))
-  const secs = Math.round((Date.now() - d.getTime()) / 1000)
-  if (secs < 60) return 'just now'
-  const mins = Math.round(secs / 60)
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.round(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  const days = Math.round(hrs / 24)
-  if (days < 30) return `${days}d ago`
-  return d.toLocaleDateString()
-}
+const lastFollowupText = computed(() => {
+  const stage = ticket.value?.stage
+  if (!stage?.last_followup_at && !stage?.last_followup_summary) return '—'
+  const dt = stage.last_followup_at ? stage.last_followup_at.substring(0, 16) : ''
+  const summary = stage.last_followup_summary ? stage.last_followup_summary.substring(0, 80) : ''
+  return (dt ? dt + ' · ' : '') + summary || '—'
+})
 </script>
 
 <style scoped>
-.animate-slide-in {
-  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.drawer-enter-active,
+.drawer-leave-active {
+  transition: opacity 0.25s ease;
 }
-@keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+.drawer-enter-from,
+.drawer-leave-to {
+  opacity: 0;
+}
+.drawer__panel {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.drawer-enter-from .drawer__panel,
+.drawer-leave-to .drawer__panel {
+  transform: translateX(100%);
 }
 </style>

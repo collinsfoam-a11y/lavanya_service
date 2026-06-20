@@ -6,6 +6,10 @@
 @tailwind utilities;
 
 @layer base {
+  *:focus-visible {
+    outline: 2px solid #004ac6;
+    outline-offset: 2px;
+  }
   body {
     background-color: #f8f9ff;
     color: #121c28;
@@ -34,6 +38,14 @@
   }
   .material-symbols-outlined.fill {
     font-variation-settings: 'FILL' 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -376,5 +388,17 @@ textarea.lav-input {
 }
 .lav-input::placeholder {
   color: #737686;
+}
+
+/* Skeleton shimmer for loading placeholders */
+.lav-skeleton {
+  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+@keyframes sk-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 

@@ -63,6 +63,28 @@ SAFE_TICKET_FIELDS = [
 	"customer_informed",
 	"customer_promised_update_at",
 	"customer_promise_status",
+	# AI advisory (Step 6) — status flag only; full suggestion lives in the drawer.
+	"ai_review_status",
+	# Follow-up tracking (Phase 1N-6B)
+	"service_path",
+	"followup_stage",
+	"service_charge_type",
+	"customer_satisfaction_status",
+	"part_required",
+	"part_name",
+	"part_expected_date",
+	"part_delay_reason",
+	"customer_informed_about_part_delay",
+	"last_service_center_followup",
+	"last_followup_summary",
+	"last_followup_at",
+	"no_update_count",
+	"customer_informed_status",
+	"estimated_amount",
+	"customer_approved_amount",
+	"technician_payable",
+	"commission_amount",
+	"payment_status",
 ]
 
 CLASSIFICATION_FIELDS = [
@@ -84,55 +106,93 @@ CLASSIFICATION_FIELDS = [
 ]
 
 GROUPS = [
+	# Urgent action-needed (overdue + follow-up failures)
 	{
 		"key": "overdue_follow_up",
 		"label": "Overdue Follow-up",
 		"priority": 1,
 	},
 	{
+		"key": "no_technician_update",
+		"label": "No Technician Update",
+		"priority": 2,
+	},
+	{
+		"key": "escalated_cases",
+		"label": "Escalated Cases",
+		"priority": 3,
+	},
+	{
+		"key": "customer_not_informed",
+		"label": "Customer Not Informed",
+		"priority": 4,
+	},
+	{
+		"key": "technician_call_due",
+		"label": "Technician Call Verification Due",
+		"priority": 5,
+	},
+	{
+		"key": "technician_visit_due",
+		"label": "Technician Visit Verification Due",
+		"priority": 6,
+	},
+	# Due / registration
+	{
 		"key": "due_today",
 		"label": "Due Today",
-		"priority": 2,
+		"priority": 7,
 	},
 	{
 		"key": "registration_recommended",
 		"label": "Registration Recommended",
-		"priority": 3,
+		"priority": 8,
 	},
 	{
 		"key": "registration_pending",
 		"label": "Registration Pending",
-		"priority": 4,
+		"priority": 9,
 	},
+	# Waiting / operational
 	{
 		"key": "waiting_on_customer",
 		"label": "Waiting on Customer",
-		"priority": 5,
+		"priority": 10,
 	},
 	{
 		"key": "waiting_on_part",
 		"label": "Waiting on Part / Approval",
-		"priority": 6,
+		"priority": 11,
 	},
 	{
 		"key": "ready_for_pickup",
 		"label": "Ready for Pickup",
-		"priority": 7,
+		"priority": 12,
+	},
+	{
+		"key": "customer_satisfaction_pending",
+		"label": "Customer Satisfaction Pending",
+		"priority": 13,
 	},
 	{
 		"key": "product_receipt_missing",
 		"label": "Product Receipt Missing",
-		"priority": 8,
+		"priority": 14,
 	},
 	{
 		"key": "closure_pending",
 		"label": "Closure Pending",
-		"priority": 9,
+		"priority": 15,
 	},
 	{
 		"key": "new_complaints",
 		"label": "New Complaints",
-		"priority": 10,
+		"priority": 16,
+	},
+	{
+		"key": "upcoming_work",
+		"label": "Upcoming Work",
+		"priority": 17,
 	},
 ]
 
@@ -142,6 +202,12 @@ HELPDESK_AGENT_GROUPS = {
 	"registration_pending",
 	"waiting_on_customer",
 	"waiting_on_part",
+	"technician_call_due",
+	"technician_visit_due",
+	"no_technician_update",
+	"customer_not_informed",
+	"escalated_cases",
+	"customer_satisfaction_pending",
 }
 
 FRONT_DESK_GROUPS = {
@@ -226,14 +292,36 @@ def classify_ticket(row, today_date=None):
 		if status == "New":
 			keys.append("new_complaints")
 
+		# Follow-up tracking (Phase 1N-6B): classify by followup_stage and related fields.
+		followup_stage = _value(row, "followup_stage")
+		if followup_stage == "technician_call_pending":
+			keys.append("technician_call_due")
+		elif followup_stage == "technician_visit_pending":
+			keys.append("technician_visit_due")
+		elif followup_stage == "no_technician_update":
+			keys.append("no_technician_update")
+		if followup_stage in ("customer_confirmation_pending", "customer_not_satisfied"):
+			keys.append("customer_satisfaction_pending")
+
+		escalation_level = _value(row, "escalation_level")
+		if escalation_level and escalation_level not in ("None", None):
+			keys.append("escalated_cases")
+
+		satisfaction = _value(row, "customer_satisfaction_status")
+		if satisfaction == "Pending":
+			keys.append("customer_satisfaction_pending")
+
+		informed = _value(row, "customer_informed_status")
+		if not informed or informed in ("Pending", "Customer Not Reachable"):
+			keys.append("customer_not_informed")
+
 		# Safety net: an active ticket that matched no bucket above is otherwise
-		# invisible on Today's Work. This happens for Helpdesk's native
-		# "Open"/"Replied" statuses (still present alongside the Lavanya status
-		# set), which the standard new-ticket form assigns on creation — so a
-		# freshly created ticket would vanish from Today's Work until its status
-		# was changed. Surface any such active ticket as a new complaint to triage.
+		# invisible on Today's Work. 
 		if not keys:
-			keys.append("new_complaints")
+			if status in ("New", "Open"):
+				keys.append("new_complaints")
+			else:
+				keys.append("upcoming_work")
 
 	if _is_closure_pending(row):
 		keys.append("closure_pending")
@@ -359,7 +447,8 @@ def _is_closure_pending(row):
 
 
 def _safe_ticket_payload(row):
-	from lavanya_service.stage_rules import compute_overdue_status, compute_escalation_level, compute_promise_status
+	from lavanya_service.stage_rules import compute_overdue_status, compute_promise_status
+	from lavanya_service.reminder_engine import derive_escalation_level
 
 	payload = {fieldname: _json_safe(_value(row, fieldname)) for fieldname in SAFE_TICKET_FIELDS}
 	payload["customer_promise_status"] = compute_promise_status(
@@ -373,11 +462,10 @@ def _safe_ticket_payload(row):
 		_value(row, "pre_overdue_alert_at"),
 		_value(row, "next_follow_up_date"),
 	)
-	payload["escalation_level"] = compute_escalation_level(
-		_value(row, "stage_due_at"),
-		_value(row, "next_follow_up_date"),
-		is_repeat=(_value(row, "is_repeated_complaint") == "Yes"),
-	)
+	try:
+		payload["escalation_level"] = derive_escalation_level(row)
+	except Exception:
+		pass  # keep stored value
 	_attach_reminder_state(payload, row)
 	return payload
 

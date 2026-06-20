@@ -10,13 +10,9 @@ def _stage_overdue_status(ticket):
 
 
 def _stage_escalation_level(ticket):
-    from lavanya_service.stage_rules import compute_escalation_level
+    from lavanya_service.reminder_engine import derive_escalation_level
 
-    return compute_escalation_level(
-        ticket.get("stage_due_at"),
-        ticket.get("next_follow_up_date"),
-        is_repeat=(ticket.get("is_repeated_complaint") == "Yes"),
-    )
+    return derive_escalation_level(ticket)
 
 
 def _stage_promise_status(ticket):
@@ -25,6 +21,30 @@ def _stage_promise_status(ticket):
     return compute_promise_status(
         ticket.get("customer_promised_update_at"), ticket.get("customer_promise_status")
     )
+
+
+def _ai_advisory_view(ticket):
+    """Read-only AI advisory for the drawer (Step 6). Blank-safe — stored ai_*
+    fields plus the live candidate flag; never raises, never writes."""
+    try:
+        from lavanya_service.ai_advisory import is_ai_review_candidate, STATUS_NOT_REQUIRED
+
+        candidate, reasons = is_ai_review_candidate(ticket)
+        return {
+            "review_status": ticket.get("ai_review_status") or STATUS_NOT_REQUIRED,
+            "suggested_next_action": ticket.get("ai_suggested_next_action"),
+            "suggested_customer_message": ticket.get("ai_suggested_customer_message"),
+            "risk_reason": ticket.get("ai_risk_reason"),
+            "manager_summary": ticket.get("ai_manager_summary"),
+            "advisory_source": ticket.get("ai_advisory_source"),
+            "last_reviewed_at": ticket.get("ai_last_reviewed_at"),
+            "reviewed_by": ticket.get("ai_reviewed_by"),
+            "is_candidate": candidate,
+            "reasons": reasons,
+        }
+    except Exception:
+        frappe.log_error(title="lavanya ai_advisory_view (drawer)", message=frappe.get_traceback())
+        return {}
 
 
 def _reminder_intelligence(ticket):
@@ -108,6 +128,20 @@ _LIST_FIELDS = [
     "response_by",
     "resolution_by",
     "first_responded_on",
+    # Stage/Escalation fields for UI badges
+    "is_repeated_complaint",
+    "stage_due_at",
+    "pre_overdue_alert_at",
+    "customer_promised_update_at",
+    "customer_promise_status",
+    "overdue_status",
+    "escalation_level",
+    "warranty_route",
+    "customer_priority",
+    "customer_informed_at",
+    "ticket_type",
+    "service_flow_type",
+    "current_service_stage",
 ]
 
 
@@ -148,6 +182,31 @@ def get_ticket_list(search=None, status=None, start=0, page_length=30):
         start=start,
         page_length=page_length,
     )
+
+    from lavanya_service.stage_rules import compute_overdue_status, compute_promise_status
+    from lavanya_service.reminder_engine import derive_escalation_level
+    try:
+        from lavanya_service.reminder_engine import refresh_ticket_reminder_state, get_active_rules
+        rules = get_active_rules()
+    except Exception:
+        rules = []
+
+    for row in tickets:
+        row["customer_promise_status"] = compute_promise_status(
+            row.get("customer_promised_update_at"), row.get("customer_promise_status")
+        )
+        row["overdue_status"] = compute_overdue_status(
+            row.get("stage_due_at"),
+            row.get("pre_overdue_alert_at"),
+            row.get("next_follow_up_date"),
+        )
+        row["escalation_level"] = derive_escalation_level(row)
+        
+        try:
+            state = refresh_ticket_reminder_state(row, save=False, rules=rules)
+            row["customer_update_due"] = state.get("customer_update_due")
+        except Exception:
+            pass
 
     has_more = len(tickets) == page_length
     return {"tickets": tickets, "start": start, "page_length": page_length, "has_more": has_more}
@@ -454,8 +513,29 @@ def get_ticket_detail(ticket_id):
             "customer_informed": ticket.get("customer_informed"),
             "customer_promised_update_at": ticket.get("customer_promised_update_at"),
             "customer_promise_status": _stage_promise_status(ticket),
+            # Follow-up tracking (Phase 1N-6B)
+            "service_path": ticket.get("service_path"),
+            "followup_stage": ticket.get("followup_stage"),
+            "service_charge_type": ticket.get("service_charge_type"),
+            "customer_satisfaction_status": ticket.get("customer_satisfaction_status"),
+            "customer_informed_status": ticket.get("customer_informed_status"),
+            "last_followup_summary": ticket.get("last_followup_summary"),
+            "last_followup_at": ticket.get("last_followup_at"),
+            "no_update_count": ticket.get("no_update_count"),
+            "part_required": ticket.get("part_required"),
+            "part_name": ticket.get("part_name"),
+            "part_expected_date": ticket.get("part_expected_date"),
+            "part_delay_reason": ticket.get("part_delay_reason"),
+            "customer_informed_about_part_delay": ticket.get("customer_informed_about_part_delay"),
+            "estimated_amount": ticket.get("estimated_amount"),
+            "customer_approved_amount": ticket.get("customer_approved_amount"),
+            "technician_payable": ticket.get("technician_payable"),
+            "commission_amount": ticket.get("commission_amount"),
+            "payment_status": ticket.get("payment_status"),
+            "last_service_center_followup": ticket.get("last_service_center_followup"),
         },
         "reminder": _reminder_intelligence(ticket),
+        "ai": _ai_advisory_view(ticket),
         "assigned_to": ticket._assign if ticket._assign else None,
         "creation": ticket.creation
     }

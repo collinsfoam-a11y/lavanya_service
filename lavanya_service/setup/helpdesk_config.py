@@ -185,6 +185,8 @@ def ensure_status(config):
 	name = config["name"]
 
 	if frappe.db.exists("HD Ticket Status", name):
+		if name == "Closed":
+			return "skipped"
 		doc = frappe.get_doc("HD Ticket Status", name)
 		action = "updated"
 	else:

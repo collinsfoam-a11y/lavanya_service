@@ -48,12 +48,14 @@ def run():
 	_assert(sr.compute_overdue_status(next_follow_up_date=add_days(today(), 3), now=now) == "Not Due", "fallback not-due")
 	_assert(sr.compute_overdue_status(now=now) == "Not Due", "no dates -> Not Due")
 
-	# 4. escalation_level derivation.
-	_assert(sr.compute_escalation_level(next_follow_up_date=today(), now=now) == "None", "esc None")
-	_assert(sr.compute_escalation_level(next_follow_up_date=add_days(today(), -1), now=now) == "Coordinator", "esc Coordinator")
-	_assert(sr.compute_escalation_level(next_follow_up_date=add_days(today(), -2), now=now) == "Manager", "esc Manager")
-	_assert(sr.compute_escalation_level(next_follow_up_date=add_days(today(), -5), now=now) == "Owner", "esc Owner")
-	_assert(sr.compute_escalation_level(next_follow_up_date=today(), is_repeat=True, now=now) == "Manager", "esc repeat -> Manager")
+	# 4. escalation_level derivation (single source: reminder_engine.derive_escalation_level).
+	from lavanya_service.reminder_engine import derive_escalation_level
+	_t = lambda **kw: frappe._dict({"is_repeated_complaint": "No", "service_flow_type": "", "current_service_stage": "", "customer_promised_update_at": None, "customer_promise_status": "", "stage_due_at": None, "pre_overdue_alert_at": None, "modified": now, "creation": now, **kw})
+	_assert(derive_escalation_level(_t(next_follow_up_date=today())) == "None", "esc None")
+	_assert(derive_escalation_level(_t(next_follow_up_date=add_days(today(), -1))) == "L3 - Manager Escalation", "esc L3 (1d overdue)")
+	_assert(derive_escalation_level(_t(next_follow_up_date=add_days(today(), -2))) == "L3 - Manager Escalation", "esc L3 (2d overdue)")
+	_assert(derive_escalation_level(_t(next_follow_up_date=add_days(today(), -5))) == "L4 - Owner / Brand Manager Escalation", "esc Owner")
+	_assert(derive_escalation_level(_t(next_follow_up_date=today(), is_repeated_complaint="Yes")) == "L3 - Manager Escalation", "esc repeat -> Manager")
 
 	# 5. Today's Work payload exposes stage fields; every active ticket has a computed
 	#    overdue_status (so old tickets without stage_due_at still appear/work).

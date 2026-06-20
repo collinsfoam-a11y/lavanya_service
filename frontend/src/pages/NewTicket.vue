@@ -27,18 +27,23 @@
     </div>
 
     <!-- Form -->
-    <form v-else class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 max-w-2xl flex flex-col gap-5" @submit.prevent="submit">
+    <form v-else class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 max-w-2xl flex flex-col gap-5 relative" @submit.prevent="submit">
+      <div v-if="loadingOptions" class="absolute inset-0 bg-white/60 rounded-xl flex items-center justify-center z-10">
+        <div class="flex items-center gap-2 font-body-md text-on-surface-variant">
+          <span class="material-symbols-outlined animate-spin" style="font-size:20px">progress_activity</span> Loading options…
+        </div>
+      </div>
       <div v-if="error" class="p-3 bg-error-container text-on-error-container rounded-lg font-body-md">{{ error }}</div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface-variant">Customer Name <span class="text-error">*</span></span>
-          <input v-model="form.customer_name" type="text" class="lav-input" placeholder="Full name" />
+          <input v-model="form.customer_name" type="text" class="lav-input" placeholder="Full name" autofocus />
         </label>
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface-variant">Mobile <span class="text-error">*</span></span>
-          <input v-model="form.mobile" type="tel" class="lav-input" placeholder="10-digit mobile" @blur="lookupCustomer" />
-          <span v-if="lookupHint" class="font-label-md text-label-md" style="color:#1a7f37">{{ lookupHint }}</span>
+            <input v-model="form.mobile" type="tel" class="lav-input" placeholder="10-digit mobile" @blur="lookupCustomer" />
+          <span v-if="lookupHint" class="font-label-md text-label-md" :style="{ color: lookupHint.color || '#1a7f37' }">{{ lookupHint.text }}</span>
         </label>
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface-variant">Brand <span class="text-error">*</span></span>
@@ -97,7 +102,7 @@
       </label>
 
       <div class="flex justify-end gap-3">
-        <button type="button" class="px-5 h-10 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-body-md hover:bg-surface-container-low" @click="reset">Clear</button>
+        <button type="button" class="px-5 h-10 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-body-md hover:bg-surface-container-low" @click="confirmClear">Clear</button>
         <button
           type="submit"
           :disabled="!canSubmit || submitting"
@@ -117,37 +122,39 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { call, post } from '@/api'
 import AppShell from '@/components/AppShell.vue'
+import { useToast } from '@/utils/toast'
 
 const router = useRouter()
+const { show: showToast } = useToast()
 
 const opts = ref({ brands: [], product_types: [], ticket_types: [], complaint_sources: [], warranty_statuses: [] })
+const loadingOptions = ref(true)
 const submitting = ref(false)
 const error = ref('')
 const created = ref(null)
-const lookupHint = ref('')
+const lookupHint = ref({ text: '', color: '' })
 
 async function lookupCustomer() {
   const m = (form.mobile || '').replace(/\D/g, '')
   if (m.length < 10) {
-    lookupHint.value = ''
+    lookupHint.value = { text: '', color: '' }
     return
   }
   try {
     const res = await call('lavanya_service.api.customer_intake.lookup_customer_by_mobile', { mobile: form.mobile })
     if (res && res.found) {
-      // Prefill empty fields only — never overwrite what staff already typed.
       if (!form.customer_name) form.customer_name = res.customer_name || ''
       if (!form.address) form.address = res.address || ''
       if (!form.pincode) form.pincode = res.pincode || ''
       if (!form.brand && res.last_brand && opts.value.brands?.includes(res.last_brand)) form.brand = res.last_brand
       if ((!form.product_type || form.product_type === '') && res.last_product_type && opts.value.product_types?.includes(res.last_product_type)) form.product_type = res.last_product_type
       const n = res.ticket_count || 0
-      lookupHint.value = `Returning customer${n ? ` · ${n} previous ticket${n > 1 ? 's' : ''}` : ''} — details prefilled`
+      lookupHint.value = { text: `Returning customer${n ? ` · ${n} previous ticket${n > 1 ? 's' : ''}` : ''} — details prefilled`, color: '#1a7f37' }
     } else {
-      lookupHint.value = ''
+      lookupHint.value = { text: 'Customer not found. Continue with new entry.', color: '#943700' }
     }
   } catch (e) {
-    lookupHint.value = ''
+    lookupHint.value = { text: 'Could not check previous tickets. Try again later.', color: '#ba1a1a' }
   }
 }
 
@@ -163,12 +170,15 @@ const canSubmit = computed(() =>
 )
 
 async function loadOptions() {
+  loadingOptions.value = true
   try {
     const res = (await call('lavanya_service.api.stitch_console.get_new_ticket_options')) || {}
     opts.value = { ...opts.value, ...res }
     if (!form.ticket_type && res.ticket_types?.length) form.ticket_type = res.ticket_types[0]
   } catch (e) {
     error.value = 'Could not load options. Check your access.'
+  } finally {
+    loadingOptions.value = false
   }
 }
 loadOptions()
@@ -180,6 +190,7 @@ async function submit() {
   try {
     const res = await post('lavanya_service.api.stitch_console.create_ticket', { ...form })
     created.value = res?.ticket
+    showToast('Ticket created successfully')
   } catch (e) {
     error.value = e.message || 'Could not create the ticket.'
   } finally {
@@ -187,12 +198,16 @@ async function submit() {
   }
 }
 
+function confirmClear() {
+  const filled = Object.values(form).some(v => String(v).trim().length > 0)
+  if (!filled || confirm('Clear all form fields?')) reset()
+}
 function reset() {
   Object.assign(form, blank())
   if (opts.value.ticket_types?.length) form.ticket_type = opts.value.ticket_types[0]
   created.value = null
   error.value = ''
-  lookupHint.value = ''
+  lookupHint.value = { text: '', color: '' }
 }
 
 function openCreated() {

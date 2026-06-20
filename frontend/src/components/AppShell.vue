@@ -36,13 +36,13 @@
       </nav>
 
       <div class="px-2 mt-2">
-        <a
-          :href="logoutUrl"
-          class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
+        <button
+          @click="confirmLogout"
+          class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
         >
           <span class="material-symbols-outlined">logout</span>
           <span class="font-label-md text-body-md">Logout</span>
-        </a>
+        </button>
       </div>
     </aside>
 
@@ -77,6 +77,19 @@
       </div>
 
       <!-- Mobile bottom nav -->
+      <!-- Toast container -->
+      <div class="fixed top-4 right-4 z-[60] flex flex-col gap-2 pointer-events-none">
+        <div
+          v-for="t in toasts"
+          :key="t.id"
+          class="pointer-events-auto px-4 py-3 rounded-lg shadow-lg text-body-md font-body-md text-on-primary max-w-sm animate-in slide-in-from-right-2 fade-in duration-200"
+          :class="t.kind === 'error' ? 'bg-error' : 'bg-primary'"
+          @click="dismiss(t.id)"
+        >
+          {{ t.message }}
+        </div>
+      </div>
+
       <nav class="lav-mobile-nav">
         <router-link
           v-for="item in navItems.filter((i) => !i.external)"
@@ -96,9 +109,11 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useToast } from '@/utils/toast'
 
 const route = useRoute()
 const router = useRouter()
+const { toasts, dismiss } = useToast()
 const q = ref('')
 
 function goSearch() {
@@ -113,7 +128,11 @@ const navItems = [
   { label: 'New Ticket', icon: 'add_box', to: '/new-ticket' },
 ]
 
-const logoutUrl = '/api/method/logout'
+function confirmLogout() {
+  if (confirm('Are you sure you want to log out?')) {
+    window.location.href = '/api/method/logout'
+  }
+}
 
 const headerTitle = computed(() => {
   const active = navItems.find((i) => !i.external && i.to === route.path)

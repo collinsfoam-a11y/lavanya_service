@@ -102,6 +102,59 @@ def create_product_receipt(
 		serial_no=serial_no
 	)
 
+@frappe.whitelist(methods=["POST"])
+def verify_technician_called(ticket_name, technician_name=None, notes=None):
+	return quick_actions.verify_technician_called(
+		ticket_name, technician_name=technician_name, notes=notes
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def verify_technician_visit(ticket_name, technician_name=None, visit_result=None, notes=None):
+	return quick_actions.verify_technician_visit(
+		ticket_name, technician_name=technician_name, visit_result=visit_result, notes=notes
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def record_sc_followup(ticket_name, follow_up_result=None, next_follow_up_date=None, customer_informed_status=None):
+	return quick_actions.record_sc_followup(
+		ticket_name, follow_up_result=follow_up_result, next_follow_up_date=next_follow_up_date,
+		customer_informed_status=customer_informed_status
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def inform_customer(ticket_name, message=None, channel=None):
+	return quick_actions.inform_customer(
+		ticket_name, message=message, channel=channel
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def mark_no_update(ticket_name, notes=None):
+	return quick_actions.mark_no_update(ticket_name, notes=notes)
+
+
+@frappe.whitelist(methods=["POST"])
+def escalate_case(ticket_name, reason=None):
+	return quick_actions.escalate_case(ticket_name, reason=reason)
+
+
+@frappe.whitelist(methods=["POST"])
+def record_satisfaction(ticket_name, satisfaction_status=None, notes=None):
+	return quick_actions.record_satisfaction(
+		ticket_name, satisfaction_status=satisfaction_status, notes=notes
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def record_customer_approval(ticket_name, approved_amount=None, payment_status=None, notes=None):
+    return quick_actions.record_customer_approval(
+        ticket_name, approved_amount=approved_amount, payment_status=payment_status, notes=notes
+    )
+
+
 @frappe.whitelist()
 def get_current_user_roles():
     roles = frappe.get_roles(frappe.session.user)

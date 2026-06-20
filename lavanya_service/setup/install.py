@@ -33,21 +33,37 @@ def _steps():
 	from lavanya_service.setup.masters import create_supporting_masters
 	from lavanya_service.setup.service_receipt import create_service_receipt_doctypes_and_link
 	from lavanya_service.setup.customer_profile import ensure_lavanya_customer_profile
-	from lavanya_service.setup.intake_masters import (
-		ensure_product_category_doctype,
-		ensure_product_item_doctype,
-	)
 	from lavanya_service.setup.permission_fixes import restrict_hd_ticket_all_permission
 	from lavanya_service.setup.sla_fixes import ensure_helpdesk_sla_defaults
 
+	from lavanya_service.setup.helpdesk_config import configure_statuses_priorities_types
+	from lavanya_service.setup.sla_config import configure_lavanya_default_sla
+	from lavanya_service.setup.intake_masters import configure_intake_masters
+	from lavanya_service.setup.ticket_template import configure_default_ticket_template_fields
+	from lavanya_service.setup.runtime_defaults import configure_runtime_defaults
+
 	return [
-		# App-owned custom DocTypes + master seed data (the fresh-install fix)
+		# 1. Base DocTypes and Masters
 		("supporting_masters", create_supporting_masters),
 		("service_receipt_doctypes", create_service_receipt_doctypes_and_link),
 		("customer_profile_doctype", ensure_lavanya_customer_profile),
-		("product_category_doctype", ensure_product_category_doctype),
-		("product_item_doctype", ensure_product_item_doctype),
-		# Preserve the previous after_install/after_migrate guarantees
+		
+		# 2. Helpdesk configurations (Statuses, Priorities, Types)
+		("helpdesk_statuses_priorities_types", configure_statuses_priorities_types),
+		
+		# 3. Product Categories, Items, and related fields/scripts
+		("intake_masters", configure_intake_masters),
+		
+		# 4. Ticket Template
+		("ticket_template", configure_default_ticket_template_fields),
+		
+		# 5. SLA
+		("lavanya_default_sla", configure_lavanya_default_sla),
+		
+		# 6. Runtime Defaults (Depends on SLA)
+		("runtime_defaults", configure_runtime_defaults),
+
+		# 7. Preserved permission/SLA fixes
 		("restrict_hd_ticket_all", restrict_hd_ticket_all_permission),
 		("helpdesk_sla_defaults", ensure_helpdesk_sla_defaults),
 	]

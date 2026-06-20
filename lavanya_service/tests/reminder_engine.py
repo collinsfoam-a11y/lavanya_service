@@ -93,9 +93,9 @@ def run():
 		tk = _ticket(stage_due_at=add_to_date(now, hours=-hours_overdue), current_service_stage="Brand Registered")
 		return re.derive_escalation_level(tk, None, now)
 
-	_check("RE-08a overdue <1d → Coordinator", esc_for(10) == "Coordinator", esc_for(10))
-	_check("RE-08b overdue 2d → Manager", esc_for(48) == "Manager", esc_for(48))
-	_check("RE-08c overdue 5d → Owner", esc_for(120) == "Owner", esc_for(120))
+	_check("RE-08a overdue <1d → L2", esc_for(10) == "L2 - Coordinator Escalation", esc_for(10))
+	_check("RE-08b overdue 2d → L3", esc_for(48) == "L3 - Manager Escalation", esc_for(48))
+	_check("RE-08c overdue 5d → L4", esc_for(120) == "L4 - Owner / Brand Manager Escalation", esc_for(120))
 	t8_notdue = _ticket(stage_due_at=add_to_date(now, days=2), current_service_stage="Brand Registered")
 	_check("RE-08d not overdue → None", re.derive_escalation_level(t8_notdue, None, now) == "None")
 
@@ -106,7 +106,7 @@ def run():
 		customer_promised_update_at=add_to_date(now, hours=-2),  # promised time passed
 		customer_promise_status="Pending",
 	)
-	_check("RE-09 promise breach → ≥ Coordinator", re.derive_escalation_level(t9, None, now) == "Coordinator", re.derive_escalation_level(t9, None, now))
+	_check("RE-09 promise breach → ≥ L2", re.derive_escalation_level(t9, None, now) == "L2 - Coordinator Escalation", re.derive_escalation_level(t9, None, now))
 
 	# 10. Customer update due when rule requires it and none has happened.
 	r_update = _rule("Update", customer_update_required=1, customer_update_every_minutes=120)

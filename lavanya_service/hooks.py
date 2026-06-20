@@ -96,12 +96,16 @@ after_install = [
 	"lavanya_service.setup.appointment.create_appointment_doctype",
 	"lavanya_service.setup.service_stages.create_service_stage_fields",
 	"lavanya_service.setup.reminder_rule.create_reminder_rule_doctype",
+	"lavanya_service.setup.ai_fields.create_ai_advisory_fields",
+	"lavanya_service.setup.followup_fields.create_followup_fields",
 ]
 after_migrate = [
 	"lavanya_service.setup.install.after_migrate",
 	"lavanya_service.setup.appointment.create_appointment_doctype",
 	"lavanya_service.setup.service_stages.create_service_stage_fields",
 	"lavanya_service.setup.reminder_rule.create_reminder_rule_doctype",
+	"lavanya_service.setup.ai_fields.create_ai_advisory_fields",
+	"lavanya_service.setup.followup_fields.create_followup_fields",
 ]
 
 # Uninstallation
@@ -310,6 +314,31 @@ fixtures = [
 				[
 					"lavanya_customer_section",
 					"complaint_source",
+					"followup_stage",
+					"service_path",
+					"service_charge_type",
+					"customer_satisfaction_status",
+					"customer_informed_status",
+					"part_required",
+					"part_name",
+					"part_expected_date",
+					"part_delay_reason",
+					"customer_informed_about_part_delay",
+					"last_service_center_followup",
+					"last_followup_summary",
+					"last_followup_at",
+					"no_update_count",
+					"estimated_amount",
+					"customer_approved_amount",
+					"technician_payable",
+					"commission_amount",
+					"payment_status",
+					"lavanya_followup_tracking_section",
+					"followup_tracking_col",
+					"lavanya_part_section",
+					"part_col",
+					"lavanya_finance_section",
+					"finance_col",
 					"customer_name",
 					"phone_1",
 					"phone_2",
@@ -426,11 +455,11 @@ fixtures = [
 
 
 # Lavanya Service validation hooks
+# NOTE: HD Ticket before_validate and validate are NOT registered here because
+# the override class (LavanyaHDTicket in overrides/hd_ticket.py) already calls
+# normalize_ticket_phone_numbers and validate_ticket directly. Registering them
+# here too would execute them twice on every save.
 doc_events = {
-	"HD Ticket": {
-		"before_validate": "lavanya_service.validations.hd_ticket.normalize_ticket_phone_numbers",
-		"validate": "lavanya_service.validations.hd_ticket.validate_ticket",
-	},
 	"Lavanya Customer Profile": {
 		"before_validate": "lavanya_service.api.customer_intake.normalize_customer_profile_phone_numbers",
 	},

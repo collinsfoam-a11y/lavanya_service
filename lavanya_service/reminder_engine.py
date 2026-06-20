@@ -54,7 +54,7 @@ _RULE_FIELDS = [
 	"pause_when_sla_paused", "business_hours_only",
 ]
 
-_ESCALATION_ORDER = {"None": 0, "Coordinator": 1, "Manager": 2, "Owner": 3}
+_ESCALATION_ORDER = {"None": 0, "L1 - Agent Follow-up": 1, "L2 - Coordinator Escalation": 2, "L3 - Manager Escalation": 3, "L4 - Owner / Brand Manager Escalation": 4}
 _PRODUCT_AT_STORE_FLOW = "Customer Product at Store"
 _SPARE_PENDING_STAGE = "Spare Pending"
 
@@ -239,25 +239,25 @@ def derive_escalation_level(ticket, rule=None, now=None):
 	od = sr.overdue_days(_effective_due(ticket, rule, now), _tv(ticket, "next_follow_up_date"), now)
 
 	if status == "Overdue":
-		base = "Owner" if od > 3 else ("Manager" if od >= 1 else "Coordinator")
+		base = "L4 - Owner / Brand Manager Escalation" if od > 3 else ("L3 - Manager Escalation" if od >= 1 else "L2 - Coordinator Escalation")
 	else:
 		base = "None"  # Not Due / Due Soon stay calm
 
 	bumps = [base]
 	if _tv(ticket, "is_repeated_complaint") == "Yes":
-		bumps.append("Manager")  # repeat → at least Manager
+		bumps.append("L3 - Manager Escalation")  # repeat → at least Manager
 
 	promise = sr.compute_promise_status(
 		_tv(ticket, "customer_promised_update_at"), _tv(ticket, "customer_promise_status"), now
 	)
 	if promise == "Breached":
-		bumps.append("Manager" if status == "Overdue" else "Coordinator")
+		bumps.append("L3 - Manager Escalation" if status == "Overdue" else "L2 - Coordinator Escalation")
 
 	if _tv(ticket, "service_flow_type") == _PRODUCT_AT_STORE_FLOW and status == "Overdue":
-		bumps.append("Manager")  # product-at-store ageing
+		bumps.append("L3 - Manager Escalation")  # product-at-store ageing
 
 	if _tv(ticket, "current_service_stage") == _SPARE_PENDING_STAGE and status == "Overdue":
-		bumps.append("Owner" if od > 3 else "Manager")  # spare pending ageing
+		bumps.append("L4 - Owner / Brand Manager Escalation" if od > 3 else "L3 - Manager Escalation")  # spare pending ageing
 
 	return _max_level(*bumps)
 

@@ -199,6 +199,7 @@ def register_brand_complaint(
 	if service_center:
 		doc.service_center = service_center
 	doc.status = "Brand Registered"
+	doc.followup_stage = "registration_done"
 
 	_save_ticket(doc)
 	return _result(doc, _("Brand complaint registered"))
@@ -282,6 +283,7 @@ def waiting_for_part(ticket_name, pending_reason=None, next_follow_up_date=None)
 	doc.status = "Waiting on Part / Approval"
 	doc.pending_reason = pending_reason
 	doc.next_follow_up_date = next_follow_up_date
+	doc.followup_stage = "part_pending"
 
 	_save_ticket(doc)
 	return _result(doc, _("Ticket marked waiting on part / approval"))
@@ -340,6 +342,16 @@ def close_ticket(
 	doc = _load_ticket(ticket_name)
 	_block_if_final(doc)
 
+	# Block closure unless customer satisfaction is documented (Satisfied or Not Required).
+	# This prevents closing tickets after brand/service-center says "completed" without
+	# customer confirmation — a critical real-world follow-up guarantee.
+	satisfaction = doc.customer_satisfaction_status
+	if satisfaction not in ("Satisfied", "Not Required"):
+		frappe.throw(_(
+			"Ticket cannot be closed. Customer satisfaction must be 'Satisfied' "
+			"or documented as 'Not Required' (current: {0})."
+		).format(satisfaction or "Not Set"))
+
 	doc.status = "Closed"
 	doc.work_narration = work_narration
 	doc.closure_type = closure_type
@@ -384,14 +396,6 @@ def create_product_receipt(
 			)
 		)
 
-	existing = frappe.db.get_value(RECEIPT_DOCTYPE, {"ticket": doc.name}, "name")
-	if existing:
-		frappe.throw(
-			_("A Service Product Receipt ({0}) already exists for ticket {1}.").format(
-				existing, doc.name
-			)
-		)
-
 	receipt = frappe.new_doc(RECEIPT_DOCTYPE)
 	receipt.naming_series = "LV-SR-.YYYY.-.####"
 	receipt.ticket = doc.name
@@ -424,12 +428,20 @@ def create_product_receipt(
 
 	receipt.insert()
 
-	# Link the receipt back to the ticket. ``service_product_receipt`` is a
-	# protected service-coordination field; Front Desk is an allowed role for
-	# this action but is not a service-coordination writer, so the link is set
-	# directly. This is the documented, narrowly-scoped permission bypass,
+	# Link the receipt back to the ticket using a conditional UPDATE so that
+	# if a concurrent request already linked a different receipt, we never
+	# silently overwrite it (race-condition guard). ``service_product_receipt``
+	# is a protected service-coordination field; Front Desk is an allowed role
+	# for this action but is not a service-coordination writer, so the link is
+	# set directly. This is the documented, narrowly-scoped permission bypass,
 	# gated by the explicit action-role check above.
-	frappe.db.set_value(TICKET_DOCTYPE, doc.name, "service_product_receipt", receipt.name)
+	frappe.db.sql(
+		"""UPDATE `tabHD Ticket`
+		   SET service_product_receipt = %s
+		   WHERE name = %s
+		     AND (service_product_receipt IS NULL OR service_product_receipt = '')""",
+		(receipt.name, doc.name),
+	)
 
 	doc.reload()
 	return {
@@ -439,3 +451,230 @@ def create_product_receipt(
 		"receipt": receipt.name,
 		"message": _("Service Product Receipt {0} created").format(receipt.name),
 	}
+
+
+# ---------------------------------------------------------------------------
+# Follow-up tracking quick actions (Phase 1N-6B)
+# ---------------------------------------------------------------------------
+
+ESCALATION_LEVELS = ["None", "L1 - Agent Follow-up", "L2 - Coordinator Escalation", "L3 - Manager Escalation", "L4 - Owner / Brand Manager Escalation"]
+_SATISFACTION_VALUES = {"Satisfied", "Not Satisfied", "Customer Not Reachable", "Not Required"}
+_CHANNEL_MAP = {
+	"Phone": "Informed by Call",
+	"WhatsApp": "Informed by WhatsApp",
+	"SMS": "Informed by SMS",
+	"Direct": "Informed by Call",
+	"Email": "Informed by Call",
+}
+
+
+def _increment_escalation(current):
+	"""Move up one level in the escalation ladder."""
+	if not current or current == "None":
+		return "L1 - Agent Follow-up"
+	if current == "L1 - Agent Follow-up":
+		return "L2 - Coordinator Escalation"
+	if current == "L2 - Coordinator Escalation":
+		return "L3 - Manager Escalation"
+	if current == "L3 - Manager Escalation":
+		return "L4 - Owner / Brand Manager Escalation"
+	return "L4 - Owner / Brand Manager Escalation"
+
+
+def _set_last_followup(doc, summary):
+	"""Update the last-followup summary and timestamp."""
+	doc.last_followup_summary = summary[:280] if summary else summary
+	doc.last_followup_at = now_datetime()
+
+
+def verify_technician_called(ticket_name, technician_name=None, notes=None):
+	_require_roles("Verify Technician Called", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.followup_stage = "technician_called"
+
+	entry = "[Follow-up] Verify Technician Called"
+	if technician_name:
+		entry += " — Technician: {0}".format(technician_name)
+	if notes:
+		entry += " · Notes: {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Technician called verified"))
+
+
+def verify_technician_visit(ticket_name, technician_name=None, visit_result=None, notes=None):
+	_require_roles("Verify Technician Visit", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.followup_stage = "technician_visited"
+
+	entry = "[Follow-up] Verify Technician Visit"
+	if technician_name:
+		entry += " — Technician: {0}".format(technician_name)
+	if visit_result:
+		entry += " · Result: {0}".format(visit_result)
+	if notes:
+		entry += " · Notes: {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Technician visit verified"))
+
+
+def record_sc_followup(ticket_name, follow_up_result=None, next_follow_up_date=None, customer_informed_status=None):
+	_require_roles("Record SC Follow-up", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	follow_up_result = _require(follow_up_result, "Follow-up Result")
+	if follow_up_result not in FOLLOW_UP_RESULTS:
+		frappe.throw(_("'{0}' is not a valid Follow-up Result.").format(follow_up_result))
+	customer_informed_status = _require(customer_informed_status, "Customer Informed Status")
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.followup_stage = "sc_followup_done"
+	doc.last_service_center_followup = now_datetime()
+	doc.customer_informed_status = customer_informed_status
+	if next_follow_up_date:
+		doc.next_follow_up_date = next_follow_up_date
+
+	entry = "[Follow-up] Service Center Follow-up — Result: {0}".format(follow_up_result)
+	if next_follow_up_date:
+		entry += " · Next: {0}".format(next_follow_up_date)
+	entry += " · Customer: {0}".format(customer_informed_status)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("SC follow-up recorded: {0}").format(follow_up_result))
+
+
+def inform_customer(ticket_name, message=None, channel=None):
+	_require_roles("Inform Customer", {ROLE_MANAGER, ROLE_COORDINATOR, ROLE_AGENT})
+
+	channel = _require(channel, "Channel")
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.followup_stage = "customer_informed"
+	doc.customer_informed = "Yes"
+	doc.customer_informed_channel = channel
+	doc.customer_informed_at = now_datetime()
+	doc.customer_informed_by = _acting_user()
+	doc.customer_informed_status = _CHANNEL_MAP.get(channel, "Informed by Call")
+
+	entry = "[Follow-up] Inform Customer — Channel: {0}".format(channel)
+	if message:
+		entry += " · Message: {0}".format(message)
+	# Auto-wire AI suggested customer message into narration when available
+	ai_msg = doc.get("ai_suggested_customer_message")
+	if ai_msg and not message:
+		entry += " · AI message: {0}".format(ai_msg[:280])
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Customer informed via {0}").format(channel))
+
+
+def mark_no_update(ticket_name, notes=None):
+	_require_roles("Mark No Update", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.followup_stage = "no_technician_update"
+	doc.escalation_level = _increment_escalation(doc.escalation_level)
+	doc.no_update_count = (doc.no_update_count or 0) + 1
+
+	entry = "[Follow-up] Mark No Update — Escalation: {0}".format(doc.escalation_level)
+	entry += " · Count: {0}".format(doc.no_update_count)
+	if notes:
+		entry += " · Notes: {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("No update marked; escalated to {0}").format(doc.escalation_level))
+
+
+def escalate_case(ticket_name, reason=None):
+	_require_roles("Escalate Case", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	reason = _require(reason, "Reason")
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	prev_level = doc.escalation_level or "None"
+	doc.escalation_level = _increment_escalation(doc.escalation_level)
+
+	entry = "[Follow-up] Escalate Case — From: {0} → {1}".format(prev_level, doc.escalation_level)
+	entry += " · Reason: {0}".format(reason)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Case escalated from {0} to {1}").format(prev_level, doc.escalation_level))
+
+
+def record_satisfaction(ticket_name, satisfaction_status=None, notes=None):
+	_require_roles("Record Satisfaction", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	satisfaction_status = _require(satisfaction_status, "Satisfaction Status")
+	if satisfaction_status not in _SATISFACTION_VALUES:
+		frappe.throw(_("'{0}' is not a valid satisfaction status.").format(satisfaction_status))
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.customer_satisfaction_status = satisfaction_status
+
+	if satisfaction_status == "Satisfied":
+		doc.followup_stage = "customer_satisfied"
+	elif satisfaction_status == "Not Satisfied":
+		doc.followup_stage = "customer_not_satisfied"
+	else:
+		doc.followup_stage = "customer_confirmation_pending"
+
+	entry = "[Follow-up] Record Satisfaction — Status: {0}".format(satisfaction_status)
+	if notes:
+		entry += " · Notes: {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Customer satisfaction recorded: {0}").format(satisfaction_status))
+
+
+def record_customer_approval(ticket_name, approved_amount=None, payment_status=None, notes=None):
+	_require_roles("Record Customer Approval", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	approved_amount = _require(approved_amount, "Approved Amount")
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.customer_approved_amount = float(approved_amount) if approved_amount else 0
+	if payment_status:
+		doc.payment_status = payment_status
+
+	entry = "[Follow-up] Record Approval — Amount: {0}".format(approved_amount)
+	if payment_status:
+		entry += " · Payment: {0}".format(payment_status)
+	if notes:
+		entry += " · Notes: {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Customer approval recorded: amount {0}").format(approved_amount))

@@ -33,7 +33,7 @@ _ENGINE_FIELDS = [
 	"next_follow_up_date", "is_repeated_complaint", "customer_promised_update_at",
 	"customer_promise_status", "customer_informed_at", "brand", "product_type",
 	"ticket_type", "warranty_route", "pending_reason", "customer_priority",
-	"overdue_status", "escalation_level",
+	"overdue_status", "escalation_level", "ai_review_status",
 ]
 
 
@@ -109,6 +109,40 @@ def _process_ticket(row, rules, now, dry_run, meta, stats):
 		stats["breaches"] += 1
 		if not dry_run:
 			_mark_breach(name, stats)
+
+	_flag_ai_review(row, name, now, dry_run, meta, stats)
+
+
+def _flag_ai_review(row, name, now, dry_run, meta, stats):
+	"""Lightweight AI-advisory flag (Step 6): mark high-risk tickets 'Review Needed'
+	and pre-populate the advisory text so it is ready for display without requiring
+	an explicit staff action to generate. Never clobbers a staff decision
+	(Suggested/Accepted/Ignored)."""
+	if not meta.has_field("ai_review_status"):
+		return
+	from lavanya_service import ai_advisory as ai
+
+	current = row.get("ai_review_status") or ai.STATUS_NOT_REQUIRED
+	candidate, _ = ai.is_ai_review_candidate(row, now)
+	target = None
+	if candidate and current in ("", ai.STATUS_NOT_REQUIRED):
+		target = ai.STATUS_REVIEW_NEEDED
+	elif not candidate and current == ai.STATUS_REVIEW_NEEDED:
+		target = ai.STATUS_NOT_REQUIRED  # no longer risky and never acted on
+	if target and target != current:
+		stats["ai_flagged"] = stats.get("ai_flagged", 0) + 1
+		if not dry_run:
+			frappe.db.set_value(TICKET_DOCTYPE, name, "ai_review_status", target, update_modified=False)
+			# Pre-populate advisory text so it is ready for display in the SPA
+			if target == ai.STATUS_REVIEW_NEEDED:
+				try:
+					doc = frappe.get_doc(TICKET_DOCTYPE, name)
+					advisory = ai.generate_rule_based_ai_advisory(doc, now)
+					if advisory.get("review_status") == ai.STATUS_SUGGESTED:
+						ai.save_ai_advisory(doc, advisory, add_comment=False)
+						stats["ai_prepopulated"] = stats.get("ai_prepopulated", 0) + 1
+				except Exception:
+					pass  # non-critical; text can be generated on-demand via the API
 
 
 def refresh_active_ticket_reminders(batch_size=DEFAULT_BATCH_SIZE, max_tickets=DEFAULT_MAX_PER_RUN, dry_run=False, now=None):

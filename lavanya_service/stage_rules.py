@@ -58,7 +58,7 @@ NEXT_ACTIONS = [
 ]
 
 OVERDUE_STATUSES = ["Not Due", "Due Soon", "Overdue", "Breached"]
-ESCALATION_LEVELS = ["None", "Coordinator", "Manager", "Owner"]
+ESCALATION_LEVELS = ["None", "L1 - Agent Follow-up", "L2 - Coordinator Escalation", "L3 - Manager Escalation", "L4 - Owner / Brand Manager Escalation"]
 CUSTOMER_INFORMED_OPTIONS = ["Yes", "No", "Not Required"]
 CUSTOMER_INFORMED_CHANNELS = ["Phone", "WhatsApp", "Direct", "SMS", "Email"]
 
@@ -139,7 +139,7 @@ def pre_overdue_lead_minutes(sla_minutes):
 		return 10
 	if sla_minutes <= 2 * _H:
 		return 30
-	if sla_minutes <= 4 * _H:
+	if sla_minutes <= 8 * _H:
 		return _H
 	return 4 * _H
 
@@ -181,21 +181,6 @@ def overdue_days(stage_due_at=None, next_follow_up_date=None, now=None):
 	if next_follow_up_date:
 		return max(0, date_diff(getdate(_today()), getdate(next_follow_up_date)))
 	return 0
-
-
-def compute_escalation_level(stage_due_at=None, next_follow_up_date=None, is_repeat=False, now=None):
-	"""Derive escalation_level from how overdue a ticket is (delta plan mapping).
-	Used for filtering/reporting only — NOT a second escalation engine."""
-	od = overdue_days(stage_due_at, next_follow_up_date, now)
-	if od >= 4:
-		return "Owner"
-	if od >= 2:
-		return "Manager"
-	if od >= 1:
-		return "Coordinator"
-	if is_repeat:
-		return "Manager"
-	return "None"
 
 
 def compute_promise_status(promised_at=None, stored_status=None, now=None):
