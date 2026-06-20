@@ -35,6 +35,63 @@ The measurable outcome: fixed bug, new capability, performance gain, etc.
 
 ---
 
+## 2026-06-20 22:00 — H2 task spec created: UI/UX Wiring, Settings, Modernisation + Theme System
+
+### What changed
+- `doc/h2_uiux_wiring_settings_modernisation_theme_system.md` — created the consolidated H2 phase task specification combining UI/UX wiring, settings, modernisation, and the multiple-theme add-on.
+
+### Previous state
+- H2 UI/UX Wiring + Settings was referenced in other docs but had no dedicated task document.
+- The Modern UI/UX + Multiple Themes add-on existed only in conversation, not in the repo.
+
+### Current state
+- A single canonical H2 task document exists covering: settings groups (general defaults, follow-up rules, notifications, penalty, ERPNext, UI feature flags, theme preferences, safety locks), theme system requirements, modern UI refresh targets, shared component list, theme selector behaviour, compact counter mode, accessibility rules, tests, screenshots, documentation, acceptance criteria, and safety boundaries.
+
+### Why changed
+- Required to keep the expanded H2 scope in one controlled phase and give all agents a single source of truth before implementation starts.
+
+### What was obtained
+- Clear, reviewable H2 scope with acceptance criteria and safety boundaries.
+
+### Compatibility notes
+- No code changed; no tests required.
+- Implementation of the spec is the next step.
+
+---
+
+## 2026-06-20 21:30 — P2.2 Notification Templates + Dry-run Queue closed
+
+### What changed
+- `doc/p2_notification_state_audit.md` — created a current-state audit documenting implemented files, missing files, existing DocTypes/APIs/frontend UI, tests, safety checks, gaps, and verification results.
+- `doc/screenshots/p2_notifications/` — renamed the 8 captured screenshots to the required `01-` … `08-` naming scheme.
+- `lavanya_service/tests/p2_notification_tests.py` — hardened test runner with `_purge_stale()` to clean leftover templates/tickets/queue rows/agent user from prior interrupted runs; set `send_welcome_email: 0` on the test agent user to avoid SMTP failures on the dev site.
+- `lavanya_service/api/notifications.py` — removed unused `assert_no_live_send()` dead code.
+- `doc/p2_notification_templates_report.md`, `doc/p2_notification_defects_found.md`, `doc/p2_notification_closure_audit.md`, `doc/p2_notification_uat_report.md` — updated verification counts, screenshot names, and fixed-defect notes.
+- `doc/lavanya-spa-status.md` — added P2.2 closure entry to the done table.
+
+### Previous state
+P2.2 notification implementation existed from parallel work and was documented as ready for closure, but the state had not been independently audited. Screenshot names did not match the required scheme, the focused test runner was fragile to stale DB state, and a dead helper function remained in `api/notifications.py`.
+
+### Current state
+P2.2 is closed. The dry-run notification template and queue infrastructure is verified: 15 templates active, preview/queue/approve/cancel/skip workflows working, live sending blocked, no provider credentials, no ERP/accounting side effects. P2.2 tests pass 10/10 and P2.1 regression remains 18/18.
+
+### Why changed
+P2.2 needed an independent state audit and hardening before it could be safely committed as a closed milestone separate from P2.1.
+
+### What was obtained
+- `lavanya_service.tests.p2_notification_tests.run`: 10 pass, 0 fail via `bench execute`.
+- `lavanya_service.tests.p2_tests.run`: 18 pass, 0 fail.
+- `bench --site lavanya-dev.localhost migrate`: PASS.
+- Frontend production build: PASS.
+- 8 P2.2 screenshots in required `doc/screenshots/p2_notifications/`.
+
+### Compatibility notes
+- No P2.1 penalty code was changed.
+- No live WhatsApp/SMS provider, ERPNext integration, customer portal, CSAT, or accounting posting was started.
+- Frontend `Reports.vue` and `TicketDetail.vue` notification UI was preserved unchanged.
+
+---
+
 ## 2026-06-20 20:00 — P2.1 Supplier Penalty Computation closed
 
 ### What changed
