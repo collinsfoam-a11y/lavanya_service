@@ -35,7 +35,71 @@ The measurable outcome: fixed bug, new capability, performance gain, etc.
 
 ---
 
-## 2026-06-20 12:00 — Initial comprehensive documentation system
+## 2026-06-20 20:00 — P2.1 Supplier Penalty Computation closed
+
+### What changed
+- `frontend/src/pages/Reports.vue` — added penalty detail modal and approve/waive/reject narration/reason modals using `LavModal` and `useConfirm()`.
+- `doc/p2_penalty_computation_report.md` — updated verification status to CLOSED; listed captured screenshots and final closure verdict.
+- `doc/p2_penalty_defects_found.md` — closed `P2-OPEN-001` (frontend modals/screenshots) and documented the remaining non-P2.1 email-configuration regression blocker.
+- `doc/lavanya-spa-status.md` — updated the P2.1 entry to reflect closed state and completed modal/screenshot work.
+
+### Previous state
+P2.1 backend/API verification was complete (18/18), but the frontend detail/narration modals and required screenshots were still listed as the active closure gate. The defect log still had an open item for the missing modals.
+
+### Current state
+P2.1 is closed. The Reports Center Penalty tab displays a detail modal and approve/waive/reject modals that require narration/reason. Final screenshots are captured in `doc/screenshots/p2_penalty/`. Build, migration, and tests all pass.
+
+### Why changed
+P2.1 cannot be closed without the frontend UI that exposes the audited manager actions (approve/waive/reject) and the required screenshot evidence.
+
+### What was obtained
+- P2.1 backend/API runner: 18 pass, 0 fail.
+- Frontend production build: PASS.
+- Migration: PASS.
+- Screenshots captured: 7 files in `doc/screenshots/p2_penalty/`.
+- Static check: no native `window.confirm` in `Reports.vue`; only `useConfirm()` composable calls.
+
+### Compatibility notes
+- `LavModal`, `LavConfirm`, `useConfirm()`, and `theme.js` are shared components/utils already introduced by the concurrent frontend Phase A pass; the penalty modals reuse them without adding new dependencies.
+- No ERPNext/accounting, WhatsApp, SMS, customer portal, or P2.2/P2.3 scope was started.
+- Test command: `docker exec -i devcontainer-example-frappe-1 bash -lc 'cd /workspace/development/frappe-bench && bench --site lavanya-dev.localhost execute lavanya_service.tests.p2_tests.run > /tmp/p2-final.txt 2>&1; grep -v Enqueuing /tmp/p2-final.txt'`.
+- Build command: `cd frontend && node node_modules/vite/bin/vite.js build`.
+
+---
+
+## 2026-06-20 18:10 — P2.1 penalty backend verification docs and tests
+
+### What changed
+- `lavanya_service/tests/p2_tests.py` — extended the P2.1 runner from 10 to 18 checks by adding summary/list/detail API smoke, blank approval narration, blank waiver reason, waiver zeroing, missing rejection reason, and rejected-status coverage.
+- `doc/p2_penalty_rules.md` — added the explicit operational boundary: advisory/operational only, no ERP posting, no accounting entry, no WhatsApp/SMS, manager narration required, and accounting application deferred to a future phase.
+- `doc/p2_penalty_computation_report.md` — corrected verification status to migration passed, 18/18 backend/API checks passed, current SPA build sanity passed, and final frontend screenshots/build still pending until the detail/narration modals land.
+- `doc/p2_penalty_defects_found.md` — added backend test-coverage defect notes and the current open frontend modal/screenshot gate.
+- `doc/lavanya-app-reference.md` — documented P2.1 DocTypes, penalty APIs, scheduler job, test module, setup hook, and import-map references.
+
+### Previous state
+P2.1 backend computation and APIs existed, and the original P2.1 runner passed 10 checks. Documentation existed from a concurrent batch but still had stale verification counts, incomplete advisory-boundary wording, and did not list the new P2.1 modules in the app reference.
+
+### Current state
+The P2.1 backend/API runner now reports 18 pass, 0 fail. The docs clearly state P2.1 is advisory/operational only and does not post ERPNext/accounting entries or send WhatsApp/SMS. The app reference includes the penalty doctypes, APIs, daily scheduler, and test module.
+
+### Why changed
+P2.1 cannot be closed without durable audit controls and documentation that future agents can trust. Backend tests needed to cover the required narration/reason checks directly instead of relying on manual inspection.
+
+### What was obtained
+- Verified migration completed cleanly.
+- Verified `lavanya_service.tests.p2_tests.run` returns `{"pass": 18, "fail": 0}` after purging leaked test artifacts caused by an earlier truncated-output run.
+- Established clear remaining closure gates: frontend detail/narration modals, final build after those modals, required screenshots, and regression checks.
+- Verified current SPA build sanity after `npm install` restored Rollup optional dependency `@rollup/rollup-win32-x64-msvc`.
+
+### Compatibility notes
+- Existing frontend calls pass non-empty action text, so server-side narration enforcement remains backward-compatible.
+- No ERPNext/accounting, WhatsApp, SMS, customer portal, or P2.2/P2.3 scope was started.
+- Test command run: `docker exec -i devcontainer-example-frappe-1 bash -lc 'cd /workspace/development/frappe-bench && bench --site lavanya-dev.localhost execute lavanya_service.tests.p2_tests.run > /tmp/p2run.txt 2>&1; grep -v Enqueuing /tmp/p2run.txt'`.
+- Build command run: `node node_modules/vite/bin/vite.js build` from `frontend` after `npm install` repaired optional dependencies. Build retry passed; npm reported cleanup permission warnings and 2 audit findings.
+
+---
+
+## 2026-06-20 12:00 — Initial comprehensive documentation system (commit 9c0756b)
 
 ### What changed
 - `AGENTS.md` — rewritten with stricter rules (must-read-all-docs, changelog
@@ -66,4 +130,48 @@ duplicate work, broken dependencies, and incompatible changes.
 ### Compatibility notes
 - All existing docs remain untouched
 - No code was modified
+- No migration needed
+- Also included: multi-agent delta batch (SPA UI/UX polish, Reminder Engine
+  Steps 3-5, AI advisory, follow-up tracking, stage layer, dashboards)
+- Repo: https://github.com/collinsfoam-a11y/lavanya_service
+
+---
+
+## 2026-06-20 14:30 — Comprehensive frontend deep analysis audit
+
+### What changed
+- `doc/lavanya-frontend-audit.md` — created with 13-section audit (architecture,
+  component tree, state, routing, API, design system, responsiveness, a11y,
+  performance, code quality, browser compat, upgrade suggestions, modern standards)
+- `doc/lavanya-frontend-deep-analysis.md` — created with 12-section deep analysis
+  (modern design patterns, anti-pattern catalog, responsive matrix, feature gap
+  analysis, phased improvement roadmap, documentation gaps, what to avoid,
+  detailed browser compat matrix, feature completeness check, ADRs, code org
+  recommendations, tech radar)
+
+### Previous state
+Frontend had no dedicated audit/analysis document. Only `doc/lavanya-spa-status.md`
+existed with build status.
+
+### Current state
+Two comprehensive frontend documents exist:
+1. `doc/lavanya-frontend-audit.md` — standard audit (13 sections)
+2. `doc/lavanya-frontend-deep-analysis.md` — deep analysis (12 sections)
+
+### Why changed
+User requested comprehensive audit covering: modern design comparison, anti-patterns,
+all browser sizes, feature gaps, upgrade suggestions, what to avoid, what's missing.
+
+### What was obtained
+- Complete responsive matrix for 320px-1920px with critical breakpoint analysis
+- 11 anti-patterns cataloged with fixes
+- 10 backend features identified as missing from frontend
+- 24 improvement items in 4-phase roadmap with effort/impact estimates
+- Technology radar with 8 technologies assessed
+- Detailed browser compatibility table across 7 browsers
+- Architectural decision records documented
+- Feature completeness check (27 items checked)
+
+### Compatibility notes
+- No code was modified — documentation only
 - No migration needed
