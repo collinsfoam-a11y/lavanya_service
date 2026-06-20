@@ -1,0 +1,563 @@
+# Instincts generated from https://github.com/collinsfoam-a11y/lavanya_service
+# Generated: 2026-06-20T03:42:00.498Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: lavanya_service-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat, docs, ui
+
+## Evidence
+
+- 14 commits analyzed
+- Detected conventional commit pattern
+- Examples: feat: WhatsApp customer messaging + structured follow-up log, docs: user guide for WhatsApp, follow-up history, appointment scheduling
+
+---
+id: lavanya_service-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Commit Length
+
+## Action
+
+Write moderate-length commit messages (~69 characters)
+
+## Evidence
+
+- Average commit message length: 69 chars
+- Based on 14 commits
+
+---
+id: lavanya_service-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Naming Files
+
+## Action
+
+Use snake_case naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: snake_case
+
+---
+id: lavanya_service-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: lavanya_service-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: lavanya_service-arch-type-based
+trigger: "when adding new code"
+confidence: 0.8
+domain: architecture
+source: repo-analysis
+source_repo: https://github.com/collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Arch Type Based
+
+## Action
+
+Place code in the appropriate type folder (components/, services/, utils/, etc.)
+
+## Evidence
+
+- Type-based module organization detected
+- Folders: 
+
+---
+id: lavanya_service-test-naming
+trigger: "when creating a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Test Naming
+
+## Action
+
+Name test files using the pattern: *.test.ts
+
+## Evidence
+
+- File pattern: *.test.ts
+- Consistent across test files
+
+---
+id: lavanya_service-test-types
+trigger: "when planning tests for a feature"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Test Types
+
+## Action
+
+Write unit, e2e tests to match project standards
+
+## Evidence
+
+- Test types detected: unit, e2e
+- Coverage config: no
+
+---
+id: lavanya_service-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~19x per month
+- Files: frontend/src/components/*, **/*.test.*, **/api/**
+
+---
+id: lavanya_service-workflow-add-new-programmatic-doctype-or-fields
+trigger: "when doing add new programmatic doctype or fields"
+confidence: 0.65
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Workflow Add New Programmatic Doctype Or Fields
+
+## Action
+
+Follow the add-new-programmatic-doctype-or-fields workflow:
+1. Create new setup/*.py file to define DocType or fields programmatically.
+2. Wire setup file into hooks.py via after_install/after_migrate.
+3. Verify creation and round-trip of the new DocType/fields.
+4. Update related business logic or APIs to use the new DocType/fields.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~3x per month
+- Files: lavanya_service/setup/*.py, lavanya_service/hooks.py
+
+---
+id: lavanya_service-workflow-feature-development-api-frontend-tests
+trigger: "when doing feature development api frontend tests"
+confidence: 0.7
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Workflow Feature Development Api Frontend Tests
+
+## Action
+
+Follow the feature-development-api-frontend-tests workflow:
+1. Implement backend logic and/or API endpoint (api/*.py, workflow/*.py, stage_rules.py, reminder_engine.py, etc).
+2. Update or create frontend Vue components/pages to surface the new feature.
+3. Update index.html/www/frontend.html for SPA integration.
+4. Add or update automated tests for backend and/or frontend.
+5. Update documentation if needed.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~4x per month
+- Files: lavanya_service/api/*.py, lavanya_service/workflow/*.py, lavanya_service/stage_rules.py
+
+---
+id: lavanya_service-workflow-document-feature-or-release
+trigger: "when doing document feature or release"
+confidence: 0.65
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Workflow Document Feature Or Release
+
+## Action
+
+Follow the document-feature-or-release workflow:
+1. Write or update a markdown file in doc/ or docs/ describing the new feature or release.
+2. Include user guides, implementation plans, changelogs, or expanded design docs as needed.
+3. Commit with a docs: prefix.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~3x per month
+- Files: doc/*.md, docs/*.md
+
+---
+id: lavanya_service-workflow-add-or-enhance-reminder-engine-step
+trigger: "when doing add or enhance reminder engine step"
+confidence: 0.65
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Workflow Add Or Enhance Reminder Engine Step
+
+## Action
+
+Follow the add-or-enhance-reminder-engine-step workflow:
+1. Add or update backend logic (reminder_engine.py, tasks/reminder_refresh.py, etc).
+2. Add or update tests for the new reminder logic.
+3. Update frontend (TodayWork.vue, TicketDetail.vue, etc) to surface new reminder intelligence.
+4. Document the new step in doc/lavanya-spa-status.md or similar.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~3x per month
+- Files: lavanya_service/reminder_engine.py, lavanya_service/tasks/reminder_refresh.py, lavanya_service/tests/reminder_engine.py
+
+---
+id: lavanya_service-instinct-file-naming
+trigger: "When creating a new Python file"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct File Naming
+
+## Action
+
+Name the file using snake_case
+
+## Evidence
+
+- Pattern in namingConventions.files: snake_case
+
+---
+id: lavanya_service-instinct-function-naming
+trigger: "When defining a new function in Python"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct Function Naming
+
+## Action
+
+Name the function using camelCase
+
+## Evidence
+
+- Pattern in namingConventions.functions: camelCase
+
+---
+id: lavanya_service-instinct-class-naming
+trigger: "When defining a new class in Python"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct Class Naming
+
+## Action
+
+Name the class using PascalCase
+
+## Evidence
+
+- Pattern in namingConventions.classes: PascalCase
+
+---
+id: lavanya_service-instinct-constant-naming
+trigger: "When defining a constant in Python"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct Constant Naming
+
+## Action
+
+Name the constant using SCREAMING_SNAKE_CASE
+
+## Evidence
+
+- Pattern in namingConventions.constants: SCREAMING_SNAKE_CASE
+
+---
+id: lavanya_service-instinct-import-style
+trigger: "When importing modules in Python"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct Import Style
+
+## Action
+
+Use relative imports
+
+## Evidence
+
+- Pattern in importStyle: relative
+
+---
+id: lavanya_service-instinct-export-style
+trigger: "When exporting from a Python module"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct Export Style
+
+## Action
+
+Use named exports
+
+## Evidence
+
+- Pattern in exportStyle: named
+
+---
+id: lavanya_service-instinct-test-file-pattern
+trigger: "When adding a new test file"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct Test File Pattern
+
+## Action
+
+Name the file with the pattern *.test.ts
+
+## Evidence
+
+- Pattern in testing.filePattern: *.test.ts
+
+---
+id: lavanya_service-instinct-test-types
+trigger: "When writing tests"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct Test Types
+
+## Action
+
+Include both unit and e2e test types as appropriate
+
+## Evidence
+
+- Pattern in testing.testTypes: unit, e2e
+
+---
+id: lavanya_service-instinct-commit-prefix
+trigger: "When making a git commit"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct Commit Prefix
+
+## Action
+
+Use a conventional commit prefix: feat, docs, or ui
+
+## Evidence
+
+- Seen in commit: feat: WhatsApp customer messaging + structured follow-up log
+- Seen in commit: docs: user guide for WhatsApp, follow-up history, appointment scheduling
+- Seen in commit: ui: convert Customer QR form to Stitch design; remove orphan Home.vue
+
+---
+id: lavanya_service-instinct-commit-length
+trigger: "When writing a commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct Commit Length
+
+## Action
+
+Keep the commit message concise (average length ~69 characters)
+
+## Evidence
+
+- Pattern in commits.averageLength: 69
+
+---
+id: lavanya_service-instinct-add-new-programmatic-doctype
+trigger: "When someone wants to add a new entity or config to the backend without conflicting with shared fixtures"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct Add New Programmatic Doctype
+
+## Action
+
+Create a new setup/*.py file, wire it into hooks.py, verify creation, and update related business logic or APIs
+
+## Evidence
+
+- Workflow: add-new-programmatic-doctype-or-fields
+- Files: lavanya_service/setup/*.py, lavanya_service/hooks.py
+
+---
+id: lavanya_service-instinct-feature-development-api-frontend-tests
+trigger: "When someone wants to add a new workflow or user-facing feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct Feature Development Api Frontend Tests
+
+## Action
+
+Implement backend logic/APIs, update frontend components/pages, integrate with SPA, add/update tests, and update docs if needed
+
+## Evidence
+
+- Workflow: feature-development-api-frontend-tests
+- Files: lavanya_service/api/*.py, frontend/src/components/*.vue, lavanya_service/tests/*.py
+
+---
+id: lavanya_service-instinct-document-feature-or-release
+trigger: "When someone wants to record a new feature, workflow, or sprint milestone"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct Document Feature Or Release
+
+## Action
+
+Write or update a markdown file in doc/ or docs/, include relevant guides or changelogs, and commit with a docs: prefix
+
+## Evidence
+
+- Workflow: document-feature-or-release
+- Files: doc/*.md, docs/*.md
+
+---
+id: lavanya_service-instinct-add-or-enhance-reminder-engine-step
+trigger: "When someone wants to add a new capability or layer to the reminder engine"
+confidence: 0.92
+domain: workflow
+source: repo-analysis
+source_repo: collinsfoam-a11y/lavanya_service
+---
+
+# Lavanya_service Instinct Add Or Enhance Reminder Engine Step
+
+## Action
+
+Add or update backend logic, add/update tests, update frontend to surface new reminder intelligence, and document the step
+
+## Evidence
+
+- Workflow: add-or-enhance-reminder-engine-step
+- Files: lavanya_service/reminder_engine.py, frontend/src/pages/TodayWork.vue, doc/lavanya-spa-status.md
+
