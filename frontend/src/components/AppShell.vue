@@ -27,8 +27,9 @@
           :href="item.external ? item.to : undefined"
           :target="item.external ? '_blank' : undefined"
           class="flex items-center gap-3 px-3 py-2 rounded-lg font-label-md text-body-md transition-colors
-                 border-l-4 border-transparent text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
-          :class="isActive(item) ? '!border-primary bg-surface-container-low !text-primary font-bold' : ''"
+                 border-l-4 border-transparent text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary"
+          :class="isActive(item) ? '!border-primary bg-surface-container-low !text-primary font-bold shadow-sm' : ''"
+          :title="item.label"
         >
           <span class="material-symbols-outlined" :class="isActive(item) ? 'fill' : ''">{{ item.icon }}</span>
           <span class="truncate">{{ item.label }}</span>
@@ -50,8 +51,10 @@
     <!-- Main -->
     <main class="lav-main">
       <header class="lav-header">
-        <h2 class="font-headline-md text-headline-md font-bold text-primary md:hidden">Lavanya</h2>
-        <div class="hidden md:block font-body-md text-on-surface-variant">{{ headerTitle }}</div>
+        <div class="min-w-0">
+          <h2 class="font-headline-md text-headline-md font-bold text-primary truncate">{{ headerTitle }}</h2>
+          <p class="hidden sm:block font-label-md text-label-md text-on-surface-variant truncate">{{ headerSubtitle }}</p>
+        </div>
         <div class="flex items-center gap-3">
           <form
             role="search"
@@ -69,8 +72,9 @@
             />
           </form>
           <LavThemeToggle />
-          <div class="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center shrink-0" aria-hidden="true">
+          <div class="hidden sm:flex items-center gap-2 rounded-full bg-surface-container-low border border-outline-variant pl-2 pr-3 h-9 text-on-surface-variant">
             <span class="material-symbols-outlined" aria-hidden="true">person</span>
+            <span class="font-label-md text-label-md">Staff</span>
           </div>
         </div>
       </header>
@@ -98,15 +102,15 @@
 
       <nav class="lav-mobile-nav" aria-label="Mobile navigation">
         <router-link
-          v-for="item in navItems.filter((i) => !i.external)"
+          v-for="item in mobileNavItems"
           :key="'m-' + item.label"
           :to="item.to"
-          class="flex flex-col items-center gap-0.5 px-2 py-1 text-on-surface-variant"
-          :class="isActive(item) ? '!text-primary' : ''"
+          class="flex flex-col items-center gap-0.5 px-2 py-1 text-on-surface-variant rounded-lg min-w-[56px]"
+          :class="isActive(item) ? '!text-primary bg-surface-container-low font-bold' : ''"
           :aria-label="item.label"
         >
           <span class="material-symbols-outlined" :class="isActive(item) ? 'fill' : ''" aria-hidden="true">{{ item.icon }}</span>
-          <span class="font-label-md text-label-md">{{ item.label }}</span>
+          <span class="font-label-md text-label-md">{{ item.mobileLabel || item.label }}</span>
         </router-link>
       </nav>
     </main>
@@ -158,13 +162,15 @@ onMounted(() => document.addEventListener('keydown', onKeyDown))
 onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
 
 const navItems = [
-  { label: 'Today\'s Work', icon: 'dashboard', to: '/' },
-  { label: 'Tickets', icon: 'confirmation_number', to: '/tickets' },
-  { label: 'Reports', icon: 'assessment', to: '/reports' },
-  { label: 'Field Mode', icon: 'phone_iphone', to: '/field' },
-  { label: 'New Ticket', icon: 'add_box', to: '/new-ticket' },
-  { label: 'Settings', icon: 'settings', to: '/settings' },
+  { label: 'Today\'s Work', mobileLabel: 'Work', icon: 'dashboard', to: '/', subtitle: 'Critical, important, and normal follow-ups' },
+  { label: 'Tickets', mobileLabel: 'Tickets', icon: 'confirmation_number', to: '/tickets', subtitle: 'Search, filters, and ticket detail drawer' },
+  { label: 'Reports', mobileLabel: 'Reports', icon: 'assessment', to: '/reports', subtitle: 'Manager reports and safety previews' },
+  { label: 'Field Mode', mobileLabel: 'Field', icon: 'phone_iphone', to: '/field', subtitle: 'Counter-friendly phone lookup and quick work' },
+  { label: 'New Ticket', mobileLabel: 'New', icon: 'add_box', to: '/new-ticket', subtitle: 'Register a customer complaint' },
+  { label: 'Settings', mobileLabel: 'Settings', icon: 'settings', to: '/settings', subtitle: 'Theme, safety locks, and feature flags' },
 ]
+
+const mobileNavItems = computed(() => navItems.filter((i) => ['/', '/tickets', '/field', '/settings'].includes(i.to)))
 
 async function confirmLogout() {
   const ok = await confirm('Are you sure you want to log out?', 'Logout')
@@ -176,6 +182,11 @@ async function confirmLogout() {
 const headerTitle = computed(() => {
   const active = navItems.find((i) => !i.external && i.to === route.path)
   return active ? active.label : 'Service Console'
+})
+
+const headerSubtitle = computed(() => {
+  const active = navItems.find((i) => !i.external && i.to === route.path)
+  return active?.subtitle || 'Lavanya service follow-up command system'
 })
 
 const today = new Date().toLocaleDateString(undefined, {

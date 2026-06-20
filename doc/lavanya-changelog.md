@@ -91,6 +91,49 @@ The measurable outcome: fixed bug, new capability, performance gain, etc.
 
 ---
 
+## 2026-06-21 04:30 — H4: final UI/UX polish and interaction regression layer
+
+### What changed
+- `frontend/src/components/LavTicketCard.vue` — new shared ticket card showing customer, phone, product, status, next action, due state, quality badge, escalation, and customer-informed state.
+- `frontend/src/index.css` — added token-driven `LavTicketCard` and Field Mode action styles; all new styles use `var(--lav-*)` theme tokens.
+- `frontend/src/components/AppShell.vue` — improved active nav state, compact mobile labels, mobile nav prioritization, page subtitle, and user action separation.
+- `frontend/src/components/LavActionBar.vue` — visually separated primary, secondary, and danger action groups.
+- `frontend/src/components/TicketDetail.vue` — reordered top stack to action-first layout, changed WhatsApp wording to draft-only, and added explicit closure guard language.
+- `frontend/src/pages/TodayWork.vue` — replaced dense bucket rows with `LavTicketCard` while keeping Critical / Important / Normal tiers.
+- `frontend/src/pages/Tickets.vue` — added saved filters, mobile card view, desktop Next Action and Quality columns, and clearer filtered-empty state.
+- `frontend/src/pages/Reports.vue` — added prominent Penalty and Notification safety-state cards.
+- `frontend/src/pages/Settings.vue` — added manager/read-only state, dirty-state indicator, sticky save/reset bar, and feature-flag descriptions.
+- `frontend/src/pages/FieldMode.vue` — reused `LavTicketCard`, added recent work, and added sticky safe quick actions.
+- `lavanya_service/tests/theme_settings.py` — extended static UI checks for native dialog calls, `/field` route, `LavTicketCard`, Settings dirty state, and compact-mode CSS.
+- `doc/h4_uiux_upgrade_audit.md` — new page-by-page audit with problems, fixes, remaining issues, and screenshot requirements.
+- `doc/h4_uiux_upgrade_report.md` — new implementation report.
+
+### Previous state
+- H3B pages were functionally modernized but ticket cards were duplicated, mobile filtering was table-dependent, Ticket Detail did not lead with the action bar, and Settings lacked a clear dirty-state/save layer.
+
+### Current state
+- The operational workflow is more action-first and scan-friendly across Dashboard/Today’s Work, Tickets, Ticket Detail, Reports, Settings, and Field Mode.
+- Safety states for notification/penalty areas are more visible.
+- Static regression coverage now checks H4 UI wiring and forbidden native dialogs.
+
+### Why changed
+- H4 requires the app to feel production-ready for showroom/service-counter staff while preserving existing workflow and safety gates.
+
+### What was obtained
+- `node node_modules/vite/bin/vite.js build`: PASS.
+- `lavanya_service.tests.theme_settings.run`: 29/29 pass.
+- `lavanya_service.tests.stitch_console_spa.run`: PASS on sequential rerun; first parallel run hit transient `tabSeries` contention.
+- `lavanya_service.tests.p2_tests.run`: 18/18 pass.
+- `lavanya_service.tests.today_work.run`: 23/24 pass; TW-015 group-order mismatch remains pre-existing.
+
+### Compatibility notes
+- No backend workflow behavior changed.
+- No live WhatsApp/SMS, ERP posting, penalty application, accounting entry, stock posting, or automatic closure was introduced.
+- Existing closure guard remains server-side; UI now explains the guard state more clearly.
+- Screenshot capture was not available in this session; manual instructions are documented in `doc/h4_uiux_upgrade_audit.md`.
+
+---
+
 ## 2026-06-21 03:00 — H3B: Tickets/Reports modernization, Mobile Field Mode, shared-component fixes
 
 ### What changed

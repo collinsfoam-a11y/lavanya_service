@@ -138,57 +138,8 @@
           No {{ group.label.toLowerCase() }} tickets at the moment.
         </div>
         <ul v-else role="list" :aria-label="'Tickets in ' + group.label">
-          <li
-            v-for="t in group.tickets"
-            :key="t.name"
-            class="lav-work-card group cursor-pointer hover:bg-surface-container-low transition-all focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
-            :style="{ borderLeft: '4px solid ' + accent(group.key) }"
-            tabindex="0"
-            role="button"
-            :aria-label="'Open ticket ' + t.name + ' - ' + (t.subject || 'no subject')"
-            @click="selectedTicket = t.name"
-            @keydown.enter.prevent="selectedTicket = t.name"
-            @keydown.space.prevent="selectedTicket = t.name"
-          >
-            <div class="flex items-start gap-3 flex-1 min-w-0">
-              <!-- Customer initial avatar -->
-              <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 font-label-md font-semibold text-on-primary"
-                   :style="{ background: accent(group.key) }">
-                {{ (t.customer_name || '?').charAt(0).toUpperCase() }}
-              </div>
-              <div class="min-w-0 flex-1">
-                <div class="font-body-md font-semibold text-primary hover:underline truncate">
-                  {{ t.subject || '(no subject)' }}
-                </div>
-                <div class="font-label-md text-label-md text-on-surface-variant mt-0.5 truncate">
-                  <span class="text-on-surface font-medium">{{ t.name }}</span>
-                  <template v-if="t.customer_name"> · {{ t.customer_name }}</template>
-                  <template v-if="t.phone_1"> · {{ t.phone_1 }}</template>
-                  <template v-if="product(t)"> · {{ product(t) }}</template>
-                </div>
-              </div>
-            </div>
-            <div class="flex items-center gap-1.5 flex-wrap shrink-0">
-              <span class="px-2 py-0.5 rounded-full font-label-md text-label-md"
-                    :style="chip(t.status)">{{ t.status }}</span>
-              <SlaBadge :agreement-status="t.agreement_status" :response-by="t.response_by" :resolution-by="t.resolution_by" />
-              <span v-if="t.overdue_status && t.overdue_status !== 'Not Due'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="dueChip(t.overdue_status)">{{ t.overdue_status }}</span>
-              <span v-if="t.customer_promise_status === 'Breached'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="promiseChip('Breached')">Breach</span>
-              <span v-if="escLevel(t) && escLevel(t) !== 'None'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="escChip(escLevel(t))">{{ escLevel(t) }}</span>
-              <span v-if="t.customer_update_due" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="promiseChip('Pending')">Update due</span>
-              <span v-if="qualityBadge(t) && qualityBadge(t) !== 'Good'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="qualityChip(qualityBadge(t))">{{ qualityBadge(t) }}</span>
-            </div>
-            <div class="flex items-center gap-3 shrink-0">
-              <div v-if="t.pending_reason" class="font-label-md text-label-md text-on-surface-variant truncate max-w-[140px]" :title="t.pending_reason">
-                {{ t.pending_reason }}
-              </div>
-              <div class="font-label-md text-label-md whitespace-nowrap" :style="followStyle(t.next_follow_up_date)">
-                {{ followText(t.next_follow_up_date) }}
-              </div>
-            </div>
-            <button class="px-3 py-1.5 rounded-lg border border-outline-variant text-primary font-label-md hover:bg-primary-container hover:text-on-primary hover:border-primary transition-all md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100" :aria-label="'Open ticket ' + t.name">
-              Open
-            </button>
+          <li v-for="t in group.tickets" :key="t.name" class="p-3 border-b border-outline-variant last:border-b-0">
+            <LavTicketCard :ticket="t" :accent="accent(group.key)" @open="selectedTicket = $event" />
           </li>
         </ul>
       </div>
@@ -212,7 +163,8 @@ import LavStatCard from '@/components/LavStatCard.vue'
 import LavChip from '@/components/LavChip.vue'
 import LavEmptyState from '@/components/LavEmptyState.vue'
 import LavLoadingState from '@/components/LavLoadingState.vue'
-import { chip, followText, followStyle, product, escChip, dueChip, promiseChip, accentMetric, COLORS, qualityBadge, qualityChip } from '@/utils/index.js'
+import LavTicketCard from '@/components/LavTicketCard.vue'
+import { accentMetric, COLORS } from '@/utils/index.js'
 
 const raw = ref({})
 const loading = ref(true)

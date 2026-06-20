@@ -1,7 +1,7 @@
 # H2 Theme System Report
 
 > Part of H2 — UI/UX Wiring, Settings, Modernisation + Theme System.
-> Extended by H3/H3B — shared components modernized across all pages.
+> Extended by H3/H3B/H4 — shared components modernized and polished across workflow pages.
 
 ---
 
@@ -29,11 +29,14 @@ six themes, persists user choice, and applies instantly without a page reload.
 | `frontend/src/pages/Tickets.vue` | Updated — uses `LavSectionHeader`, `LavChip`, `LavLoadingState`, `LavEmptyState`, `LavCard`. |
 | `frontend/src/pages/Reports.vue` | Updated — 8 tabs modernized with `LavSectionHeader`, `LavStatCard`, `LavCard`, `LavLoadingState`, `LavEmptyState`. |
 | `frontend/src/pages/FieldMode.vue` | New — mobile field mode using shared components. |
+| `frontend/src/components/LavTicketCard.vue` | New in H4 — shared ticket card using theme tokens for workflow scanning. |
+| `frontend/src/pages/Tickets.vue` | H4 — saved filters, mobile cards, Next Action and Quality columns. |
+| `frontend/src/pages/Settings.vue` | H4 — dirty-state indicator, manager/read-only state, sticky save/reset bar. |
 | `frontend/src/router.js` | Updated — added `/settings` and `/field` routes. |
 | `lavanya_service/setup/ui_settings.py` | New — `Lavanya Service Settings` Single DocType with theme/UI/safety fields. |
 | `lavanya_service/api/ui_settings.py` | New — whitelisted `get_lavanya_service_settings`, `can_manage_lavanya_settings`, `save_lavanya_service_settings`, `reset_lavanya_service_settings` APIs. |
 | `lavanya_service/hooks.py` | Updated — wired `ui_settings.create_lavanya_settings` to install/migrate. |
-| `lavanya_service/tests/theme_settings.py` | Extended from 15 to 23 tests (manager gating, save/reset, invalid theme, safety lock ignoring). |
+| `lavanya_service/tests/theme_settings.py` | Extended from 15 to 23 tests in H3, then to 29 checks in H4 (static UI wiring and native-dialog guard). |
 
 ---
 
@@ -63,7 +66,7 @@ six themes, persists user choice, and applies instantly without a page reload.
 ## Verification
 
 - `node node_modules/vite/bin/vite.js build` — PASS.
-- `lavanya_service.tests.theme_settings.run` — 15/15 PASS.
+- `lavanya_service.tests.theme_settings.run` — 29/29 PASS after H4 static UI checks.
 - `lavanya_service.tests.stitch_console_spa.run` — PASS.
 - `lavanya_service.tests.p2_tests.run` — 18/18 PASS.
 - `lavanya_service.tests.today_work.run` — 23/24 PASS (TW-015 group-order mismatch is pre-existing and unrelated to theme work).

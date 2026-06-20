@@ -199,6 +199,16 @@
         <p class="font-body-md text-on-surface-variant -mt-2">Computed penalty exposure — advisory, no accounting posting</p>
       </div>
 
+      <LavCard class="mb-6 border-warning" padding="compact">
+        <div class="flex items-start gap-3">
+          <span class="material-symbols-outlined text-warning" aria-hidden="true">shield_lock</span>
+          <div>
+            <div class="font-body-md font-semibold text-on-surface">Penalty safety state</div>
+            <p class="font-label-md text-label-md text-on-surface-variant">Dry-run/advisory only. Live penalty application disabled. Manager approval required. ERP/accounting posting disabled.</p>
+          </div>
+        </div>
+      </LavCard>
+
       <!-- Summary Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6" v-if="penaltySummary">
         <LavStatCard label="Computed Total" :value="formatCurrency(penaltySummary.total_computed)" icon="payments" :accent="COLORS.error" :hover="false" />
@@ -264,6 +274,16 @@
         <LavSectionHeader title="Notifications" icon="notifications" />
         <p class="font-body-md text-on-surface-variant -mt-2">Dry-run WhatsApp/SMS/Internal queue. Live sending is disabled.</p>
       </div>
+
+      <LavCard class="mb-6 border-warning" padding="compact">
+        <div class="flex items-start gap-3">
+          <span class="material-symbols-outlined text-warning" aria-hidden="true">notifications_paused</span>
+          <div>
+            <div class="font-body-md font-semibold text-on-surface">Notification safety state</div>
+            <p class="font-label-md text-label-md text-on-surface-variant">Dry-run only. Live WhatsApp/SMS disabled. Manager approval required before queue state changes. ERP posting disabled.</p>
+          </div>
+        </div>
+      </LavCard>
 
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         <LavStatCard v-for="card in notificationCards" :key="card.label" :label="card.label" :value="card.count" icon="mark_chat_read" :accent="card.color" :hover="false" />

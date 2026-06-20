@@ -131,6 +131,8 @@ lavanya_service/
     lavanya-expanded-design.md   # Proposed expansions
     lavanya-app-reference.md     # THIS FILE
     lavanya-changelog.md         # Change audit trail
+    h4_uiux_upgrade_audit.md     # H4 page-by-page UI/UX audit
+    h4_uiux_upgrade_report.md    # H4 implementation report
 
   fixtures/                      # JSON record fixtures
     role.json, custom_field.json, client_script.json,
@@ -143,7 +145,7 @@ lavanya_service/
   frontend/                      # Vue 3 SPA
     src/
       pages/                     # TodayWork.vue, Tickets.vue, Reports.vue, NewTicket.vue, Settings.vue, FieldMode.vue
-      components/                # AppShell.vue, TicketDetail.vue, NotFound.vue, Lav*.vue, lavanya/tickets/*.vue
+      components/                # AppShell.vue, TicketDetail.vue, NotFound.vue, Lav*.vue, LavTicketCard.vue, lavanya/tickets/*.vue
       composables/               # useTheme.js
       utils/                     # index.js, toast.js, theme-engine.js, theme.js, followup-quality.js, confirm.js
       api.js                     # call() / post() helpers
@@ -630,7 +632,7 @@ All tests are plain `run()` functions (not `test_*`), executed via bench console
 | `ticket_template_integrity` | Template integrity | — |
 | `today_work_page` | Today's Work page | — |
 | `today_work` | Today's Work logic | 24 |
-| `theme_settings` | H2 theme + Lavanya Service Settings tests | 15 |
+| `theme_settings` | H2/H4 theme, settings, and static UI wiring tests | 29 |
 | `warranty_recommendation` | Warranty recommendation tests | — |
 | `workflow_quick_actions` | Quick action functions | — |
 

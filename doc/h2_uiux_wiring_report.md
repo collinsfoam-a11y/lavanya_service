@@ -3,12 +3,13 @@
 > Part of H2 — UI/UX Wiring, Settings, Modernisation + Theme System.
 > Extended by H3 — Ticket Detail Modernisation + Follow-up Intelligence.
 > Extended by H3B — Tickets/Reports Modernisation + Mobile Field Mode.
+> Extended by H4 — Final UI/UX Polish + Interaction Regression Layer.
 
 ---
 
 ## Scope covered in this pass
 
-This pass delivers the foundational wiring for H2, extended by H3 and H3B:
+This pass delivers the foundational wiring for H2, extended by H3, H3B, and H4:
 
 1. **Theme system** — six themes, runtime switching, CSS-variable driven design.
 2. **Settings backend** — `Lavanya Service Settings` Single DocType with theme
@@ -18,16 +19,24 @@ This pass delivers the foundational wiring for H2, extended by H3 and H3B:
 4. **Shared component library** — `LavCard`, `LavSectionHeader`, `LavBadge`,
    `LavChip`, `LavStatCard`, `LavActionBar`, `LavEmptyState`, `LavLoadingState`,
    `LavThemeToggle`, `LavSafetyLockPanel`, `LavWorkflowTimeline`,
-   `LavCustomerJourneyCard`, `LavFollowupQualityBadge`.
-5. **Static checks & tests** — no new hardcoded component colors, no native
-   `confirm()`, 23 theme/settings tests passing.
+   `LavCustomerJourneyCard`, `LavFollowupQualityBadge`, `LavTicketCard`.
+5. **Static checks & tests** — no native `window.confirm` / `window.alert` /
+   `window.prompt`, `/field` route, `LavTicketCard`, settings dirty-state, and
+   compact-mode CSS checks in `theme_settings.run`.
 6. **H3: Ticket Detail Modernisation** — `LavWorkflowTimeline`, `LavCustomerJourneyCard`,
    `LavFollowupQualityBadge` integrated into `TicketDetail.vue`; next actions grouped via `LavActionBar`.
 6. **H3B: Tickets/Reports Modernisation + Mobile Field Mode** —
    - `Tickets.vue`: `LavSectionHeader`, `LavChip`, `LavLoadingState`, `LavEmptyState`, `LavCard`.
    - `Reports.vue` (8 tabs): `LavSectionHeader`, `LavStatCard`, `LavCard`, `LavLoadingState`, `LavEmptyState`.
-   - `FieldMode.vue`: new `/field` page for counter/showroom staff — large action tiles, phone search, critical work snapshot, quick-open drawer.
-   - `AppShell.vue`: Field Mode nav item added.
+    - `FieldMode.vue`: new `/field` page for counter/showroom staff — large action tiles, phone search, critical work snapshot, quick-open drawer.
+    - `AppShell.vue`: Field Mode nav item added.
+7. **H4: Final UI/UX Polish** —
+   - `LavTicketCard`: shared operational ticket card used by Today’s Work, Tickets mobile, and Field Mode.
+   - `TicketDetail.vue`: action-first top stack and explicit closure guard language.
+   - `Tickets.vue`: saved filters, mobile cards, Next Action / Quality columns.
+   - `Reports.vue`: penalty/notification safety-state cards.
+   - `Settings.vue`: manager/read-only state, dirty-state, sticky save/reset controls.
+   - `FieldMode.vue`: recent work and sticky safe quick actions.
 
 ---
 
@@ -68,8 +77,8 @@ remain open and are documented in `doc/lavanya-spa-status.md` pending work:
 | Check | Result |
 |-------|--------|
 | `node node_modules/vite/bin/vite.js build` | PASS |
-| `lavanya_service.tests.theme_settings.run` | 23/23 pass |
-| `lavanya_service.tests.stitch_console_spa.run` | PASS |
+| `lavanya_service.tests.theme_settings.run` | 29/29 pass |
+| `lavanya_service.tests.stitch_console_spa.run` | PASS on sequential rerun |
 | `lavanya_service.tests.p2_tests.run` | 18/18 pass |
 | `lavanya_service.tests.today_work.run` | 23/24 pass (TW-015 pre-existing) |
 | No live WhatsApp/SMS, ERP posting, penalty apply | Verified |

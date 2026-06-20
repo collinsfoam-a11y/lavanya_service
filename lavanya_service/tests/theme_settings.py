@@ -1,4 +1,5 @@
-"""H2 theme + Lavanya Service Settings tests."""
+"""H2/H4 theme + Lavanya Service Settings/UI wiring tests."""
+import os
 import frappe
 
 _PASS = []
@@ -182,6 +183,36 @@ def test_can_manage_settings():
 	_check("admin_can_manage", can_manage_lavanya_settings())
 
 
+def _frontend_file(*parts):
+	return os.path.join(frappe.get_app_path("lavanya_service"), "..", "frontend", "src", *parts)
+
+
+def _read_frontend(*parts):
+	with open(_frontend_file(*parts), "r", encoding="utf-8") as f:
+		return f.read()
+
+
+def test_h4_static_ui_regressions():
+	frontend_root = os.path.join(frappe.get_app_path("lavanya_service"), "..", "frontend", "src")
+	forbidden = []
+	for root, _, files in os.walk(frontend_root):
+		for filename in files:
+			if not filename.endswith((".vue", ".js")):
+				continue
+			path = os.path.join(root, filename)
+			with open(path, "r", encoding="utf-8") as f:
+				body = f.read()
+			for token in ("window.confirm(", "window.alert(", "window.prompt(", "globalThis.confirm(", "globalThis.alert(", "globalThis.prompt("):
+				if token in body:
+					forbidden.append(os.path.relpath(path, frontend_root) + ":" + token)
+	_check("no_native_dialog_calls", not forbidden, forbidden)
+	_check("mobile_field_route_present", "path: '/field'" in _read_frontend("router.js"))
+	_check("lav_ticket_card_component_present", os.path.exists(_frontend_file("components", "LavTicketCard.vue")))
+	_check("tickets_use_lav_ticket_card", "LavTicketCard" in _read_frontend("pages", "Tickets.vue"))
+	_check("settings_dirty_state_present", "const dirty = computed" in _read_frontend("pages", "Settings.vue"))
+	_check("compact_mode_css_present", '[data-compact="true"]' in _read_frontend("index.css"))
+
+
 def run():
 	_PASS.clear(); _FAIL.clear()
 	frappe.set_user("Administrator")
@@ -201,6 +232,7 @@ def run():
 	test_save_settings_rejects_invalid_theme()
 	test_reset_settings_restores_defaults()
 	test_can_manage_settings()
+	test_h4_static_ui_regressions()
 	_reset_settings()
 	print("\nRESULT: pass={} fail={}".format(len(_PASS), len(_FAIL)))
 	return {"pass": len(_PASS), "fail": len(_FAIL)}

@@ -229,6 +229,86 @@
   border-bottom: none;
 }
 
+.lav-ticket-card {
+  display: flex;
+  flex-direction: column;
+  gap: calc(12px * var(--lav-spacing-scale));
+  padding: calc(14px * var(--lav-spacing-scale));
+  border: 1px solid var(--lav-border-light);
+  border-left: 4px solid var(--lav-ticket-accent, var(--lav-primary));
+  border-radius: 0.875rem;
+  background: var(--lav-surface);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+.lav-ticket-card:hover,
+.lav-ticket-card:focus-visible {
+  border-color: var(--lav-ticket-accent, var(--lav-primary));
+  background: var(--lav-surface-container-low);
+}
+.lav-ticket-card:active {
+  transform: scale(0.995);
+}
+.lav-ticket-card__top {
+  display: flex;
+  gap: calc(12px * var(--lav-spacing-scale));
+  min-width: 0;
+}
+.lav-ticket-card__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--lav-ticket-accent, var(--lav-primary));
+  color: var(--lav-on-primary);
+  font-weight: 700;
+}
+.lav-ticket-card__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(10px * var(--lav-spacing-scale));
+}
+.lav-ticket-card__label {
+  display: block;
+  font-size: calc(11px * var(--lav-typography-scale));
+  line-height: calc(14px * var(--lav-typography-scale));
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--lav-text-muted);
+}
+.lav-ticket-card__value {
+  display: block;
+  margin-top: 2px;
+  font-size: calc(13px * var(--lav-typography-scale));
+  line-height: calc(18px * var(--lav-typography-scale));
+  font-weight: 600;
+  color: var(--lav-text-primary);
+}
+.lav-ticket-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(8px * var(--lav-spacing-scale));
+  min-width: 0;
+}
+.lav-ticket-card--compact {
+  gap: calc(8px * var(--lav-spacing-scale));
+  padding: calc(12px * var(--lav-spacing-scale));
+}
+.lav-ticket-card--compact .lav-ticket-card__meta {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .lav-ticket-card--row .lav-ticket-card__meta {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 /* Stitch "Today's Work Dashboard" — 6-metric grid + Action Queue.
    Tailwind responsive utilities don't generate in this scaffold, so the grid
    and cards are explicit CSS (matches the lav-* layout pattern above). */
@@ -433,6 +513,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.field-action {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(6px * var(--lav-spacing-scale));
+  border-radius: 0.75rem;
+  border: 1px solid var(--lav-border);
+  background: var(--lav-surface-container-low);
+  color: var(--lav-text-primary);
+  font-size: calc(12px * var(--lav-typography-scale));
+  font-weight: 700;
+}
+.field-action:hover,
+.field-action:focus-visible {
+  border-color: var(--lav-primary);
+  color: var(--lav-primary);
+  background: color-mix(in srgb, var(--lav-primary) 8%, var(--lav-surface));
 }
 
 /* New Ticket form inputs */

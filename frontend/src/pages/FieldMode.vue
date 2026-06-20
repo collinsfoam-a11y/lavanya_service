@@ -51,27 +51,11 @@
 
       <LavLoadingState v-if="searching" :lines="4" />
       <div v-else-if="searched && results.length === 0" class="mt-3">
-        <LavEmptyState icon="search_off" title="No tickets found" :message="'No matches for &ldquo;' + search + '&rdquo;.'" />
+        <LavEmptyState icon="search_off" title="No tickets found" :message="'No matches for ' + search + '.'" />
       </div>
       <ul v-else-if="results.length" class="mt-3 flex flex-col gap-2" role="list">
-        <li
-          v-for="t in results"
-          :key="t.name"
-          class="rounded-xl border border-outline-variant bg-surface-container-low p-3 flex items-center gap-3 cursor-pointer hover:border-primary active:scale-[0.99] transition"
-          @click="selectedTicket = t.name"
-        >
-          <div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0 font-label-md font-semibold">
-            {{ (t.customer_name || '?').charAt(0).toUpperCase() }}
-          </div>
-          <div class="min-w-0 flex-1">
-            <div class="font-body-md font-semibold text-primary truncate">{{ t.subject || '(no subject)' }}</div>
-            <div class="font-label-md text-label-md text-on-surface-variant truncate">
-              <span class="text-on-surface font-medium">{{ t.name }}</span>
-              <template v-if="t.customer_name"> · {{ t.customer_name }}</template>
-              <template v-if="t.phone_1"> · {{ t.phone_1 }}</template>
-            </div>
-          </div>
-          <span class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="chip(t.status)">{{ t.status }}</span>
+        <li v-for="t in results" :key="t.name">
+          <LavTicketCard :ticket="t" :compact="true" @open="selectedTicket = $event" />
         </li>
       </ul>
     </LavCard>
@@ -90,6 +74,36 @@
       </template>
     </div>
 
+    <div class="mb-gutter">
+      <LavSectionHeader title="Recently Opened Work" icon="history" :badge="recentTickets.length" />
+      <LavEmptyState v-if="!loadingWork && recentTickets.length === 0" icon="task_alt" title="No recent ticket work" message="Search by phone or open Today’s Work to begin." />
+      <div v-else class="flex flex-col gap-3">
+        <LavTicketCard v-for="t in recentTickets" :key="t.name" :ticket="t" :compact="true" @open="selectedTicket = $event" />
+      </div>
+    </div>
+
+    <LavCard class="sticky bottom-20 md:bottom-4 z-20 shadow-lg" padding="compact">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <button type="button" class="field-action" @click="goNewTicket">
+          <span class="material-symbols-outlined" aria-hidden="true">add_box</span>
+          New Ticket
+        </button>
+        <button type="button" class="field-action" @click="focusSearch">
+          <span class="material-symbols-outlined" aria-hidden="true">phone_in_talk</span>
+          Call Customer
+        </button>
+        <button type="button" class="field-action" @click="focusSearch">
+          <span class="material-symbols-outlined" aria-hidden="true">fact_check</span>
+          Verify Visit
+        </button>
+        <button type="button" class="field-action" @click="focusSearch">
+          <span class="material-symbols-outlined" aria-hidden="true">chat</span>
+          WhatsApp Draft
+        </button>
+      </div>
+      <p class="mt-2 font-label-md text-label-md text-on-surface-variant text-center">Safe mode: live WhatsApp/SMS sending remains disabled.</p>
+    </LavCard>
+
     <TicketDetail :ticketId="selectedTicket" @close="selectedTicket = null" @refresh="loadWork" />
   </AppShell>
 </template>
@@ -105,7 +119,8 @@ import LavSectionHeader from '@/components/LavSectionHeader.vue'
 import LavStatCard from '@/components/LavStatCard.vue'
 import LavEmptyState from '@/components/LavEmptyState.vue'
 import LavLoadingState from '@/components/LavLoadingState.vue'
-import { chip, COLORS } from '@/utils'
+import LavTicketCard from '@/components/LavTicketCard.vue'
+import { COLORS } from '@/utils'
 
 const router = useRouter()
 const search = ref('')
@@ -132,6 +147,19 @@ const counts = computed(() => {
 })
 
 const criticalTotal = computed(() => counts.value.overdue + counts.value.due_today)
+const recentTickets = computed(() => {
+  const seen = new Set()
+  const out = []
+  for (const group of work.value.groups || []) {
+    for (const ticket of group.tickets || []) {
+      if (!ticket?.name || seen.has(ticket.name)) continue
+      seen.add(ticket.name)
+      out.push(ticket)
+      if (out.length >= 5) return out
+    }
+  }
+  return out
+})
 
 function focusSearch() {
   if (searchInput.value) searchInput.value.focus()

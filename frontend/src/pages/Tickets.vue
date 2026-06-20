@@ -44,6 +44,18 @@
       >{{ s }}</LavChip>
     </div>
 
+    <div class="mb-gutter">
+      <div class="font-label-md text-label-md text-on-surface-variant mb-2">Saved filters</div>
+      <div class="lav-chips">
+        <LavChip
+          v-for="f in SAVED_FILTERS"
+          :key="f.key"
+          :active="quickFilter === f.key"
+          @click="quickFilter = quickFilter === f.key ? '' : f.key"
+        >{{ f.label }}</LavChip>
+      </div>
+    </div>
+
     <!-- States -->
     <LavLoadingState v-if="loading && tickets.length === 0" :lines="8" />
     <LavEmptyState
@@ -54,12 +66,13 @@
       tone="error"
     />
     <LavEmptyState
-      v-else-if="tickets.length === 0"
+      v-else-if="displayedTickets.length === 0"
       icon="search_off"
       title="No tickets match this view"
+      message="Try clearing filters or searching by phone/ticket number."
     >
       <div class="mt-4 flex justify-center gap-3">
-        <button v-if="search || status !== 'All'" @click="search = ''; status = 'All'; reload()" class="px-4 h-10 rounded-lg border border-outline-variant text-primary font-label-md hover:bg-surface-container-low">
+        <button v-if="search || status !== 'All' || quickFilter" @click="search = ''; status = 'All'; quickFilter = ''; reload()" class="px-4 h-10 rounded-lg border border-outline-variant text-primary font-label-md hover:bg-surface-container-low">
           Clear filters
         </button>
         <router-link to="/new-ticket" class="px-4 h-10 rounded-lg bg-primary text-on-primary font-label-md inline-flex items-center gap-1.5">
@@ -69,8 +82,13 @@
     </LavEmptyState>
 
     <!-- List -->
-    <LavCard v-else padding="none" class="lav-queue overflow-x-auto">
-      <table class="w-full" style="border-collapse:collapse">
+    <template v-else>
+      <div class="md:hidden flex flex-col gap-3">
+        <LavTicketCard v-for="t in sortedTickets" :key="t.name" :ticket="t" @open="selectedTicket = $event" />
+      </div>
+
+      <LavCard padding="none" class="lav-queue overflow-x-auto hidden md:block">
+        <table class="w-full" style="border-collapse:collapse">
         <thead>
           <tr class="text-left font-label-md text-label-md text-on-surface-variant border-b border-outline-variant">
             <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('name')" :aria-label="'Sort by ticket number' + (sortKey==='name' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='name' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
@@ -91,6 +109,8 @@
             <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('followup')" :aria-label="'Sort by follow-up date' + (sortKey==='followup' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='followup' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
               Follow-up <template v-if="sortKey==='followup'"><span aria-hidden="true">{{ sortDir==='asc' ? '▲' : '▼' }}</span></template>
             </th>
+            <th class="px-4 py-3">Next Action</th>
+            <th class="px-4 py-3">Quality</th>
             <th class="px-4 py-3"></th>
           </tr>
         </thead>
@@ -128,6 +148,13 @@
               {{ followText(t.next_follow_up_date) }}
               <span v-if="t.customer_update_due" class="ml-1 px-2 py-0.5 rounded-full font-label-md text-label-md" :style="promiseChip('Pending')">Update due</span>
             </td>
+            <td class="px-4 py-3 font-body-md text-on-surface max-w-[180px]">
+              <div class="font-semibold truncate">{{ t.next_action || t.current_service_stage || 'Review ticket' }}</div>
+              <div class="font-label-md text-label-md text-on-surface-variant truncate">{{ t.customer_informed_status || t.customer_informed || 'Customer info pending' }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="qualityChip(qualityBadge(t))">{{ qualityBadge(t) }}</span>
+            </td>
             <td class="px-4 py-3">
               <button class="px-3 py-1 rounded border border-outline-variant text-primary font-label-md hover:bg-surface-container-low md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity" :aria-label="'Open ticket ' + t.name">
                 Open
@@ -135,8 +162,9 @@
             </td>
           </tr>
         </tbody>
-      </table>
-    </LavCard>
+        </table>
+      </LavCard>
+    </template>
 
     <!-- Infinite scroll sentinel -->
     <div v-if="hasMore && !error" ref="sentinel" class="text-center py-6">
@@ -160,7 +188,8 @@ import LavCard from '@/components/LavCard.vue'
 import LavChip from '@/components/LavChip.vue'
 import LavEmptyState from '@/components/LavEmptyState.vue'
 import LavLoadingState from '@/components/LavLoadingState.vue'
-import { chip, dueChip, escChip, promiseChip, product, followText, followStyle } from '@/utils'
+import LavTicketCard from '@/components/LavTicketCard.vue'
+import { chip, dueChip, escChip, promiseChip, product, followText, followStyle, qualityBadge, qualityChip } from '@/utils'
 
 const route = useRoute()
 
@@ -185,13 +214,27 @@ const error = ref(false)
 const hasMore = ref(false)
 const search = ref(route.query.search || '')
 const status = ref('All')
+const quickFilter = ref('')
 const selectedTicket = ref(null)
 const sentinel = ref(null)
 const sortKey = ref('name')
 const sortDir = ref('desc')
 
+const SAVED_FILTERS = [
+  { key: 'overdue', label: 'Overdue' },
+  { key: 'customer_not_informed', label: 'Customer Not Informed' },
+  { key: 'part_pending', label: 'Part Pending' },
+  { key: 'technician_call_pending', label: 'Tech Call Pending' },
+  { key: 'technician_visit_pending', label: 'Tech Visit Pending' },
+  { key: 'closure_pending', label: 'Closure Pending' },
+  { key: 'escalated', label: 'Escalated' },
+  { key: 'reopened', label: 'Reopened' },
+]
+
+const displayedTickets = computed(() => tickets.value.filter(matchesQuickFilter))
+
 const sortedTickets = computed(() => {
-  const arr = [...tickets.value]
+  const arr = [...displayedTickets.value]
   const k = sortKey.value
   const dir = sortDir.value === 'asc' ? 1 : -1
   arr.sort((a, b) => {
@@ -208,6 +251,21 @@ const sortedTickets = computed(() => {
   })
   return arr
 })
+
+function matchesQuickFilter(t) {
+  if (!quickFilter.value) return true
+  const stage = `${t.current_service_stage || ''} ${t.followup_stage || ''} ${t.next_action || ''}`.toLowerCase()
+  const escalation = t.computed_escalation_level || t.escalation_level || 'None'
+  if (quickFilter.value === 'overdue') return t.overdue_status === 'Overdue'
+  if (quickFilter.value === 'customer_not_informed') return t.customer_update_due || ['Pending', '', null, undefined].includes(t.customer_informed_status || t.customer_informed)
+  if (quickFilter.value === 'part_pending') return stage.includes('part') || (t.pending_reason || '').toLowerCase().includes('part')
+  if (quickFilter.value === 'technician_call_pending') return stage.includes('technician') && stage.includes('call')
+  if (quickFilter.value === 'technician_visit_pending') return stage.includes('technician') && stage.includes('visit')
+  if (quickFilter.value === 'closure_pending') return stage.includes('closure') || stage.includes('customer confirmation')
+  if (quickFilter.value === 'escalated') return escalation && escalation !== 'None'
+  if (quickFilter.value === 'reopened') return (t.status || '').toLowerCase().includes('reopen')
+  return true
+}
 
 function toggleSort(key) {
   if (sortKey.value === key) {

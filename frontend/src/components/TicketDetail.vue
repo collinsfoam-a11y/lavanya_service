@@ -33,24 +33,20 @@
             <div class="mt-3 flex items-center gap-3 flex-wrap">
               <button
                 v-if="ticket.customer?.mobile"
-                @click="whatsappCustomer"
-                class="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg font-label-md text-body-md text-on-primary"
-                style="background:#25D366"
-                :aria-label="'Message ' + ticket.customer?.name + ' on WhatsApp'"
-              >
-                <span class="material-symbols-outlined" style="font-size:18px" aria-hidden="true">chat</span> Message on WhatsApp
-              </button>
+                  @click="whatsappCustomer"
+                  class="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg font-label-md text-body-md bg-success text-on-success"
+                  :aria-label="'Generate WhatsApp draft for ' + ticket.customer?.name"
+                >
+                  <span class="material-symbols-outlined" style="font-size:18px" aria-hidden="true">chat</span> WhatsApp Draft
+                </button>
               <a :href="'/helpdesk/tickets/' + ticket.name" target="_blank" class="text-primary hover:underline font-label-md">
                 Open in Standard Helpdesk ↗
               </a>
             </div>
           </header>
 
-          <!-- Workflow Timeline — visual stage progression -->
-          <LavWorkflowTimeline :ticket="ticket" />
-
           <!-- Next Action Bar — context-aware primary/secondary/danger actions -->
-          <div class="rounded-xl p-4 mb-2" style="background: color-mix(in srgb, var(--lav-accent, #004ac6) 6%, #ffffff); border: 1px solid color-mix(in srgb, var(--lav-accent, #004ac6) 15%, #c3c6d7)">
+          <div class="rounded-xl p-4 mb-2 border border-outline-variant bg-surface-container-low">
             <div class="flex items-center gap-2 mb-3">
               <span class="material-symbols-outlined text-primary" style="font-size:20px">flash_on</span>
               <span class="font-label-lg text-label-lg font-semibold text-primary">Next Action</span>
@@ -87,8 +83,21 @@
             </div>
           </div>
 
+          <!-- Workflow Timeline — visual stage progression -->
+          <LavWorkflowTimeline :ticket="ticket" />
+
           <!-- Customer Journey Summary Card -->
           <LavCustomerJourneyCard :ticket="ticket" />
+
+          <section class="rounded-xl border p-4" :class="closureGuard.allowed ? 'border-success bg-success-container' : 'border-error bg-error-container'">
+            <div class="flex items-start gap-3">
+              <span class="material-symbols-outlined" :class="closureGuard.allowed ? 'text-success' : 'text-error'" aria-hidden="true">{{ closureGuard.allowed ? 'verified' : 'lock' }}</span>
+              <div>
+                <h3 class="font-headline-md text-headline-md" :class="closureGuard.allowed ? 'text-success' : 'text-error'">{{ closureGuard.allowed ? 'Closure Allowed' : 'Closure Not Allowed' }}</h3>
+                <p class="font-body-md text-on-surface mt-1">Reason: {{ closureGuard.reason }}</p>
+              </div>
+            </div>
+          </section>
 
           <!-- Communication Preview — P2.2 dry-run notifications only -->
           <section id="sec-communication" class="rounded-xl border border-outline-variant bg-surface-container-lowest p-4">
@@ -897,6 +906,19 @@ const postingNote = ref(false)
 const repeatCandidates = ref([])
 
 const isClosed = computed(() => ['Closed', 'Cancelled', 'Resolved'].includes(ticket.value?.status))
+const closureGuard = computed(() => {
+  const s = ticket.value?.stage || ticket.value || {}
+  const satisfaction = s.customer_satisfaction_status
+  const confirmed = s.customer_confirmation_received || ticket.value?.customer_confirmation_received
+  if (isClosed.value) return { allowed: true, reason: 'Ticket is already closed or resolved.' }
+  if (confirmed === 'Yes' || satisfaction === 'Satisfied' || satisfaction === 'Not Required') {
+    return { allowed: true, reason: 'Customer confirmed issue solved.' }
+  }
+  if (satisfaction === 'Not Satisfied') {
+    return { allowed: false, reason: 'Customer is not satisfied; follow-up must continue.' }
+  }
+  return { allowed: false, reason: 'Customer confirmation pending.' }
+})
 
 const SECTIONS = [
   { id: 'sec-stage', label: 'Stage' },

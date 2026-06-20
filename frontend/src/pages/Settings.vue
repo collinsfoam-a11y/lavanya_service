@@ -13,11 +13,24 @@
       />
       <template v-else>
         <LavConfirm />
+        <LavCard class="mb-6" padding="compact">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined" :class="canManage ? 'text-success' : 'text-on-surface-variant'" aria-hidden="true">{{ canManage ? 'admin_panel_settings' : 'visibility' }}</span>
+              <div>
+                <div class="font-body-md font-semibold text-on-surface">{{ canManage ? 'Manager edit mode' : 'Read-only mode' }}</div>
+                <div class="font-label-md text-label-md text-on-surface-variant">{{ canManage ? 'Preferences can be changed. Safety locks remain backend-controlled.' : 'Contact a Lavanya Manager to change settings.' }}</div>
+              </div>
+            </div>
+            <span v-if="dirty" class="px-3 py-1 rounded-full bg-warning-container text-on-warning font-label-md text-label-md">Unsaved changes</span>
+          </div>
+        </LavCard>
+
         <div v-if="saveStatus" class="mb-4 rounded-lg px-4 py-3 font-body-md" :class="saveStatusClass" role="status">
           {{ saveStatus }}
         </div>
 
-        <LavCard class="mb-6">
+        <LavCard class="mb-6 border-error/30">
           <LavSectionHeader title="Theme & Accessibility" icon="palette" />
           <div class="space-y-4">
             <div class="flex items-center justify-between gap-4">
@@ -34,7 +47,8 @@
               <label
                 v-for="flag in themeFlags"
                 :key="flag.key"
-                class="flex items-start gap-3 p-3 rounded-lg border border-outline-variant bg-surface-container-low cursor-pointer"
+                class="flex items-start gap-3 p-3 rounded-lg border border-outline-variant bg-surface-container-low"
+                :class="canManage ? 'cursor-pointer' : 'cursor-default opacity-90'"
               >
                 <span class="material-symbols-outlined text-primary mt-0.5" aria-hidden="true">{{ flag.icon }}</span>
                 <div class="flex-1">
@@ -45,7 +59,7 @@
                   v-if="canManage"
                   type="checkbox"
                   v-model="draft[flag.key]"
-                  class="accent-primary"
+                  class="accent-primary mt-1"
                 />
                 <span v-else class="material-symbols-outlined" :class="draft[flag.key] ? 'text-success' : 'text-muted'">
                   {{ draft[flag.key] ? 'check_circle' : 'cancel' }}
@@ -69,14 +83,18 @@
             <label
               v-for="flag in uiFlags"
               :key="flag.key"
-              class="flex items-center justify-between p-3 rounded-lg border border-outline-variant bg-surface-container-low cursor-pointer"
+                class="flex items-start justify-between gap-3 p-3 rounded-lg border border-outline-variant bg-surface-container-low"
+                :class="canManage ? 'cursor-pointer' : 'cursor-default opacity-90'"
             >
-              <div class="font-body-md text-body-md text-on-surface">{{ flag.label }}</div>
+              <div>
+                <div class="font-body-md text-body-md text-on-surface">{{ flag.label }}</div>
+                <div class="font-label-md text-label-md text-on-surface-variant">{{ flag.description }}</div>
+              </div>
               <input
                 v-if="canManage"
                 type="checkbox"
                 v-model="draft[flag.key]"
-                class="accent-primary"
+                class="accent-primary mt-1"
               />
               <span v-else class="material-symbols-outlined" :class="draft[flag.key] ? 'text-success' : 'text-muted'">
                 {{ draft[flag.key] ? 'check_circle' : 'cancel' }}
@@ -85,10 +103,10 @@
           </div>
         </LavCard>
 
-        <div v-if="canManage" class="flex flex-wrap items-center gap-3">
+        <div v-if="canManage" class="sticky bottom-4 z-20 flex flex-wrap items-center gap-3 rounded-xl border border-outline-variant bg-surface/95 p-3 shadow-lg backdrop-blur">
           <button
             @click="saveSettings"
-            :disabled="saving"
+            :disabled="saving || !dirty"
             class="px-5 py-2.5 rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ saving ? 'Saving…' : 'Save settings' }}
@@ -100,6 +118,7 @@
           >
             Reset to safe defaults
           </button>
+          <span class="font-label-md text-label-md text-on-surface-variant">{{ dirty ? 'Review changes before leaving.' : 'No unsaved changes.' }}</span>
         </div>
         <div v-else class="font-label-md text-label-md text-on-surface-variant">
           Contact a Lavanya Manager to change settings.
@@ -146,14 +165,14 @@ const safetyLocks = computed(() => [
 ])
 
 const uiFlags = computed(() => [
-  { key: 'show_next_action_bar', label: 'Next action bar' },
-  { key: 'show_workflow_timeline', label: 'Workflow timeline' },
-  { key: 'show_customer_journey_summary', label: 'Customer journey summary' },
-  { key: 'show_followup_quality_badge', label: 'Follow-up quality badge' },
-  { key: 'show_mobile_field_mode', label: 'Mobile field mode' },
-  { key: 'show_penalty_tab', label: 'Penalty tab' },
-  { key: 'show_notification_tab', label: 'Notification tab' },
-  { key: 'show_erp_status_panel', label: 'ERP status panel' },
+  { key: 'show_next_action_bar', label: 'Next action bar', description: 'Show action-first controls on Ticket Detail.' },
+  { key: 'show_workflow_timeline', label: 'Workflow timeline', description: 'Show service stage progression.' },
+  { key: 'show_customer_journey_summary', label: 'Customer journey summary', description: 'Show follow-up proof and closure readiness.' },
+  { key: 'show_followup_quality_badge', label: 'Follow-up quality badge', description: 'Show Good / Needs Update / At Risk / Critical states.' },
+  { key: 'show_mobile_field_mode', label: 'Mobile field mode', description: 'Enable counter-friendly phone lookup.' },
+  { key: 'show_penalty_tab', label: 'Penalty tab', description: 'Advisory only; penalty application remains disabled.' },
+  { key: 'show_notification_tab', label: 'Notification tab', description: 'Dry-run queues only; no live WhatsApp/SMS.' },
+  { key: 'show_erp_status_panel', label: 'ERP status panel', description: 'Read-only ERP status; posting remains disabled.' },
 ])
 
 const saveStatusClass = computed(() => {
@@ -161,6 +180,8 @@ const saveStatusClass = computed(() => {
   if (saveStatus.value.startsWith('Error')) return 'bg-error-container text-on-error'
   return 'bg-primary-container text-on-primary'
 })
+
+const dirty = computed(() => JSON.stringify(draft.value || {}) !== JSON.stringify(buildDraft(settings.value || {})))
 
 onMounted(async () => {
   try {
