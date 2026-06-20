@@ -12,6 +12,13 @@ export {
   initTheme, THEME_STORAGE_KEY,
 } from './theme.js'
 
+export {
+  computeFollowupQuality,
+  qualityReason,
+  qualityColor,
+  QUALITY_LEVELS,
+} from './followup-quality.js'
+
 export function product(t) {
   return [t.brand, t.product_item || t.product_type].filter(Boolean).join(' / ')
 }

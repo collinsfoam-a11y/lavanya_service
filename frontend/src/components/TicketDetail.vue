@@ -46,94 +46,49 @@
             </div>
           </header>
 
+          <!-- Workflow Timeline — visual stage progression -->
+          <LavWorkflowTimeline :ticket="ticket" />
+
           <!-- Next Action Bar — context-aware primary/secondary/danger actions -->
           <div class="rounded-xl p-4 mb-2" style="background: color-mix(in srgb, var(--lav-accent, #004ac6) 6%, #ffffff); border: 1px solid color-mix(in srgb, var(--lav-accent, #004ac6) 15%, #c3c6d7)">
             <div class="flex items-center gap-2 mb-3">
               <span class="material-symbols-outlined text-primary" style="font-size:20px">flash_on</span>
               <span class="font-label-lg text-label-lg font-semibold text-primary">Next Action</span>
-              <span v-if="qualityLevel" class="ml-auto px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="qualityChip(qualityLevel)">{{ qualityLevel }}</span>
+              <LavFollowupQualityBadge v-if="qualityLevel" :ticket="ticket" class="ml-auto" />
             </div>
-            <div class="flex flex-wrap gap-2">
-              <button v-for="action in nextActions.primary" :key="action.key"
-                @click="openAction(action.key)"
-                class="px-4 py-2.5 rounded-lg font-label-md text-left flex items-center gap-2 bg-primary text-on-primary hover:opacity-90 active:scale-[0.97] transition-all">
-                <span class="material-symbols-outlined" style="font-size:18px">{{ action.icon }}</span>
-                {{ action.label }}
-              </button>
-              <button v-for="action in nextActions.secondary" :key="action.key"
-                @click="openAction(action.key)"
-                class="px-4 py-2.5 rounded-lg font-label-md text-left flex items-center gap-2 bg-primary-container text-on-primary hover:opacity-90 active:scale-[0.97] transition-all">
-                <span class="material-symbols-outlined" style="font-size:18px">{{ action.icon }}</span>
-                {{ action.label }}
-              </button>
-              <div v-if="nextActions.danger.length" class="flex flex-wrap gap-2 ml-auto">
+            <LavActionBar>
+              <template #primary>
+                <button v-for="action in nextActions.primary" :key="action.key"
+                  @click="openAction(action.key)"
+                  class="px-4 py-2.5 rounded-lg font-label-md text-left flex items-center gap-2 bg-primary text-on-primary hover:opacity-90 active:scale-[0.97] transition-all">
+                  <span class="material-symbols-outlined" style="font-size:18px">{{ action.icon }}</span>
+                  {{ action.label }}
+                </button>
+              </template>
+              <template #secondary>
+                <button v-for="action in nextActions.secondary" :key="action.key"
+                  @click="openAction(action.key)"
+                  class="px-4 py-2.5 rounded-lg font-label-md text-left flex items-center gap-2 bg-primary-container text-on-primary hover:opacity-90 active:scale-[0.97] transition-all">
+                  <span class="material-symbols-outlined" style="font-size:18px">{{ action.icon }}</span>
+                  {{ action.label }}
+                </button>
+              </template>
+              <template #danger>
                 <button v-for="action in nextActions.danger" :key="action.key"
                   @click="openAction(action.key)"
                   class="px-4 py-2.5 rounded-lg font-label-md text-left flex items-center gap-2 bg-error text-on-error hover:opacity-90 active:scale-[0.97] transition-all">
                   <span class="material-symbols-outlined" style="font-size:18px">{{ action.icon }}</span>
                   {{ action.label }}
                 </button>
-              </div>
-              <div v-if="!nextActions.primary.length && !nextActions.secondary.length && !nextActions.danger.length" class="text-on-surface-variant font-body-md py-1">
-                No actions available for this ticket state.
-              </div>
+              </template>
+            </LavActionBar>
+            <div v-if="!nextActions.primary.length && !nextActions.secondary.length && !nextActions.danger.length" class="text-on-surface-variant font-body-md py-1">
+              No actions available for this ticket state.
             </div>
           </div>
 
-          <!-- Customer Journey View — at-a-glance answer to "what happened?" -->
-          <div class="rounded-xl p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"
-               style="background: color-mix(in srgb, var(--lav-accent, #004ac6) 4%, #f8f9ff); border: 1px solid color-mix(in srgb, var(--lav-accent, #004ac6) 12%, #c3c6d7)">
-            <div>
-              <div class="font-label-md text-label-md text-on-surface-variant">Last Customer Update</div>
-              <div class="font-body-md text-on-surface mt-0.5">{{ ticket.stage?.customer_informed_at?.substring(0,16) || ticket.stage?.last_followup_at?.substring(0,16) || 'No update yet' }}</div>
-            </div>
-            <div>
-              <div class="font-label-md text-label-md text-on-surface-variant">Last Tech Update</div>
-              <div class="font-body-md text-on-surface mt-0.5">
-                <template v-if="ticket.stage?.followup_stage === 'technician_visited' || ticket.stage?.followup_stage === 'technician_called'">{{ ticket.stage?.last_followup_at?.substring(0,16) || 'Pending' }}</template>
-                <template v-else>—</template>
-              </div>
-            </div>
-            <div>
-              <div class="font-label-md text-label-md text-on-surface-variant">Last SC Update</div>
-              <div class="font-body-md text-on-surface mt-0.5">{{ ticket.stage?.last_service_center_followup?.substring(0,16) || '—' }}</div>
-            </div>
-            <div>
-              <div class="font-label-md text-label-md text-on-surface-variant">Days Open</div>
-              <div class="font-body-md text-on-surface mt-0.5 font-bold" :class="ticketAge(ticket.creation) > 7 ? 'text-error' : ''">{{ ticketAge(ticket.creation) }} days</div>
-            </div>
-            <div>
-              <div class="font-label-md text-label-md text-on-surface-variant">Next Follow-up</div>
-              <div class="font-body-md text-on-surface mt-0.5 font-bold" :class="followupUrgency(ticket.stage?.next_follow_up_date).class">
-                {{ followupUrgency(ticket.stage?.next_follow_up_date).label }}
-              </div>
-            </div>
-            <div>
-              <div class="font-label-md text-label-md text-on-surface-variant">Customer Updated?</div>
-              <div class="font-body-md text-on-surface mt-0.5">
-                <span v-if="ticket.stage?.customer_informed_status" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="informedChip(ticket.stage.customer_informed_status)">{{ ticket.stage.customer_informed_status }}</span>
-                <span v-else class="text-on-surface-variant">Not yet</span>
-              </div>
-            </div>
-            <div>
-              <div class="font-label-md text-label-md text-on-surface-variant">Satisfaction</div>
-              <div class="font-body-md text-on-surface mt-0.5">
-                <span v-if="ticket.stage?.customer_satisfaction_status" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="satisfactionChip(ticket.stage.customer_satisfaction_status)">{{ ticket.stage.customer_satisfaction_status }}</span>
-                <span v-else class="text-on-surface-variant">Pending</span>
-              </div>
-            </div>
-            <div>
-              <div class="font-label-md text-label-md text-on-surface-variant">Escalation Level</div>
-              <div class="font-body-md text-on-surface mt-0.5">
-                <span v-if="ticket.stage?.escalation_level && ticket.stage.escalation_level !== 'None'" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="escChip(ticket.stage.escalation_level)">{{ ticket.stage.escalation_level }}</span>
-                <span v-else class="text-on-surface-variant">None</span>
-              </div>
-            </div>
-            <div class="col-span-2 sm:col-span-3 md:col-span-5">
-              <div class="font-label-md text-label-md text-on-surface-variant">Last Follow-up Summary</div>
-              <div class="font-body-md text-on-surface mt-0.5 break-words">{{ ticket.stage?.last_followup_summary || 'No follow-up recorded yet' }}</div>
-            </div>
-          </div>
+          <!-- Customer Journey Summary Card -->
+          <LavCustomerJourneyCard :ticket="ticket" />
 
           <!-- Communication Preview — P2.2 dry-run notifications only -->
           <section id="sec-communication" class="rounded-xl border border-outline-variant bg-surface-container-lowest p-4">
@@ -910,7 +865,11 @@ import { ref, watch, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { call, post } from '@/api'
 import SlaBadge from '@/components/SlaBadge.vue'
 import LavModal from '@/components/LavModal.vue'
-import { chip, dueChip, promiseChip, escChip, stageChip, satisfactionChip, informedChip, fmtDT, ticketAge, relTime, hexToRgba, COLORS, qualityBadge, qualityChip, friendlyLabel } from '@/utils'
+import LavActionBar from '@/components/LavActionBar.vue'
+import LavWorkflowTimeline from '@/components/lavanya/tickets/LavWorkflowTimeline.vue'
+import LavCustomerJourneyCard from '@/components/lavanya/tickets/LavCustomerJourneyCard.vue'
+import LavFollowupQualityBadge from '@/components/lavanya/tickets/LavFollowupQualityBadge.vue'
+import { chip, dueChip, promiseChip, escChip, stageChip, satisfactionChip, informedChip, fmtDT, ticketAge, relTime, hexToRgba, COLORS, qualityBadge, friendlyLabel } from '@/utils'
 import { useToast } from '@/utils/toast'
 import { useConfirm } from '@/utils/confirm'
 import LavConfirm from '@/components/LavConfirm.vue'
@@ -1182,17 +1141,6 @@ const workflowTimeline = computed(() => {
     return { ...stage, status }
   })
 })
-
-function followupUrgency(dateStr) {
-  if (!dateStr) return { label: 'No date set', class: 'text-on-surface-variant' }
-  const d = new Date(dateStr.slice(0, 10))
-  const today = new Date(new Date().toISOString().slice(0, 10))
-  const diff = Math.round((d - today) / 86400000)
-  if (diff < 0) return { label: 'Overdue by ' + Math.abs(diff) + 'd', class: 'text-error' }
-  if (diff === 0) return { label: 'Due today', class: 'text-warning' }
-  if (diff <= 2) return { label: 'In ' + diff + ' days', class: 'text-primary' }
-  return { label: dateStr.slice(0, 10), class: 'text-on-surface' }
-}
 
 async function loadRepeat() {
   repeatCandidates.value = []

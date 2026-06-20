@@ -91,6 +91,100 @@ The measurable outcome: fixed bug, new capability, performance gain, etc.
 
 ---
 
+## 2026-06-21 03:00 — H3B: Tickets/Reports modernization, Mobile Field Mode, shared-component fixes
+
+### What changed
+- `frontend/src/components/LavSectionHeader.vue` — added `badge` and `accent` props; displays ticket count badge with accent color.
+- `frontend/src/components/LavStatCard.vue` — added `caption` prop (alias for `sub`); shows sub-detail line when provided.
+- `frontend/src/components/LavEmptyState.vue` — added `message` (alias for `description`) and `tone` props; `tone="error"` renders error styling.
+- `frontend/src/components/LavLoadingState.vue` — added `layout` prop; `layout="card-list"` renders metric-grid + row skeletons matching Today's Work / Tickets.
+- `frontend/src/pages/Tickets.vue` — modernized with `LavSectionHeader` (header + New Ticket action), `LavChip` (status filter), `LavLoadingState`, `LavEmptyState` (with action slot), `LavCard` (table wrapper).
+- `frontend/src/pages/Reports.vue` — modernized all 8 tabs (Overview, Brand Delay, Supplier, Follow-up Quality, Penalty, Notifications, Aging, Reports) using `LavSectionHeader`, `LavStatCard` (summary cards), `LavCard` (table/containers), `LavLoadingState`, `LavEmptyState`; preserved dry-run/safety behavior in Penalty/Notifications.
+- `frontend/src/pages/FieldMode.vue` — new Mobile Field Mode page at `/field` for counter/showroom staff: large action tiles (New Ticket, Find Customer), phone/ticket search with `stitch_console.get_ticket_list`, critical-work snapshot via `today_work.get_today_work`, quick-open TicketDetail drawer.
+- `frontend/src/router.js` — registered `/field` route.
+- `frontend/src/components/AppShell.vue` — added Field Mode nav item (icon: `phone_iphone`).
+- `doc/lavanya-spa-status.md` — updated H2/H3 progress and remaining work.
+- `doc/lavanya-app-reference.md` — documented FieldMode page, `/field` route, and new shared-component props.
+
+### Previous state
+- Tickets.vue used custom header, status chips, skeleton/empty states, and bare table.
+- Reports.vue used inline headers, custom summary cards, raw tables, and custom loading/empty states across 8 tabs.
+- No Field Mode page existed for counter/showroom staff.
+- LavSectionHeader/LavStatCard/LavEmptyState/LavLoadingState lacked `badge`/`accent`/`caption`/`message`/`tone`/`layout` props — pages passing them rendered no content.
+- Mobile navigation lacked Field Mode entry.
+
+### Current state
+- Tickets.vue and Reports.vue fully use shared `Lav*` components; consistent styling, accessible skeletons/empty states, and compact-mode aware.
+- Field Mode page provides touch-first experience: large tap targets, phone search, critical counts, and quick drawer access.
+- All shared components now support the props used by pages; sub-detail lines, badge counts, error tones, and card-list skeletons render correctly.
+- SPA build passes; all backend tests pass (theme_settings 23/23, p2_tests 18/18, stitch_console_spa PASS, today_work 23/24 with documented pre-existing TW-015).
+
+### Why changed
+- H3B requires modernizing remaining pages with shared component library, adding Mobile Field Mode for showroom staff, and fixing shared-component prop gaps from H2.
+
+### What was obtained
+- `node node_modules/vite/bin/vite.js build`: PASS.
+- `lavanya_service.tests.theme_settings.run`: 23/23 pass.
+- `lavanya_service.tests.p2_tests.run`: 18/18 pass.
+- `lavanya_service.tests.stitch_console_spa.run`: PASS.
+- `lavanya_service.tests.today_work.run`: 23/24 pass (TW-015 pre-existing).
+- No live WhatsApp/SMS, ERP posting, or penalty application enabled.
+- No native `confirm()`/`alert()` introduced; uses `LavConfirm`.
+
+### Compatibility notes
+- No backend workflow behavior changed.
+- Penalty/Notifications tabs retain all dry-run logic, manager-approval gates, and safety-lock checks.
+- `LavConfirm` used throughout; no native dialogs.
+- TW-015 mismatch was present before H3B changes.
+
+---
+
+## 2026-06-21 00:30 — H3 progress: Ticket Detail Modernisation + Follow-up Intelligence + editable settings
+
+### What changed
+- `frontend/src/utils/followup-quality.js` — new utility that computes follow-up quality (Good / Needs Attention / Poor) from ticket stage, last follow-up, next follow-up, and customer-informed status.
+- `frontend/src/components/lavanya/tickets/LavWorkflowTimeline.vue` — new reusable workflow timeline showing intake → registration → service → resolution → closure stages with current-stage highlight and stage metadata.
+- `frontend/src/components/lavanya/tickets/LavCustomerJourneyCard.vue` — new reusable customer-journey summary card replacing the inline grid in Ticket Detail.
+- `frontend/src/components/lavanya/tickets/LavFollowupQualityBadge.vue` — new computed quality badge component (chip style) driven by `followup-quality.js`.
+- `frontend/src/components/TicketDetail.vue` — integrated `LavWorkflowTimeline`, `LavCustomerJourneyCard`, `LavFollowupQualityBadge`, and wrapped the next-action buttons in `LavActionBar`; removed now-unused `qualityChip` and `followupUrgency` helpers.
+- `frontend/src/pages/TodayWork.vue` — applied `LavSectionHeader`, `LavStatCard`, `LavLoadingState`, and `LavEmptyState`; retained existing bucket logic and urgency-first ordering.
+- `frontend/src/pages/Settings.vue` — made theme flags and UI feature flags editable for managers; added save and reset-to-safe-defaults actions; wired `LavConfirm` instead of native `confirm`.
+- `lavanya_service/api/ui_settings.py` — added `can_manage_lavanya_settings`, `save_lavanya_service_settings`, and `reset_lavanya_service_settings`; manager-only (Lavanya Manager / System Manager / Administrator) with validation for editable fields and theme options; safety locks remain read-only mirrors.
+- `lavanya_service/tests/theme_settings.py` — extended from 15 to 23 checks covering save permission gating, editable-field updates, safety-lock ignoring, invalid-theme rejection, reset-to-defaults, and manager detection.
+- `doc/lavanya-spa-status.md` — updated H2/H3 remaining work and verification table.
+
+### Previous state
+- Ticket Detail had inline next-action bar, customer-journey grid, and a computed follow-up chip, but no reusable workflow-timeline or journey-card components.
+- Today’s Work rendered metrics and states with custom markup rather than the shared `Lav*` components introduced in H2.
+- Settings page was read-only; managers could not persist theme or UI flag changes from the SPA.
+- `api/ui_settings.py` only exposed a read endpoint.
+
+### Current state
+- Ticket Detail uses reusable H3 ticket components for timeline, journey summary, and quality badge, with actions grouped via `LavActionBar`.
+- Today’s Work uses shared `Lav*` components for metric cards, section headers, and loading/empty states while preserving Critical/Important/Normal tiering.
+- Settings page is editable for managers and resets safely to defaults.
+- Backend enforces manager-only writes, validates themes, and ignores safety-lock attempts from the editable save path.
+- Theme/settings test module now has 23 passing checks.
+
+### Why changed
+- H3 requires modern, reusable ticket-detail components and follow-up intelligence indicators; H2 remaining work requires applying shared components across pages and making settings editable.
+
+### What was obtained
+- `node node_modules/vite/bin/vite.js build`: PASS.
+- `lavanya_service.tests.theme_settings.run`: 23 pass, 0 fail.
+- `lavanya_service.tests.stitch_console_spa.run`: PASS.
+- `lavanya_service.tests.p2_tests.run`: 18 pass, 0 fail.
+- `lavanya_service.tests.today_work.run`: 23/24 pass (TW-015 group-order mismatch pre-existing, unrelated to H3 work).
+- Static checks: no native `confirm()` in changed code; safety locks remain disabled-by-default.
+
+### Compatibility notes
+- No backend workflow behavior changed.
+- Existing `qualityBadge`/`qualityChip` helpers in `utils/index.js` remain available; Ticket Detail now imports only `qualityBadge`.
+- `Lavanya Service Settings` safety-lock fields remain read-only mirrors of backend gates.
+- TW-015 mismatch was present before H3 changes.
+
+---
+
 ## 2026-06-20 22:00 — H2 task spec created: UI/UX Wiring, Settings, Modernisation + Theme System
 
 ### What changed

@@ -22,7 +22,7 @@
     <template v-if="activeTab === 'overview'">
       <!-- Trend + breakdowns -->
       <section v-if="overview.allowed" class="mb-6 flex flex-col gap-4">
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+        <LavCard padding="default">
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-headline-md text-headline-md text-on-surface">Last {{ overview.days }} days</h3>
             <div class="flex items-center gap-4 font-label-md text-label-md text-on-surface-variant">
@@ -39,34 +39,32 @@
           <div v-if="trend" class="flex justify-between font-label-md text-label-md text-on-surface-variant mt-1">
             <span>{{ trend.first }}</span><span>{{ trend.last }}</span>
           </div>
-        </div>
+        </LavCard>
       </section>
 
       <!-- Executive Summary Cards -->
       <section class="mb-6">
-        <h3 class="font-headline-md text-headline-md text-on-surface mb-3">Executive Summary</h3>
+        <LavSectionHeader title="Executive Summary" icon="dashboard" />
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          <div v-for="card in execCards" :key="card.key"
-            class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 hover:-translate-y-0.5 hover:shadow-md transition cursor-pointer"
-            :style="{ borderLeft: '4px solid ' + (card.color === 'error' ? COLORS.error : card.color === 'warning' ? COLORS.warning : card.color === 'secondary' ? COLORS.secondary : COLORS.primary) }"
-            @click="handleCardClick(card.key)"
+          <LavStatCard
+            v-for="card in execCards" :key="card.key"
+            :label="card.label"
+            :value="card.count"
+            :icon="card.icon"
+            :accent="card.color === 'error' ? COLORS.error : card.color === 'warning' ? COLORS.warning : card.color === 'secondary' ? COLORS.secondary : COLORS.primary"
+            :hover="true"
             role="button" :tabindex="0"
             :aria-label="card.label + ': ' + card.count"
+            @click="handleCardClick(card.key)"
             @keydown.enter="handleCardClick(card.key)"
             @keydown.space.prevent="handleCardClick(card.key)"
-          >
-            <div class="flex items-center justify-between mb-1">
-              <span class="material-symbols-outlined text-on-surface-variant" style="font-size: 22px">{{ card.icon }}</span>
-              <span class="font-headline-sm text-on-surface font-bold">{{ card.count }}</span>
-            </div>
-            <div class="font-label-md text-label-md text-on-surface-variant">{{ card.label }}</div>
-          </div>
+          />
         </div>
       </section>
 
       <!-- By status / closure type -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" v-if="overview.allowed">
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+        <LavCard>
           <h3 class="font-headline-md text-headline-md text-on-surface mb-3">By status</h3>
           <div v-for="b in overview.by_status" :key="b.label" class="flex items-center gap-2 mb-1.5">
             <span class="font-label-md text-label-md text-on-surface-variant w-36 truncate" :title="b.label">{{ b.label }}</span>
@@ -75,8 +73,8 @@
             </div>
             <span class="font-label-md text-label-md w-7 text-right text-on-surface">{{ b.count }}</span>
           </div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+        </LavCard>
+        <LavCard>
           <h3 class="font-headline-md text-headline-md text-on-surface mb-3">By closure type</h3>
           <div v-if="!overview.by_closure_type?.length" class="font-body-md text-on-surface-variant">No closed tickets yet.</div>
           <div v-for="b in overview.by_closure_type" :key="b.label" class="flex items-center gap-2 mb-1.5">
@@ -86,22 +84,23 @@
             </div>
             <span class="font-label-md text-label-md w-7 text-right text-on-surface">{{ b.count }}</span>
           </div>
-        </div>
+        </LavCard>
       </div>
     </template>
 
     <!-- ====== BRAND DELAY TAB ====== -->
     <template v-if="activeTab === 'brand_delay'">
       <div class="mb-gutter">
-        <h2 class="font-headline-lg text-headline-lg text-on-surface">Brand / Service Center Delay</h2>
-        <p class="font-body-md text-on-surface-variant">Which brand/service center is delaying customer complaints</p>
+        <LavSectionHeader title="Brand / Service Center Delay" icon="sensors" />
+        <p class="font-body-md text-on-surface-variant -mt-2">Which brand/service center is delaying customer complaints</p>
       </div>
-      <div v-if="loadingBrand" class="text-on-surface-variant font-body-md py-8 text-center">Loading...</div>
-      <div v-else-if="brandData.brands?.length === 0" class="py-12 text-center">
-        <div class="text-5xl mb-2">✅</div>
-        <div class="text-on-surface-variant font-body-lg">No brand delays to report.</div>
-      </div>
-      <div v-else class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-x-auto">
+      <LavLoadingState v-if="loadingBrand" :lines="6" />
+      <LavEmptyState
+        v-else-if="brandData.brands?.length === 0"
+        icon="verified"
+        title="No brand delays to report"
+      />
+      <LavCard v-else padding="none" class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-surface-container-low">
@@ -127,21 +126,22 @@
             </tr>
           </tbody>
         </table>
-      </div>
+      </LavCard>
     </template>
 
     <!-- ====== SUPPLIER CONTROL TAB ====== -->
     <template v-if="activeTab === 'supplier'">
       <div class="mb-gutter">
-        <h2 class="font-headline-lg text-headline-lg text-on-surface">Supplier Control</h2>
-        <p class="font-body-md text-on-surface-variant">Supplier compliance, stock complaints, payment blocks</p>
+        <LavSectionHeader title="Supplier Control" icon="local_shipping" />
+        <p class="font-body-md text-on-surface-variant -mt-2">Supplier compliance, stock complaints, payment blocks</p>
       </div>
-      <div v-if="loadingSupplier" class="text-on-surface-variant font-body-md py-8 text-center">Loading...</div>
-      <div v-else-if="supplierData.suppliers?.length === 0" class="py-12 text-center">
-        <div class="text-5xl mb-2">📋</div>
-        <div class="text-on-surface-variant font-body-lg">No supplier data available.</div>
-      </div>
-      <div v-else class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-x-auto mb-6">
+      <LavLoadingState v-if="loadingSupplier" :lines="6" />
+      <LavEmptyState
+        v-else-if="supplierData.suppliers?.length === 0"
+        icon="inventory"
+        title="No supplier data available"
+      />
+      <LavCard v-else padding="none" class="overflow-x-auto mb-6">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-surface-container-low">
@@ -172,92 +172,51 @@
             </tr>
           </tbody>
         </table>
-      </div>
+      </LavCard>
     </template>
 
     <!-- ====== FOLLOW-UP QUALITY TAB ====== -->
     <template v-if="activeTab === 'followup_quality'">
       <div class="mb-gutter">
-        <h2 class="font-headline-lg text-headline-lg text-on-surface">Follow-up Quality</h2>
-        <p class="font-body-md text-on-surface-variant">Measure whether Lavanya is proving follow-up properly</p>
+        <LavSectionHeader title="Follow-up Quality" icon="quality" />
+        <p class="font-body-md text-on-surface-variant -mt-2">Measure whether Lavanya is proving follow-up properly</p>
       </div>
-      <div v-if="loadingFQ" class="text-on-surface-variant font-body-md py-8 text-center">Loading...</div>
+      <LavLoadingState v-if="loadingFQ" :lines="6" />
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4"
-          :style="{ borderLeft: fqData.no_followup > 0 ? '4px solid ' + COLORS.error : '4px solid ' + COLORS.outline }">
-          <div class="font-headline-sm text-on-surface mb-1">{{ fqData.no_followup || 0 }}</div>
-          <div class="font-label-md text-label-md text-on-surface-variant">Tickets without follow-up</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4"
-          :style="{ borderLeft: fqData.customer_not_informed > 0 ? '4px solid ' + COLORS.warning : '4px solid ' + COLORS.outline }">
-          <div class="font-headline-sm text-on-surface mb-1">{{ fqData.customer_not_informed || 0 }}</div>
-          <div class="font-label-md text-label-md text-on-surface-variant">Customer not informed</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4"
-          :style="{ borderLeft: fqData.promise_breach > 0 ? '4px solid ' + COLORS.error : '4px solid ' + COLORS.outline }">
-          <div class="font-headline-sm text-on-surface mb-1">{{ fqData.promise_breach || 0 }}</div>
-          <div class="font-label-md text-label-md text-on-surface-variant">Promise breached</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4"
-          :style="{ borderLeft: fqData.no_technician_update > 0 ? '4px solid ' + COLORS.warning : '4px solid ' + COLORS.outline }">
-          <div class="font-headline-sm text-on-surface mb-1">{{ fqData.no_technician_update || 0 }}</div>
-          <div class="font-label-md text-label-md text-on-surface-variant">No technician update</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4"
-          :style="{ borderLeft: '4px solid ' + COLORS.success }">
-          <div class="font-headline-sm text-on-surface mb-1">{{ fqData.closed_with_satisfaction || 0 }}</div>
-          <div class="font-label-md text-label-md text-on-surface-variant">Closed with satisfaction</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4"
-          :style="{ borderLeft: '4px solid ' + COLORS.secondary }">
-          <div class="font-headline-sm text-on-surface mb-1">{{ fqData.satisfaction_pct || 0 }}%</div>
-          <div class="font-label-md text-label-md text-on-surface-variant">Satisfaction rate</div>
-        </div>
+        <LavStatCard label="Tickets without follow-up" :value="fqData.no_followup || 0" icon="sms_failed" :accent="fqData.no_followup > 0 ? COLORS.error : COLORS.outline" :hover="false" />
+        <LavStatCard label="Customer not informed" :value="fqData.customer_not_informed || 0" icon="campaign" :accent="fqData.customer_not_informed > 0 ? COLORS.warning : COLORS.outline" :hover="false" />
+        <LavStatCard label="Promise breached" :value="fqData.promise_breach || 0" icon="gpp_bad" :accent="fqData.promise_breach > 0 ? COLORS.error : COLORS.outline" :hover="false" />
+        <LavStatCard label="No technician update" :value="fqData.no_technician_update || 0" icon="cell_tower" :accent="fqData.no_technician_update > 0 ? COLORS.warning : COLORS.outline" :hover="false" />
+        <LavStatCard label="Closed with satisfaction" :value="fqData.closed_with_satisfaction || 0" icon="sentiment_satisfied" :accent="COLORS.success" :hover="false" />
+        <LavStatCard label="Satisfaction rate" :value="(fqData.satisfaction_pct || 0) + '%'" icon="thumb_up" :accent="COLORS.secondary" :hover="false" />
       </div>
     </template>
 
     <!-- ====== PENALTY TAB ====== -->
     <template v-if="activeTab === 'penalty'">
       <div class="mb-gutter">
-        <h2 class="font-headline-lg text-headline-lg text-on-surface">Supplier Penalty</h2>
-        <p class="font-body-md text-on-surface-variant">Computed penalty exposure — advisory, no accounting posting</p>
+        <LavSectionHeader title="Supplier Penalty" icon="gavel" />
+        <p class="font-body-md text-on-surface-variant -mt-2">Computed penalty exposure — advisory, no accounting posting</p>
       </div>
 
       <!-- Summary Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6" v-if="penaltySummary">
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4" :style="{ borderLeft: '4px solid ' + COLORS.error }">
-          <div class="font-headline-sm text-error">{{ formatCurrency(penaltySummary.total_computed) }}</div>
-          <div class="font-label-md text-label-md text-on-surface-variant">Computed Total</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4" :style="{ borderLeft: '4px solid ' + COLORS.warning }">
-          <div class="font-headline-sm text-on-surface">{{ penaltySummary.manager_review_count || 0 }}</div>
-          <div class="font-label-md text-label-md text-on-surface-variant">Manager Review</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4" :style="{ borderLeft: '4px solid ' + COLORS.success }">
-          <div class="font-headline-sm text-on-surface">{{ formatCurrency(penaltySummary.approved_amount) }}</div>
-          <div class="font-label-md text-label-md text-on-surface-variant">Approved</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4" :style="{ borderLeft: '4px solid ' + COLORS.secondary }">
-          <div class="font-headline-sm text-on-surface">{{ formatCurrency(penaltySummary.waived_amount) }}</div>
-          <div class="font-label-md text-label-md text-on-surface-variant">Waived</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4" :style="{ borderLeft: '4px solid ' + COLORS.error }">
-          <div class="font-headline-sm text-on-surface">{{ penaltySummary.highest_supplier || '—' }}</div>
-          <div class="font-label-md text-label-md text-on-surface-variant">Highest Supplier</div>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4" :style="{ borderLeft: '4px solid ' + COLORS.warning }">
-          <div class="font-headline-sm text-on-surface">{{ penaltySummary.oldest_breach_days || 0 }}d</div>
-          <div class="font-label-md text-label-md text-on-surface-variant">Oldest Breach</div>
-        </div>
+        <LavStatCard label="Computed Total" :value="formatCurrency(penaltySummary.total_computed)" icon="payments" :accent="COLORS.error" :hover="false" />
+        <LavStatCard label="Manager Review" :value="penaltySummary.manager_review_count || 0" icon="rate_review" :accent="COLORS.warning" :hover="false" />
+        <LavStatCard label="Approved" :value="formatCurrency(penaltySummary.approved_amount)" icon="check_circle" :accent="COLORS.success" :hover="false" />
+        <LavStatCard label="Waived" :value="formatCurrency(penaltySummary.waived_amount)" icon="block" :accent="COLORS.secondary" :hover="false" />
+        <LavStatCard label="Highest Supplier" :value="penaltySummary.highest_supplier || '—'" icon="leaderboard" :accent="COLORS.error" :hover="false" />
+        <LavStatCard label="Oldest Breach" :value="(penaltySummary.oldest_breach_days || 0) + 'd'" icon="history" :accent="COLORS.warning" :hover="false" />
       </div>
 
       <!-- Penalty Table -->
-      <div v-if="loadingPenaltyList" class="text-on-surface-variant font-body-md py-8 text-center">Loading...</div>
-      <div v-else-if="penaltyList.length === 0" class="py-12 text-center">
-        <div class="text-5xl mb-2">✅</div>
-        <div class="text-on-surface-variant font-body-lg">No penalty computations found.</div>
-      </div>
-      <div v-else class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-x-auto">
+      <LavLoadingState v-if="loadingPenaltyList" :lines="6" />
+      <LavEmptyState
+        v-else-if="penaltyList.length === 0"
+        icon="verified"
+        title="No penalty computations found"
+      />
+      <LavCard v-else padding="none" class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-surface-container-low">
@@ -296,29 +255,27 @@
             </tr>
           </tbody>
         </table>
-      </div>
+      </LavCard>
     </template>
 
     <!-- ====== NOTIFICATIONS TAB ====== -->
     <template v-if="activeTab === 'notifications'">
       <div class="mb-gutter">
-        <h2 class="font-headline-lg text-headline-lg text-on-surface">Notifications</h2>
-        <p class="font-body-md text-on-surface-variant">Dry-run WhatsApp/SMS/Internal queue. Live sending is disabled.</p>
+        <LavSectionHeader title="Notifications" icon="notifications" />
+        <p class="font-body-md text-on-surface-variant -mt-2">Dry-run WhatsApp/SMS/Internal queue. Live sending is disabled.</p>
       </div>
 
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        <div v-for="card in notificationCards" :key="card.label" class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4" :style="{ borderLeft: '4px solid ' + card.color }">
-          <div class="font-headline-sm text-on-surface">{{ card.count }}</div>
-          <div class="font-label-md text-label-md text-on-surface-variant">{{ card.label }}</div>
-        </div>
+        <LavStatCard v-for="card in notificationCards" :key="card.label" :label="card.label" :value="card.count" icon="mark_chat_read" :accent="card.color" :hover="false" />
       </div>
 
-      <div v-if="loadingNotifications" class="text-on-surface-variant font-body-md py-8 text-center">Loading notifications...</div>
-      <div v-else-if="notificationQueue.length === 0" class="py-12 text-center">
-        <div class="text-5xl mb-2">✅</div>
-        <div class="text-on-surface-variant font-body-lg">No queued notifications yet.</div>
-      </div>
-      <div v-else class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-x-auto">
+      <LavLoadingState v-if="loadingNotifications" :lines="6" />
+      <LavEmptyState
+        v-else-if="notificationQueue.length === 0"
+        icon="inbox"
+        title="No queued notifications yet"
+      />
+      <LavCard v-else padding="none" class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-surface-container-low">
@@ -348,19 +305,18 @@
             </tr>
           </tbody>
         </table>
-      </div>
+      </LavCard>
     </template>
 
     <!-- ====== AGING TAB ====== -->
     <template v-if="activeTab === 'aging'">
       <div class="mb-gutter">
-        <h2 class="font-headline-lg text-headline-lg text-on-surface">Aging Reports</h2>
-        <p class="font-body-md text-on-surface-variant">Ticket age distribution by category</p>
+        <LavSectionHeader title="Aging Reports" icon="hourglass_top" />
+        <p class="font-body-md text-on-surface-variant -mt-2">Ticket age distribution by category</p>
       </div>
-      <div v-if="loadingAging" class="text-on-surface-variant font-body-md py-8 text-center">Loading...</div>
+      <LavLoadingState v-if="loadingAging" :lines="6" />
       <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div v-for="cat in agingCategories" :key="cat.key"
-          class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4">
+        <LavCard v-for="cat in agingCategories" :key="cat.key">
           <h3 class="font-headline-md text-headline-md text-on-surface mb-3">{{ cat.label }}</h3>
           <div v-for="b in (agingData.aging?.[cat.key] || [])" :key="b.label"
             class="flex items-center gap-2 mb-1.5">
@@ -370,24 +326,27 @@
             </div>
             <span class="font-label-md text-label-md w-7 text-right text-on-surface">{{ b.count }}</span>
           </div>
-        </div>
+        </LavCard>
       </div>
     </template>
 
     <!-- ====== REPORTS CATALOG TAB ====== -->
     <template v-if="activeTab === 'reports'">
       <template v-if="!reportActive">
-        <div v-if="loadingCatalog" class="text-on-surface-variant font-body-md py-12 text-center">
-          Loading reports...
-        </div>
-        <div v-else-if="catalogError" class="text-error font-body-md py-12 text-center">
-          Could not load reports.
-        </div>
+        <LavLoadingState v-if="loadingCatalog" :lines="6" />
+        <LavEmptyState
+          v-else-if="catalogError"
+          icon="error"
+          title="Could not load reports"
+          tone="error"
+        />
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <button v-for="r in catalog" :key="r.key"
-            class="group text-left bg-surface-container-lowest border border-outline-variant rounded-xl p-4
-                   transition hover:-translate-y-1 hover:border-primary hover:shadow-md flex flex-col gap-2"
-            @click="openReport(r.key)">
+          <LavCard v-for="r in catalog" :key="r.key"
+            :interactive="true"
+            padding="default"
+            class="flex flex-col gap-2 hover:border-primary"
+            @click="openReport(r.key)"
+          >
             <div class="flex items-start justify-between">
               <span class="material-symbols-outlined text-primary" style="font-size: 28px">{{ r.icon }}</span>
               <span class="min-w-[28px] h-7 px-2 inline-flex items-center justify-center rounded-full font-label-md text-label-md"
@@ -397,9 +356,9 @@
             <div class="font-body-md text-on-surface-variant flex-1">{{ r.description }}</div>
             <div class="font-label-md text-label-md text-primary flex items-center gap-1 mt-1">
               Open report
-              <span class="material-symbols-outlined transition-transform group-hover:translate-x-1" style="font-size: 16px">arrow_forward</span>
+              <span class="material-symbols-outlined" style="font-size: 16px">arrow_forward</span>
             </div>
-          </button>
+          </LavCard>
         </div>
       </template>
       <!-- Drilled-in report table -->
@@ -421,12 +380,13 @@
             <span class="material-symbols-outlined" style="font-size: 18px">download</span> Export CSV
           </button>
         </div>
-        <div v-if="loadingReport" class="text-on-surface-variant font-body-md py-12 text-center">Loading...</div>
-        <div v-else-if="reportActive.count === 0" class="py-16 text-center">
-          <div class="text-5xl mb-2">✅</div>
-          <div class="text-on-surface-variant font-body-lg">Nothing in this report right now.</div>
-        </div>
-        <div v-else class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-x-auto">
+        <LavLoadingState v-if="loadingReport" :lines="8" />
+        <LavEmptyState
+          v-else-if="reportActive.count === 0"
+          icon="verified"
+          title="Nothing in this report right now"
+        />
+        <LavCard v-else padding="none" class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="bg-surface-container-low">
@@ -446,7 +406,7 @@
               </tr>
             </tbody>
           </table>
-        </div>
+        </LavCard>
       </template>
     </template>
 
@@ -518,6 +478,11 @@ import { call, post } from '@/api'
 import AppShell from '@/components/AppShell.vue'
 import TicketDetail from '@/components/TicketDetail.vue'
 import LavModal from '@/components/LavModal.vue'
+import LavSectionHeader from '@/components/LavSectionHeader.vue'
+import LavCard from '@/components/LavCard.vue'
+import LavStatCard from '@/components/LavStatCard.vue'
+import LavEmptyState from '@/components/LavEmptyState.vue'
+import LavLoadingState from '@/components/LavLoadingState.vue'
 import { COLORS, hexToRgba } from '@/utils'
 import { useConfirm } from '@/utils/confirm'
 import { useToast } from '@/utils/toast'

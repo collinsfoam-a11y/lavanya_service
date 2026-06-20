@@ -13,31 +13,28 @@
 
     <!-- Service Command Center — Critical / Important / Normal tiers -->
     <div v-for="tier in METRIC_TIERS" :key="tier.key" class="mb-gutter">
-      <div class="flex items-center gap-2 mb-2">
-        <span class="w-2.5 h-2.5 rounded-full" :style="{ background: tier.color }"></span>
-        <h3 class="font-label-lg text-label-lg font-semibold" :style="{ color: tier.color }">{{ tier.label }}</h3>
-        <span class="font-label-md text-label-md text-on-surface-variant">· {{ tierCount(tier) }} tickets</span>
-      </div>
+      <LavSectionHeader
+        :title="tier.label"
+        :icon="tier.icon"
+        :badge="tierCount(tier)"
+        :accent="tier.color"
+      />
       <div class="lav-metric-grid">
-        <div
+        <LavStatCard
           v-for="m in tierMetrics(tier)"
           :key="m.key"
-          class="lav-metric"
-          :style="{ '--lav-accent': accent(m.key), borderLeft: '4px solid ' + tier.color }"
-          @click="scrollToBucket(m.key)"
-          @keydown.enter="scrollToBucket(m.key)"
-          @keydown.space.prevent="scrollToBucket(m.key)"
+          :icon="m.icon"
+          :label="m.label"
+          :value="metricCount(m.key)"
+          :caption="metricSub(m.key)"
+          :accent="accent(m.key)"
           tabindex="0"
           role="button"
           :aria-label="'View ' + m.label + ' tickets'"
-        >
-          <span class="material-symbols-outlined lav-metric__icon">{{ m.icon }}</span>
-          <div class="lav-metric__label">{{ m.label }}</div>
-          <div>
-            <div class="lav-metric__num">{{ metricCount(m.key) }}</div>
-            <div v-if="metricSub(m.key)" class="lav-metric__sub">{{ metricSub(m.key) }}</div>
-          </div>
-        </div>
+          @click="scrollToBucket(m.key)"
+          @keydown.enter="scrollToBucket(m.key)"
+          @keydown.space.prevent="scrollToBucket(m.key)"
+        />
       </div>
     </div>
 
@@ -59,29 +56,20 @@
     </div>
 
     <!-- States -->
-    <div v-if="loading">
-      <!-- Skeleton: metric grid -->
-      <div class="lav-metric-grid mb-gutter">
-        <div v-for="i in 6" :key="'m' + i" class="lav-metric" style="pointer-events:none">
-          <div class="lav-skeleton" style="width:20px;height:20px;border-radius:999px"></div>
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <div class="lav-skeleton" style="width:70px;height:12px"></div>
-            <div class="lav-skeleton" style="width:30px;height:20px"></div>
-          </div>
-        </div>
-      </div>
-      <!-- Skeleton: queue rows -->
-      <div class="flex flex-col gap-2">
-        <div v-for="i in 5" :key="'r' + i" class="lav-skeleton" style="width:100%;height:52px;border-radius:8px"></div>
-      </div>
-    </div>
-    <div v-else-if="error" class="text-error font-body-md py-12 text-center">
-      Could not load Today’s Work. Check your access or contact the manager.
-    </div>
-    <div v-else-if="summary.total === 0" class="py-16 text-center">
-      <div class="text-5xl mb-2">🎉</div>
-      <div class="text-on-surface-variant font-body-lg">All clear — no pending work right now.</div>
-    </div>
+    <LavLoadingState v-if="loading" layout="card-list" />
+    <LavEmptyState
+      v-else-if="error"
+      icon="error"
+      title="Could not load Today’s Work"
+      message="Check your access or contact the manager."
+      tone="error"
+    />
+    <LavEmptyState
+      v-else-if="summary.total === 0"
+      icon="celebration"
+      title="All clear"
+      message="No pending work right now."
+    />
 
     <!-- Action Queue + stage/flow filters (delta Sprint 2) -->
     <template v-else>
@@ -218,6 +206,12 @@ import { call } from '@/api'
 import AppShell from '@/components/AppShell.vue'
 import TicketDetail from '@/components/TicketDetail.vue'
 import SlaBadge from '@/components/SlaBadge.vue'
+import LavCard from '@/components/LavCard.vue'
+import LavSectionHeader from '@/components/LavSectionHeader.vue'
+import LavStatCard from '@/components/LavStatCard.vue'
+import LavChip from '@/components/LavChip.vue'
+import LavEmptyState from '@/components/LavEmptyState.vue'
+import LavLoadingState from '@/components/LavLoadingState.vue'
 import { chip, followText, followStyle, product, escChip, dueChip, promiseChip, accentMetric, COLORS, qualityBadge, qualityChip } from '@/utils/index.js'
 
 const raw = ref({})
@@ -363,11 +357,11 @@ const METRICS = [
 ]
 
 const METRIC_TIERS = [
-  { key: 'critical', label: 'Critical', color: COLORS.error,
+  { key: 'critical', label: 'Critical', color: COLORS.error, icon: 'warning',
     keys: ['overdue_follow_up', 'no_technician_update', 'escalated_cases', 'customer_not_informed'] },
-  { key: 'important', label: 'Important', color: COLORS.warning,
+  { key: 'important', label: 'Important', color: COLORS.warning, icon: 'priority_high',
     keys: ['technician_call_due', 'technician_visit_due', 'due_today', 'customer_satisfaction_pending'] },
-  { key: 'normal', label: 'Normal', color: COLORS.primary,
+  { key: 'normal', label: 'Normal', color: COLORS.primary, icon: 'check_circle',
     keys: ['registration_pending', 'waiting_on_customer', 'waiting_on_part', 'ready_for_pickup',
            'product_receipt_missing', 'closure_pending', 'new_complaints'] },
 ]

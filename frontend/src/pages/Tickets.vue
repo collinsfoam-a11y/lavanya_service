@@ -6,17 +6,18 @@
 -->
 <template>
   <AppShell>
-    <div class="mb-gutter flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h2 class="font-headline-lg text-headline-lg text-on-surface">Tickets</h2>
-        <p class="font-body-md text-on-surface-variant">Service complaints &amp; their current state</p>
-      </div>
-      <router-link
-        to="/new-ticket"
-        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary font-label-md text-body-md"
-      >
-        <span class="material-symbols-outlined">add</span> New Ticket
-      </router-link>
+    <div class="mb-gutter">
+      <LavSectionHeader title="Tickets" icon="confirmation_number">
+        <template #actions>
+          <router-link
+            to="/new-ticket"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary font-label-md text-body-md"
+          >
+            <span class="material-symbols-outlined">add</span> New Ticket
+          </router-link>
+        </template>
+      </LavSectionHeader>
+      <p class="font-body-md text-on-surface-variant -mt-2">Service complaints &amp; their current state</p>
     </div>
 
     <!-- Search -->
@@ -35,27 +36,28 @@
 
     <!-- Status filter chips -->
     <div class="lav-chips mb-gutter">
-      <button
+      <LavChip
         v-for="s in STATUSES"
         :key="s"
-        class="lav-chip"
-        :class="status === s ? 'lav-chip--active' : ''"
+        :active="status === s"
         @click="status = s; reload()"
-      >
-        {{ s }}
-      </button>
+      >{{ s }}</LavChip>
     </div>
 
     <!-- States -->
-    <div v-if="loading && tickets.length === 0" class="flex flex-col gap-2">
-        <div v-for="i in 6" :key="i" class="lav-skeleton" style="width:100%;height:52px;border-radius:8px"></div>
-      </div>
-    <div v-else-if="error" class="text-error font-body-md py-12 text-center">
-      Could not load tickets. Check your access or contact the manager.
-    </div>
-    <div v-else-if="tickets.length === 0" class="py-16 text-center">
-      <div class="text-5xl mb-2">🔍</div>
-      <div class="text-on-surface-variant font-body-lg">No tickets match this view.</div>
+    <LavLoadingState v-if="loading && tickets.length === 0" :lines="8" />
+    <LavEmptyState
+      v-else-if="error"
+      icon="error"
+      title="Could not load tickets"
+      message="Check your access or contact the manager."
+      tone="error"
+    />
+    <LavEmptyState
+      v-else-if="tickets.length === 0"
+      icon="search_off"
+      title="No tickets match this view"
+    >
       <div class="mt-4 flex justify-center gap-3">
         <button v-if="search || status !== 'All'" @click="search = ''; status = 'All'; reload()" class="px-4 h-10 rounded-lg border border-outline-variant text-primary font-label-md hover:bg-surface-container-low">
           Clear filters
@@ -64,10 +66,10 @@
           <span class="material-symbols-outlined" style="font-size:18px">add</span> New Ticket
         </router-link>
       </div>
-    </div>
+    </LavEmptyState>
 
     <!-- List -->
-    <div v-else class="lav-queue overflow-x-auto">
+    <LavCard v-else padding="none" class="lav-queue overflow-x-auto">
       <table class="w-full" style="border-collapse:collapse">
         <thead>
           <tr class="text-left font-label-md text-label-md text-on-surface-variant border-b border-outline-variant">
@@ -134,7 +136,7 @@
           </tr>
         </tbody>
       </table>
-    </div>
+    </LavCard>
 
     <!-- Infinite scroll sentinel -->
     <div v-if="hasMore && !error" ref="sentinel" class="text-center py-6">
@@ -153,6 +155,11 @@ import { call } from '@/api'
 import AppShell from '@/components/AppShell.vue'
 import TicketDetail from '@/components/TicketDetail.vue'
 import SlaBadge from '@/components/SlaBadge.vue'
+import LavSectionHeader from '@/components/LavSectionHeader.vue'
+import LavCard from '@/components/LavCard.vue'
+import LavChip from '@/components/LavChip.vue'
+import LavEmptyState from '@/components/LavEmptyState.vue'
+import LavLoadingState from '@/components/LavLoadingState.vue'
 import { chip, dueChip, escChip, promiseChip, product, followText, followStyle } from '@/utils'
 
 const route = useRoute()

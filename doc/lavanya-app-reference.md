@@ -142,10 +142,10 @@ lavanya_service/
 
   frontend/                      # Vue 3 SPA
     src/
-      pages/                     # TodayWork.vue, Tickets.vue, Reports.vue, NewTicket.vue, Settings.vue
-      components/                # AppShell.vue, TicketDetail.vue, NotFound.vue, Lav*.vue
+      pages/                     # TodayWork.vue, Tickets.vue, Reports.vue, NewTicket.vue, Settings.vue, FieldMode.vue
+      components/                # AppShell.vue, TicketDetail.vue, NotFound.vue, Lav*.vue, lavanya/tickets/*.vue
       composables/               # useTheme.js
-      utils/                     # index.js, toast.js, theme-engine.js, theme.js
+      utils/                     # index.js, toast.js, theme-engine.js, theme.js, followup-quality.js, confirm.js
       api.js                     # call() / post() helpers
       router.js                  # Vue Router config
     tailwind.config.mjs          # frappe-ui preset
@@ -490,6 +490,9 @@ All endpoints are `@frappe.whitelist()`. POST endpoints are marked with `[POST]`
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `get_lavanya_service_settings` | GET | Return `Lavanya Service Settings` with safe defaults |
+| `can_manage_lavanya_settings` | GET | Return `true` if current user is Administrator, System Manager, or Lavanya Manager |
+| `save_lavanya_service_settings(values)` | POST | Save editable theme/UI flag fields; manager-only; safety-lock fields ignored |
+| `reset_lavanya_service_settings` | POST | Reset all settings to safe defaults; manager-only |
 
 ### 5.7 Overrides (`overrides/client.py`)
 
@@ -840,7 +843,28 @@ reminder_engine.py ← workflow/today_work.py (derive_escalation_level, refresh_
 reminder_engine.py ← api/stitch_console.py (refresh_ticket_reminder_state, derive_escalation_level, get_active_rules)
 pcomp.py ← hooks.py scheduler_events.daily (run_daily_penalty_computation_dry_safe)
 api/prep.py ← frontend/src/pages/Reports.vue (penalty tab summary/list/detail/actions)
-api/ui_settings.py ← frontend/src/pages/Settings.vue (theme/UI flags/safety locks)
+api/ui_settings.py ← frontend/src/pages/Settings.vue (theme/UI flags/safety locks, save/reset)
+followup-quality.js ← frontend/src/components/lavanya/tickets/LavFollowupQualityBadge.vue (quality computation)
+followup-quality.js ← frontend/src/components/lavanya/tickets/LavCustomerJourneyCard.vue (quality chip)
+LavWorkflowTimeline.vue ← frontend/src/components/TicketDetail.vue (workflow timeline)
+LavCustomerJourneyCard.vue ← frontend/src/components/TicketDetail.vue (journey summary)
+LavFollowupQualityBadge.vue ← frontend/src/components/TicketDetail.vue (quality badge)
+LavActionBar.vue ← frontend/src/components/TicketDetail.vue (next-action grouping)
+LavSectionHeader.vue ← frontend/src/pages/Tickets.vue (header + New Ticket action)
+LavChip.vue ← frontend/src/pages/Tickets.vue (status filter)
+LavLoadingState.vue ← frontend/src/pages/Tickets.vue (skeleton)
+LavEmptyState.vue ← frontend/src/pages/Tickets.vue (empty state + actions)
+LavCard.vue ← frontend/src/pages/Tickets.vue (table wrapper)
+LavSectionHeader.vue ← frontend/src/pages/Reports.vue (8 tabs headers)
+LavStatCard.vue ← frontend/src/pages/Reports.vue (summary cards all tabs)
+LavCard.vue ← frontend/src/pages/Reports.vue (tables, containers, catalog cards)
+LavLoadingState.vue ← frontend/src/pages/Reports.vue (skeletons)
+LavEmptyState.vue ← frontend/src/pages/Reports.vue (empty states)
+LavSectionHeader.vue ← frontend/src/pages/FieldMode.vue (header)
+LavCard.vue ← frontend/src/pages/FieldMode.vue (action tiles, search, critical cards)
+LavStatCard.vue ← frontend/src/pages/FieldMode.vue (critical counts)
+LavEmptyState.vue ← frontend/src/pages/FieldMode.vue (search no results)
+LavLoadingState.vue ← frontend/src/pages/FieldMode.vue (skeletons)
 utils/phone.py ← api/customer_intake.py (normalize_phone, normalized_mobile)
 utils/phone.py ← validations/hd_ticket.py (normalize_phone)
 api/customer_intake.py ← overrides/hd_ticket.py (sync_customer_profile_from_ticket)
@@ -860,5 +884,6 @@ workflow/quick_actions.py ← api/workflow_actions.py (all 16 functions)
 | `/frontend` | `www/frontend.py` + `www/frontend.html` | SPA entry (no-cache) |
 | `/frontend/<path:app_path>` | route rule → `/frontend` | SPA sub-routes |
 | `/qr-complaint` | route rule → `qr_complaint` | QR intake form |
+| `/field` | `frontend/src/pages/FieldMode.vue` | Mobile field mode (counter/showroom) |
 
 **Source:** `hooks.py:website_route_rules`

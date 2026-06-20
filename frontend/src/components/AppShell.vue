@@ -158,9 +158,10 @@ onMounted(() => document.addEventListener('keydown', onKeyDown))
 onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
 
 const navItems = [
-  { label: 'Today’s Work', icon: 'dashboard', to: '/' },
+  { label: 'Today\'s Work', icon: 'dashboard', to: '/' },
   { label: 'Tickets', icon: 'confirmation_number', to: '/tickets' },
   { label: 'Reports', icon: 'assessment', to: '/reports' },
+  { label: 'Field Mode', icon: 'phone_iphone', to: '/field' },
   { label: 'New Ticket', icon: 'add_box', to: '/new-ticket' },
   { label: 'Settings', icon: 'settings', to: '/settings' },
 ]

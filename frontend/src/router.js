@@ -27,6 +27,11 @@ const routes = [
     component: () => import('@/pages/Settings.vue'),
   },
   {
+    path: '/field',
+    name: 'FieldMode',
+    component: () => import('@/pages/FieldMode.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/pages/NotFound.vue'),
