@@ -49,6 +49,7 @@ All on the frappe-ui theme base. Newest first.
 
 | Commit | What | Verified |
 |---|---|---|
+| _(uncommitted, H2 foundation)_ | **H2 — UI/UX Wiring, Settings, Modernisation + Theme System (foundation)**: runtime theme engine (`frontend/src/utils/theme-engine.js`) with 6 themes (Light/Dark/Blue/Green/High Contrast/Compact Counter Mode), CSS-variable driven Tailwind + `lav-*` classes, `useTheme()` composable, `LavThemeToggle`, Settings SPA page (`/frontend/settings`), `Lavanya Service Settings` Single DocType, `get_lavanya_service_settings` API, shared components (`LavCard`, `LavSectionHeader`, `LavBadge`, `LavChip`, `LavStatCard`, `LavActionBar`, `LavEmptyState`, `LavLoadingState`, `LavSafetyLockPanel`), 15 theme/settings tests, static checks. | `node node_modules/vite/bin/vite.js build` PASS; `lavanya_service.tests.theme_settings.run` 15/15; `lavanya_service.tests.stitch_console_spa.run` PASS; `lavanya_service.tests.p2_tests.run` 18/18; `lavanya_service.tests.today_work.run` 23/24 (TW-015 group-order mismatch pre-existing) |
 | _(committed, P2.4 review)_ | **P2.4 ERPNext safe integration scaffold**: reviewed the parallel-agent commit (`35c387c`); verified disabled-by-default settings, read-only preview APIs, no ERPNext imports, no write-side document creation, and 14/14 scaffold tests passing. Fixed changelog and SPA status gaps. | `lavanya_service.tests.p2_erp_scaffold_tests.run` 14 pass / 0 fail; `node node_modules/vite/bin/vite.js build` pass |
 | _(committed, P2.2 closure)_ | **P2.2 notification templates + dry-run queue**: audited existing notification implementation, fixed screenshot naming to `01-` … `08-`, hardened `p2_notification_tests.py` cleanup (`_purge_stale()` + disabled welcome email for test agent), removed dead `assert_no_live_send()` in `api/notifications.py`. Verified 15 templates, dry-run queue, preview safety, approval/cancel/skip workflows, no live send, no credentials, no ERP/accounting. P2.2 closed. | `bench --site lavanya-dev.localhost migrate`; `lavanya_service.tests.p2_notification_tests.run` 10 pass / 0 fail; `lavanya_service.tests.p2_tests.run` 18 pass / 0 fail; `node node_modules/vite/bin/vite.js build` pass |
 | _(committed, P2.1 closure)_ | **P2.1 supplier penalty backend/docs verification**: advisory penalty DocTypes/APIs/scheduler documented; `p2_tests.py` extended to cover summary/list/detail APIs, approval narration, waiver reason/zeroing, rejection reason/status; P2.1 rules/report/defects docs corrected to state no ERP posting, no accounting entry, no WhatsApp/SMS. Frontend detail/narration modals implemented in `Reports.vue` using `LavModal`; final screenshot set captured. P2.1 closed. | `bench --site lavanya-dev.localhost migrate`; `lavanya_service.tests.p2_tests.run` 18 pass / 0 fail; `node node_modules/vite/bin/vite.js build` pass |
@@ -112,11 +113,22 @@ Stitch designs exist for 19 screens; 3 + the Ticket drawer are built. Remaining
 | P11 | Helpdesk 1.26.1 scratch upgrade and native capability acceptance matrix | Platform | No custom backend until a native gap is proven |
 | P12 | Production P0 regression suite: receipt visibility and permission boundaries | Test/fix | Existing APIs and DocTypes |
 
+### H2 remaining work (depends on foundation above)
+| # | Item | Type | Backend needed? |
+|---|---|---|---|
+| H2-1 | Apply shared components (`LavCard`, `LavBadge`, `LavChip`, `LavStatCard`, `LavActionBar`, `LavEmptyState`, `LavLoadingState`) to Today’s Work, Tickets, Reports, Ticket Detail, Penalty/Notification tabs | Refactor | No |
+| H2-2 | Visual workflow timeline on Ticket Detail | New component | No |
+| H2-3 | Customer journey summary card on Ticket Detail | New component | No |
+| H2-4 | Critical / Important / Normal bucket grouping (visual) on Today’s Work | Enhancement | No |
+| H2-5 | Mobile field mode page | New page | Reuse existing endpoints |
+| H2-6 | Editable settings form (currently read-only; backend DocType ready) | Enhancement | Update `ui_settings.py` API |
+| H2-7 | Theme + layout screenshot set under `doc/screenshots/h2_ui_wiring/themes/` | Docs | No |
+
 ### Known open items / cleanup
 - Dev-test data on `lavanya-dev`: ticket **0021** left "In Progress", a note on **0014** (from smoke tests) — delete via Desk if desired.
 - Scratch screenshot tooling at `D:\lav_shots` (outside repo) — safe to delete.
 - Built assets under `public/frontend/assets/` are **untracked**; only the serve-page HTML is committed (build regenerates assets on deploy). Decide whether to track them for zero-build deploys.
-- `lav-*` semantic classes still hardcode token hex; intentional (kept), but could move to `@apply` if desired.
+- `lav-*` semantic classes now use CSS custom properties (`var(--lav-*)`) so they respond to the runtime theme engine.
 - `Front Desk` / `My Work` / `Manager Dashboard` SPA pages still pending (P2–P4). 404 page, error boundary, shared utils, Escape key, Transition animation, autofocus, focus-visible, confirm-clear, multi-pass UI/UX batch now done (+lots of goodness). Duplicated helpers (+120 lines) consolidated to `src/utils/index.js`; toast system at `src/utils/toast.js`.
 - Customer lookup on NewTicket now distinguishes "not found" (amber) from "network error" (red) instead of silent failure.
 - **Skeleton placeholders** are basic blocks; could be refined per-shape (metric vs row vs text). **Toast** uses raw DOM; consider frappe-ui's built-in toast if available. **Column sorting** on Tickets table not yet implemented.

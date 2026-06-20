@@ -7,9 +7,9 @@
  * @tailwindcss/forms, typography, the frappe-ui design tokens (full gray
  * palette, semantic colors) and the lucide icon plugin.
  *
- * The Stitch "Lavanya Service Console" brand tokens (Material Design 3, blue
- * #004ac6 primary) are layered on top via theme.extend, so the app keeps its
- * Stitch identity while inheriting frappe-ui's solid base.
+ * The Lavanya brand tokens are now driven by CSS custom properties so the
+ * runtime theme engine (`utils/theme-engine.js`) can switch themes without a
+ * page rebuild. Default values match the Lavanya Light theme.
  */
 import frappeUIPreset from 'frappe-ui/tailwind'
 import path from 'path'
@@ -27,35 +27,36 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#f8f9ff',
-        'on-background': '#121c28',
-        surface: '#f8f9ff',
-        'surface-bright': '#f8f9ff',
-        'surface-dim': '#d1dbec',
-        'surface-variant': '#d9e3f4',
-        'surface-container-lowest': '#ffffff',
-        'surface-container-low': '#eef4ff',
-        'surface-container': '#e5eeff',
-        'surface-container-high': '#dfe9fa',
-        'surface-container-highest': '#d9e3f4',
-        'on-surface': '#121c28',
-        'on-surface-variant': '#434655',
-        'outline-variant': '#c3c6d7',
-        primary: '#004ac6',
-        'primary-container': '#2563eb',
-        'on-primary': '#ffffff',
-        'on-primary-container': '#eeefff',
-        'surface-tint': '#0053db',
-        'inverse-primary': '#b4c5ff',
-        secondary: '#712ae2',
-        'secondary-container': '#8a4cfc',
-        'on-secondary': '#ffffff',
-        tertiary: '#943700',
-        'tertiary-container': '#bc4800',
-        'on-tertiary': '#ffffff',
-        error: '#ba1a1a',
-        'error-container': '#ffdad6',
-        'on-error': '#ffffff',
+        background: 'var(--lav-background)',
+        'on-background': 'var(--lav-text-primary)',
+        surface: 'var(--lav-surface)',
+        'surface-bright': 'var(--lav-surface)',
+        'surface-dim': 'var(--lav-surface-container-low)',
+        'surface-variant': 'var(--lav-surface-elevated)',
+        'surface-container-lowest': 'var(--lav-surface)',
+        'surface-container-low': 'var(--lav-surface-container-low)',
+        'surface-container': 'var(--lav-surface-elevated)',
+        'surface-container-high': 'var(--lav-surface-container-high)',
+        'surface-container-highest': 'var(--lav-surface-container-highest)',
+        'on-surface': 'var(--lav-text-primary)',
+        'on-surface-variant': 'var(--lav-text-secondary)',
+        'outline-variant': 'var(--lav-border)',
+        primary: 'var(--lav-primary)',
+        'primary-container': 'var(--lav-primary-container)',
+        'on-primary': 'var(--lav-on-primary)',
+        'on-primary-container': 'var(--lav-on-primary-container)',
+        secondary: 'var(--lav-secondary)',
+        'secondary-container': 'var(--lav-secondary-container)',
+        'on-secondary': 'var(--lav-on-secondary)',
+        tertiary: 'var(--lav-tertiary)',
+        'tertiary-container': 'var(--lav-tertiary-container)',
+        'on-tertiary': 'var(--lav-on-tertiary)',
+        error: 'var(--lav-danger)',
+        'error-container': 'var(--lav-danger-container)',
+        'on-error': 'var(--lav-on-danger)',
+        success: 'var(--lav-success)',
+        warning: 'var(--lav-warning)',
+        info: 'var(--lav-info)',
       },
       fontFamily: {
         display: ['Inter', 'sans-serif'],
@@ -75,8 +76,8 @@ export default {
       },
       spacing: {
         unit: '8px',
-        gutter: '16px',
-        'container-padding': '24px',
+        gutter: 'var(--lav-gutter)',
+        'container-padding': 'var(--lav-container-padding)',
         'sidebar-width': '260px',
         'max-content-width': '1440px',
       },

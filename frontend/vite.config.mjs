@@ -18,12 +18,13 @@ const servePage = path.join(moduleDir, 'www', 'frontend.html')
 // Keep the Frappe serve page (www/frontend.html) in sync with the hashed build
 // output on every build, so /frontend never references stale asset hashes.
 // Pair with www/frontend.py (no_cache) so Frappe re-reads it without clear-cache.
+// Uses readFileSync + writeFileSync to avoid EPERM on Docker overlay/copyFileSync.
 function syncServePage() {
   return {
     name: 'lavanya-sync-serve-page',
     closeBundle() {
       if (fs.existsSync(builtIndex)) {
-        fs.copyFileSync(builtIndex, servePage)
+        fs.writeFileSync(servePage, fs.readFileSync(builtIndex))
         // eslint-disable-next-line no-console
         console.log('[lavanya] synced www/frontend.html ->', path.basename(builtIndex))
       }

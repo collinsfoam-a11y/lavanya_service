@@ -22,6 +22,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { COLORS } from '@/utils'
 
 const props = defineProps({
   agreementStatus: { type: String, default: null },
@@ -49,17 +50,17 @@ function rel(deadline) {
 const info = computed(() => {
   const s = props.agreementStatus
   if (!s) return null
-  if (s === 'Fulfilled') return { label: 'SLA met', color: '#1a7f37', icon: 'check_circle', title: 'SLA fulfilled' }
-  if (s === 'Failed') return { label: 'SLA breached', color: '#ba1a1a', icon: 'error', title: 'SLA failed' }
-  if (s === 'Paused') return { label: 'SLA paused', color: '#434655', icon: 'pause_circle', title: 'SLA paused' }
+  if (s === 'Fulfilled') return { label: 'SLA met', color: COLORS.success, icon: 'check_circle', title: 'SLA fulfilled' }
+  if (s === 'Failed') return { label: 'SLA breached', color: COLORS.error, icon: 'error', title: 'SLA failed' }
+  if (s === 'Paused') return { label: 'SLA paused', color: COLORS.neutral, icon: 'pause_circle', title: 'SLA paused' }
 
   const isResp = s === 'First Response Due'
   const who = isResp ? 'Resp' : 'Resln'
   const r = rel(isResp ? props.responseBy : props.resolutionBy)
   const title = `${isResp ? 'First response' : 'Resolution'} by ${r ? r.when : '—'}`
-  if (!r) return { label: `${who} due`, color: '#0053db', icon: 'schedule', title }
-  if (r.overdue) return { label: `${who} overdue ${r.text}`, color: '#ba1a1a', icon: 'error', title }
-  if (r.soon) return { label: `${who} due ${r.text}`, color: '#943700', icon: 'hourglass_top', title }
-  return { label: `${who} due ${r.text}`, color: '#0053db', icon: 'schedule', title }
+  if (!r) return { label: `${who} due`, color: COLORS.secondary, icon: 'schedule', title }
+  if (r.overdue) return { label: `${who} overdue ${r.text}`, color: COLORS.error, icon: 'error', title }
+  if (r.soon) return { label: `${who} due ${r.text}`, color: COLORS.warning, icon: 'hourglass_top', title }
+  return { label: `${who} due ${r.text}`, color: COLORS.secondary, icon: 'schedule', title }
 })
 </script>

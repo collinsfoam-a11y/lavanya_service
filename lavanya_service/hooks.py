@@ -113,6 +113,7 @@ after_install = [
 	"lavanya_service.setup.prule.create_penalty_computation_doctype",
 	"lavanya_service.setup.notifications.create_notification_doctypes",
 	"lavanya_service.setup.erpnext_settings.create_erp_settings",
+	"lavanya_service.setup.ui_settings.create_lavanya_settings",
 ]
 after_migrate = [
 	"lavanya_service.setup.install.after_migrate",
@@ -136,6 +137,7 @@ after_migrate = [
 	"lavanya_service.setup.prule.create_penalty_computation_doctype",
 	"lavanya_service.setup.notifications.create_notification_doctypes",
 	"lavanya_service.setup.erpnext_settings.create_erp_settings",
+	"lavanya_service.setup.ui_settings.create_lavanya_settings",
 ]
 
 # Uninstallation

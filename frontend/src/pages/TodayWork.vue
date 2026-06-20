@@ -11,38 +11,47 @@
       <p class="font-body-md text-on-surface-variant">{{ data?.date || '' }}</p>
     </div>
 
-    <!-- 6 work-priority metric cards (Stitch) -->
-    <div class="lav-metric-grid">
-      <div
-        v-for="m in METRICS"
-        :key="m.key"
-        class="lav-metric"
-        :style="{ '--lav-accent': accent(m.key) }"
-        @click="scrollToBucket(m.key)"
-        @keydown.enter="scrollToBucket(m.key)"
-        @keydown.space.prevent="scrollToBucket(m.key)"
-        tabindex="0"
-        role="button"
-      >
-        <span class="material-symbols-outlined lav-metric__icon">{{ m.icon }}</span>
-        <div class="lav-metric__label">{{ m.label }}</div>
-        <div>
-          <div class="lav-metric__num">{{ metricCount(m.key) }}</div>
-          <div v-if="metricSub(m.key)" class="lav-metric__sub">{{ metricSub(m.key) }}</div>
+    <!-- Service Command Center — Critical / Important / Normal tiers -->
+    <div v-for="tier in METRIC_TIERS" :key="tier.key" class="mb-gutter">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="w-2.5 h-2.5 rounded-full" :style="{ background: tier.color }"></span>
+        <h3 class="font-label-lg text-label-lg font-semibold" :style="{ color: tier.color }">{{ tier.label }}</h3>
+        <span class="font-label-md text-label-md text-on-surface-variant">· {{ tierCount(tier) }} tickets</span>
+      </div>
+      <div class="lav-metric-grid">
+        <div
+          v-for="m in tierMetrics(tier)"
+          :key="m.key"
+          class="lav-metric"
+          :style="{ '--lav-accent': accent(m.key), borderLeft: '4px solid ' + tier.color }"
+          @click="scrollToBucket(m.key)"
+          @keydown.enter="scrollToBucket(m.key)"
+          @keydown.space.prevent="scrollToBucket(m.key)"
+          tabindex="0"
+          role="button"
+          :aria-label="'View ' + m.label + ' tickets'"
+        >
+          <span class="material-symbols-outlined lav-metric__icon">{{ m.icon }}</span>
+          <div class="lav-metric__label">{{ m.label }}</div>
+          <div>
+            <div class="lav-metric__num">{{ metricCount(m.key) }}</div>
+            <div v-if="metricSub(m.key)" class="lav-metric__sub">{{ metricSub(m.key) }}</div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Reminder Intelligence cards (Step 5) — click to filter the queue -->
-    <div v-if="!loading && !error && summary.total > 0" class="flex flex-wrap gap-2 mb-gutter">
-      <button
-        v-for="c in intel"
-        :key="c.key"
-        class="lav-intel"
-        :class="{ 'lav-intel--on': intelActive(c.key) }"
-        :style="{ '--lav-accent': c.hue }"
-        @click="intelActive(c.key) ? clearFilters() : applyIntel(c.key)"
-      >
+      <div v-if="!loading && !error && summary.total > 0" class="flex flex-wrap gap-2 mb-gutter" role="group" aria-label="Filter shortcuts">
+        <button
+          v-for="c in intel"
+          :key="c.key"
+          class="lav-intel"
+          :class="{ 'lav-intel--on': intelActive(c.key) }"
+          :style="{ '--lav-accent': c.hue }"
+          :aria-label="'Filter by ' + c.label + ': ' + c.count + ' tickets'"
+          @click="intelActive(c.key) ? clearFilters() : applyIntel(c.key)"
+        >
         <span class="material-symbols-outlined" style="font-size:18px">{{ c.icon }}</span>
         <span class="font-label-lg text-label-lg">{{ c.label }}</span>
         <span class="lav-intel__num">{{ c.count }}</span>
@@ -77,7 +86,7 @@
     <!-- Action Queue + stage/flow filters (delta Sprint 2) -->
     <template v-else>
       <div class="flex items-center gap-2 mb-gutter">
-        <button @click="showFilters = !showFilters" class="lav-chip flex items-center gap-1">
+        <button @click="showFilters = !showFilters" class="lav-chip flex items-center gap-1" :aria-label="(showFilters ? 'Hide' : 'Show') + ' filters'">
           <span class="material-symbols-outlined" style="font-size:16px">{{ showFilters ? 'expand_less' : 'expand_more' }}</span>
           Filters
         </button>
@@ -133,20 +142,25 @@
         class="lav-bucket"
       >
         <div class="lav-bucket__head" :style="{ borderLeft: '4px solid ' + accent(group.key) }">
-          <span class="lav-badge" :style="{ background: group.count ? accent(group.key) : '#c3c6d7' }">{{ group.count }}</span>
+          <span class="lav-badge" :style="{ background: group.count ? accent(group.key) : COLORS.outline }">{{ group.count }}</span>
           <h3 class="font-headline-md text-headline-md text-on-surface">{{ group.label }}</h3>
         </div>
 
-        <div v-if="group.tickets.length === 0" style="padding: 12px 16px; color: #737686; font-size: 14px;">
+        <div v-if="group.tickets.length === 0" class="px-4 py-3 font-body-md text-on-surface-variant">
           No {{ group.label.toLowerCase() }} tickets at the moment.
         </div>
-        <ul v-else>
+        <ul v-else role="list" :aria-label="'Tickets in ' + group.label">
           <li
             v-for="t in group.tickets"
             :key="t.name"
-            class="lav-work-card group cursor-pointer hover:bg-surface-container-low transition-all"
+            class="lav-work-card group cursor-pointer hover:bg-surface-container-low transition-all focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
             :style="{ borderLeft: '4px solid ' + accent(group.key) }"
+            tabindex="0"
+            role="button"
+            :aria-label="'Open ticket ' + t.name + ' - ' + (t.subject || 'no subject')"
             @click="selectedTicket = t.name"
+            @keydown.enter.prevent="selectedTicket = t.name"
+            @keydown.space.prevent="selectedTicket = t.name"
           >
             <div class="flex items-start gap-3 flex-1 min-w-0">
               <!-- Customer initial avatar -->
@@ -171,9 +185,10 @@
                     :style="chip(t.status)">{{ t.status }}</span>
               <SlaBadge :agreement-status="t.agreement_status" :response-by="t.response_by" :resolution-by="t.resolution_by" />
               <span v-if="t.overdue_status && t.overdue_status !== 'Not Due'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="dueChip(t.overdue_status)">{{ t.overdue_status }}</span>
-              <span v-if="t.customer_promise_status === 'Breached'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" style="color:#ba1a1a;background:rgba(186,26,26,0.12)">Breach</span>
+              <span v-if="t.customer_promise_status === 'Breached'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="promiseChip('Breached')">Breach</span>
               <span v-if="escLevel(t) && escLevel(t) !== 'None'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="escChip(escLevel(t))">{{ escLevel(t) }}</span>
-              <span v-if="t.customer_update_due" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" style="color:#0053db;background:rgba(0,83,219,0.12)">Update due</span>
+              <span v-if="t.customer_update_due" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="promiseChip('Pending')">Update due</span>
+              <span v-if="qualityBadge(t) && qualityBadge(t) !== 'Good'" class="px-2 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="qualityChip(qualityBadge(t))">{{ qualityBadge(t) }}</span>
             </div>
             <div class="flex items-center gap-3 shrink-0">
               <div v-if="t.pending_reason" class="font-label-md text-label-md text-on-surface-variant truncate max-w-[140px]" :title="t.pending_reason">
@@ -183,7 +198,7 @@
                 {{ followText(t.next_follow_up_date) }}
               </div>
             </div>
-            <button class="px-3 py-1.5 rounded-lg border border-outline-variant text-primary font-label-md hover:bg-primary-container hover:text-on-primary hover:border-primary transition-all md:opacity-0 md:group-hover:opacity-100">
+            <button class="px-3 py-1.5 rounded-lg border border-outline-variant text-primary font-label-md hover:bg-primary-container hover:text-on-primary hover:border-primary transition-all md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100" :aria-label="'Open ticket ' + t.name">
               Open
             </button>
           </li>
@@ -203,7 +218,7 @@ import { call } from '@/api'
 import AppShell from '@/components/AppShell.vue'
 import TicketDetail from '@/components/TicketDetail.vue'
 import SlaBadge from '@/components/SlaBadge.vue'
-import { chip, followText, followStyle, product, escChip, dueChip } from '@/utils'
+import { chip, followText, followStyle, product, escChip, dueChip, promiseChip, accentMetric, COLORS, qualityBadge, qualityChip } from '@/utils/index.js'
 
 const raw = ref({})
 const loading = ref(true)
@@ -298,15 +313,15 @@ function clearFilters() {
 const intel = computed(() => {
   const t = allTickets.value
   return [
-    { key: 'promise_breach', label: 'Promise Breach', icon: 'gpp_bad', hue: '#ba1a1a',
+    { key: 'promise_breach', label: 'Promise Breach', icon: 'gpp_bad', hue: COLORS.error,
       count: t.filter((x) => x.customer_promise_status === 'Breached').length },
-    { key: 'escalated', label: 'Escalated', icon: 'priority_high', hue: '#943700',
+    { key: 'escalated', label: 'Escalated', icon: 'priority_high', hue: COLORS.warning,
       count: t.filter((x) => escLevel(x) !== 'None').length },
-    { key: 'overdue', label: 'Overdue', icon: 'error', hue: '#ba1a1a',
+    { key: 'overdue', label: 'Overdue', icon: 'error', hue: COLORS.error,
       count: t.filter((x) => x.overdue_status === 'Overdue').length },
-    { key: 'due_soon', label: 'Due Soon', icon: 'schedule', hue: '#943700',
+    { key: 'due_soon', label: 'Due Soon', icon: 'schedule', hue: COLORS.warning,
       count: t.filter((x) => x.overdue_status === 'Due Soon').length },
-    { key: 'update_due', label: 'Customer Update Due', icon: 'campaign', hue: '#0053db',
+    { key: 'update_due', label: 'Customer Update Due', icon: 'campaign', hue: COLORS.secondary,
       count: t.filter((x) => x.customer_update_due).length },
   ]
 })
@@ -346,6 +361,24 @@ const METRICS = [
   { key: 'closure_pending', label: 'Closure Pending', icon: 'task_alt' },
   { key: 'new_complaints', label: 'New Complaint', icon: 'fiber_new' },
 ]
+
+const METRIC_TIERS = [
+  { key: 'critical', label: 'Critical', color: COLORS.error,
+    keys: ['overdue_follow_up', 'no_technician_update', 'escalated_cases', 'customer_not_informed'] },
+  { key: 'important', label: 'Important', color: COLORS.warning,
+    keys: ['technician_call_due', 'technician_visit_due', 'due_today', 'customer_satisfaction_pending'] },
+  { key: 'normal', label: 'Normal', color: COLORS.primary,
+    keys: ['registration_pending', 'waiting_on_customer', 'waiting_on_part', 'ready_for_pickup',
+           'product_receipt_missing', 'closure_pending', 'new_complaints'] },
+]
+
+function tierMetrics(tier) {
+  return tier.keys.map(k => METRICS.find(m => m.key === k)).filter(Boolean)
+}
+
+function tierCount(tier) {
+  return tier.keys.reduce((sum, k) => sum + metricCount(k), 0)
+}
 function metricGroup(key) {
   return groups.value.find((g) => g.key === key)
 }
@@ -405,27 +438,8 @@ function scrollToBucket(key) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-const ACCENT = {
-  overdue_follow_up: '#ba1a1a',
-  no_technician_update: '#ba1a1a',
-  escalated_cases: '#ba1a1a',
-  customer_not_informed: '#943700',
-  technician_call_due: '#004ac6',
-  technician_visit_due: '#2563eb',
-  due_today: '#943700',
-  registration_recommended: '#004ac6',
-  registration_pending: '#2563eb',
-  waiting_on_customer: '#0053db',
-  waiting_on_part: '#943700',
-  ready_for_pickup: '#1a7f37',
-  customer_satisfaction_pending: '#712ae2',
-  product_receipt_missing: '#712ae2',
-  closure_pending: '#434655',
-  new_complaints: '#004ac6',
-  upcoming_work: '#434655',
-}
 function accent(key) {
-  return ACCENT[key] || '#004ac6'
+  return accentMetric(key)
 }
 
 </script>

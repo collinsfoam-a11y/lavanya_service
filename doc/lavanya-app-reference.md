@@ -31,6 +31,7 @@ lavanya_service/
     customer_intake.py           # lookup_customer_by_mobile, sync_customer_profile_from_ticket
     intake_masters.py            # Brand/Category/Item CRUD for form scripts
     manager_reports.py           # Report catalog + drill-down
+    prep.py                      # P2.1 supplier penalty summary/list/detail/actions
     product_receipt_actions.py   # Product receipt custody moves
     qr_intake.py                 # QR complaint intake (guest-facing)
     repeat_complaints.py         # Repeat complaint detection
@@ -66,10 +67,13 @@ lavanya_service/
     sla_config.py                # Default SLA "Lavanya Default"
     sla_fixes.py                 # SLA idempotent fixup
     permission_fixes.py          # HD Ticket "All" role restriction
+    prule.py                     # Supplier Penalty Rule + Computation DocTypes (P2.1)
+    prules.py                    # Supplier Penalty Rule + Computation DocTypes (P2.1 mirror)
     ticket_template.py           # Default ticket template fields
     runtime_defaults.py          # HD Settings defaults
 
   tasks/
+    pcomp.py                     # Advisory supplier penalty computation (P2.1)
     reminder_refresh.py          # Hourly batch reminder state persistence
 
   tests/
@@ -82,6 +86,7 @@ lavanya_service/
     intake_masters.py            # Intake master CRUD tests
     phone_normalization.py       # Phone normalization tests
     pilot_readiness.py           # Pilot readiness checks
+    p2_tests.py                  # P2.1 supplier penalty computation tests
     product_receipt_ux.py        # Product receipt UX tests
     production_readiness.py      # Production readiness checks
     qr_intake.py                 # QR intake tests
@@ -137,9 +142,10 @@ lavanya_service/
 
   frontend/                      # Vue 3 SPA
     src/
-      pages/                     # TodayWork.vue, Tickets.vue, Reports.vue, NewTicket.vue
-      components/                # AppShell.vue, TicketDetail.vue, NotFound.vue
-      utils/                     # index.js, toast.js
+      pages/                     # TodayWork.vue, Tickets.vue, Reports.vue, NewTicket.vue, Settings.vue
+      components/                # AppShell.vue, TicketDetail.vue, NotFound.vue, Lav*.vue
+      composables/               # useTheme.js
+      utils/                     # index.js, toast.js, theme-engine.js, theme.js
       api.js                     # call() / post() helpers
       router.js                  # Vue Router config
     tailwind.config.mjs          # frappe-ui preset
@@ -290,6 +296,75 @@ Resolution-priority rule engine configuration. Defines per-brand/per-stage/per-p
 | notes | Small Text | |
 | status | Select | Scheduled / Completed / Cancelled |
 
+### 3.12 Supplier Penalty Rule
+| Field | Type | Details |
+|-------|------|---------|
+| supplier | Data | Optional supplier text filter |
+| brand | Link → Brand Service Master | Optional brand filter |
+| service_flow_type | Select | Optional flow filter |
+| breach_type | Select | Required breach source |
+| grace_days | Int | Days excluded before chargeable delay |
+| penalty_type | Select | Fixed Amount / Per Day / Percentage of Claim / Percentage of Invoice / Manual Review Only |
+| fixed_amount | Currency | Used by Fixed Amount |
+| percentage_rate | Percent | Used by percentage types |
+| per_day_amount | Currency | Used by Per Day |
+| max_penalty_amount | Currency | Optional cap |
+| active | Check | Only active rules are considered |
+| valid_from / valid_to | Date | Optional validity window |
+
+**Autoname:** `format:PEN-RULE-.#####`
+
+**Source:** `setup/prule.py`, `setup/prules.py`
+
+### 3.13 Supplier Penalty Computation
+| Field | Type | Details |
+|-------|------|---------|
+| ticket | Link → HD Ticket | Required |
+| supplier / brand / service_flow_type | Data/Link | Copied from ticket context |
+| linked_record_type / linked_record | Data | Optional source linkage |
+| breach_type | Select | Required breach source |
+| breach_start_date | Date | Start of breach window |
+| breach_days / grace_days / chargeable_days | Int | Delay calculation fields |
+| penalty_type | Data | Applied rule type |
+| base_amount / computed_penalty_amount / max_penalty_amount / final_penalty_amount | Currency | Advisory amount fields |
+| status | Select | Draft / Computed / Manager Review / Approved / Waived / Rejected / Applied / Cancelled |
+| manager_review_required | Check | Manual review flag |
+| calculation_narration | Small Text | Computation explanation |
+| approved_by / approved_at / approval_narration | Link/Datetime/Text | Approval audit fields |
+| waived_by / waived_at / waiver_reason | Link/Datetime/Text | Waiver audit fields |
+| rejected_by / rejected_at / rejection_reason | Link/Datetime/Text | Rejection audit fields |
+
+**Autoname:** `format:PEN-COMP-.YYYY.-.#####`
+
+**Source:** `setup/prule.py`, `setup/prules.py`
+
+**Boundary:** P2.1 penalty computation is advisory/operational only. It creates no ERP posting, no accounting entry, and no WhatsApp/SMS.
+
+### 3.14 Lavanya Service Settings
+Single DocType for SPA/UI configuration.
+
+| Field | Type | Details |
+|-------|------|---------|
+| default_theme | Select | Lavanya Light / Lavanya Dark / Lavanya Blue / Lavanya Green / High Contrast / Compact Counter Mode |
+| allow_user_theme_override | Check | Default 1 |
+| compact_mode_enabled | Check | Default 0 |
+| large_text_mode_enabled | Check | Default 0 |
+| high_contrast_mode_enabled | Check | Default 0 |
+| show_next_action_bar | Check | Default 1 |
+| show_workflow_timeline | Check | Default 1 |
+| show_customer_journey_summary | Check | Default 1 |
+| show_followup_quality_badge | Check | Default 1 |
+| show_mobile_field_mode | Check | Default 1 |
+| show_penalty_tab | Check | Default 1 |
+| show_notification_tab | Check | Default 1 |
+| show_erp_status_panel | Check | Default 0 |
+| live_notifications_blocked | Check | Read-only, default 1 |
+| erp_posting_disabled | Check | Read-only, default 1 |
+| penalty_apply_disabled | Check | Read-only, default 1 |
+| dry_run_mode_on | Check | Read-only, default 1 |
+
+**Source:** `setup/ui_settings.py`
+
 ---
 
 ## 4. HD Ticket Custom Fields (~85 fields)
@@ -382,20 +457,41 @@ All endpoints are `@frappe.whitelist()`. POST endpoints are marked with `[POST]`
 | `record_customer_approval` | POST | Log cust approval | ticket_name, approved_amount, payment_status, notes |
 | `get_current_user_roles` | GET | Role info | — |
 
-### 5.3 Customer Intake (`api/customer_intake.py`)
+### 5.3 Penalty Reports (`api/prep.py`) — 6 endpoints
+
+| Endpoint | Method | Purpose | Key params |
+|----------|--------|---------|------------|
+| `get_penalty_summary` | GET | Summary cards for advisory penalty exposure | — |
+| `get_penalty_list` | GET | Paginated penalty computation list | status_filter, brand, limit, start |
+| `get_penalty_detail` | GET | Full penalty computation detail | penalty_name |
+| `approve_penalty` | POST | Approve advisory computation; narration required | penalty_name, narration |
+| `waive_penalty` | POST | Waive advisory computation; reason required; final amount set to zero | penalty_name, reason |
+| `reject_penalty` | POST | Reject advisory computation; reason required | penalty_name, reason |
+
+**Roles:** System Manager, Lavanya Manager, Lavanya Service Coordinator, Lavanya Viewer.
+
+**Boundary:** These APIs do not post to ERPNext/accounting and do not send WhatsApp/SMS.
+
+### 5.4 Customer Intake (`api/customer_intake.py`)
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `lookup_customer_by_mobile` | GET | Find customer by phone (profile→ticket→not found) |
 
-### 5.4 Qr Intake (`api/qr_intake.py`)
+### 5.5 Qr Intake (`api/qr_intake.py`)
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `get_qr_intake_options` | GET | Field options for QR form |
 | `submit_qr_complaint` | POST | Guest complaint intake |
 
-### 5.5 Overrides (`overrides/client.py`)
+### 5.6 UI Settings (`api/ui_settings.py`)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `get_lavanya_service_settings` | GET | Return `Lavanya Service Settings` with safe defaults |
+
+### 5.7 Overrides (`overrides/client.py`)
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -495,10 +591,11 @@ Pre-overdue lead times: graduated by SLA bucket (10 min for 30-min SLA, up to 4h
 ### Daily
 - `reminders/notification_output.run_daily_reminder_notifications_dry_safe`
 - `reminders/notification_output.run_escalation_notifications_dry_safe`
+- `tasks/pcomp.run_daily_penalty_computation_dry_safe` — advisory supplier penalty scan for open breach sources. Creates/updates only `Supplier Penalty Computation` records; no ERP/accounting/message side effects.
 
 ---
 
-## 9. Tests (29 modules)
+## 9. Tests (30 modules)
 
 All tests are plain `run()` functions (not `test_*`), executed via bench console.
 
@@ -513,6 +610,7 @@ All tests are plain `run()` functions (not `test_*`), executed via bench console
 | `intake_masters` | Brand/Category/Item CRUD | — |
 | `phone_normalization` | Phone number normalization | — |
 | `pilot_readiness` | Pilot readiness | — |
+| `p2_tests` | P2.1 supplier penalty rules, computation, summary/list/detail APIs, role gate, approval/waiver/rejection audit controls | 18 |
 | `product_receipt_ux` | Product receipt UX | — |
 | `production_readiness` | Production readiness | — |
 | `qr_intake` | QR complaint intake | — |
@@ -529,7 +627,8 @@ All tests are plain `run()` functions (not `test_*`), executed via bench console
 | `ticket_template_integrity` | Template integrity | — |
 | `today_work_page` | Today's Work page | — |
 | `today_work` | Today's Work logic | 24 |
-| `warranty_recommendation` | Warranty recommendation | — |
+| `theme_settings` | H2 theme + Lavanya Service Settings tests | 15 |
+| `warranty_recommendation` | Warranty recommendation tests | — |
 | `workflow_quick_actions` | Quick action functions | — |
 
 ---
@@ -639,6 +738,7 @@ Additional post-install hooks:
 - `setup/reminder_rule.py` — Reminder Rule DocType
 - `setup/ai_fields.py` — AI advisory fields
 - `setup/followup_fields.py` — Follow-up tracking fields
+- `setup/prule.py` — Supplier Penalty Rule + Supplier Penalty Computation DocTypes
 
 ---
 
@@ -709,7 +809,7 @@ Additional post-install hooks:
 
 | Fixture | Records |
 |---------|---------|
-| DocType | 9 custom doctypes |
+| DocType | 12+ custom doctypes including Supplier Penalty Rule, Supplier Penalty Computation, and Lavanya Service Settings |
 | Custom Field | 85 HD Ticket fields |
 | Client Script | HD Ticket form scripts |
 | HD Ticket Status | 10 statuses |
@@ -738,6 +838,9 @@ stage_rules.py ← workflow/today_work.py (compute_overdue_status, compute_promi
 stage_rules.py ← api/stitch_console.py (compute_overdue_status, compute_promise_status, flow_for_ticket_type)
 reminder_engine.py ← workflow/today_work.py (derive_escalation_level, refresh_ticket_reminder_state, get_active_rules)
 reminder_engine.py ← api/stitch_console.py (refresh_ticket_reminder_state, derive_escalation_level, get_active_rules)
+pcomp.py ← hooks.py scheduler_events.daily (run_daily_penalty_computation_dry_safe)
+api/prep.py ← frontend/src/pages/Reports.vue (penalty tab summary/list/detail/actions)
+api/ui_settings.py ← frontend/src/pages/Settings.vue (theme/UI flags/safety locks)
 utils/phone.py ← api/customer_intake.py (normalize_phone, normalized_mobile)
 utils/phone.py ← validations/hd_ticket.py (normalize_phone)
 api/customer_intake.py ← overrides/hd_ticket.py (sync_customer_profile_from_ticket)

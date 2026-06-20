@@ -145,7 +145,7 @@ _LIST_FIELDS = [
 ]
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def get_ticket_list(search=None, status=None, start=0, page_length=30):
     """Paginated, permission-scoped HD Ticket list for the SPA Tickets page.
 

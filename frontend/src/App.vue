@@ -20,6 +20,7 @@
           <div class="flex justify-between"><kbd class="px-2 py-0.5 bg-surface-container-high rounded text-label-md font-label-md">g</kbd> <kbd class="px-2 py-0.5 bg-surface-container-high rounded text-label-md font-label-md">t</kbd> <span class="text-on-surface-variant">→</span> <span>Tickets</span></div>
           <div class="flex justify-between"><kbd class="px-2 py-0.5 bg-surface-container-high rounded text-label-md font-label-md">g</kbd> <kbd class="px-2 py-0.5 bg-surface-container-high rounded text-label-md font-label-md">n</kbd> <span class="text-on-surface-variant">→</span> <span>New Ticket</span></div>
           <div class="flex justify-between"><kbd class="px-2 py-0.5 bg-surface-container-high rounded text-label-md font-label-md">g</kbd> <kbd class="px-2 py-0.5 bg-surface-container-high rounded text-label-md font-label-md">r</kbd> <span class="text-on-surface-variant">→</span> <span>Reports</span></div>
+          <div class="flex justify-between"><kbd class="px-2 py-0.5 bg-surface-container-high rounded text-label-md font-label-md">g</kbd> <kbd class="px-2 py-0.5 bg-surface-container-high rounded text-label-md font-label-md">s</kbd> <span class="text-on-surface-variant">→</span> <span>Settings</span></div>
           <div class="flex justify-between"><kbd class="px-2 py-0.5 bg-surface-container-high rounded text-label-md font-label-md">?</kbd> <span class="text-on-surface-variant">→</span> <span>Toggle this help</span></div>
           <div class="flex justify-between"><kbd class="px-2 py-0.5 bg-surface-container-high rounded text-label-md font-label-md">Esc</kbd> <span class="text-on-surface-variant">→</span> <span>Close drawer / help</span></div>
         </div>
@@ -36,10 +37,12 @@
 <script setup>
 import { ref, onMounted, onUnmounted, onErrorCaptured } from 'vue'
 import { useRouter } from 'vue-router'
+import { useTheme } from '@/composables/useTheme.js'
 
 const router = useRouter()
 const fatal = ref(null)
 const showShortcuts = ref(false)
+useTheme()
 
 // Keyboard navigation shortcuts (two-key sequences like g+t, g+h)
 let pendingG = false
@@ -62,6 +65,7 @@ function onKey(e) {
     else if (e.key === 't') router.push('/tickets')
     else if (e.key === 'n') router.push('/new-ticket')
     else if (e.key === 'r') router.push('/reports')
+    else if (e.key === 's') router.push('/settings')
   }
 }
 

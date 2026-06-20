@@ -14,7 +14,7 @@
     <!-- Success state -->
     <div v-if="created" class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 max-w-2xl">
       <div class="flex items-center gap-3 mb-4">
-        <span class="material-symbols-outlined text-3xl" style="color:#1a7f37">check_circle</span>
+        <span class="material-symbols-outlined text-3xl" :style="{ color: COLORS.success }">check_circle</span>
         <div>
           <div class="font-headline-md text-headline-md text-on-surface">Ticket {{ created }} created</div>
           <div class="font-body-md text-on-surface-variant">{{ form.customer_name }} · {{ form.brand }} {{ form.product_type }}</div>
@@ -43,7 +43,7 @@
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface-variant">Mobile <span class="text-error">*</span></span>
             <input v-model="form.mobile" type="tel" class="lav-input" placeholder="10-digit mobile" @blur="lookupCustomer" />
-          <span v-if="lookupHint" class="font-label-md text-label-md" :style="{ color: lookupHint.color || '#1a7f37' }">{{ lookupHint.text }}</span>
+          <span v-if="lookupHint" class="font-label-md text-label-md" :style="{ color: lookupHint.color || COLORS.success }">{{ lookupHint.text }}</span>
         </label>
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface-variant">Brand <span class="text-error">*</span></span>
@@ -114,6 +114,8 @@
         </button>
       </div>
     </form>
+
+    <LavConfirm />
   </AppShell>
 </template>
 
@@ -122,9 +124,13 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { call, post } from '@/api'
 import AppShell from '@/components/AppShell.vue'
+import LavConfirm from '@/components/LavConfirm.vue'
+import { useConfirm } from '@/utils/confirm'
 import { useToast } from '@/utils/toast'
+import { COLORS } from '@/utils'
 
 const router = useRouter()
+const { confirm } = useConfirm()
 const { show: showToast } = useToast()
 
 const opts = ref({ brands: [], product_types: [], ticket_types: [], complaint_sources: [], warranty_statuses: [] })
@@ -149,12 +155,12 @@ async function lookupCustomer() {
       if (!form.brand && res.last_brand && opts.value.brands?.includes(res.last_brand)) form.brand = res.last_brand
       if ((!form.product_type || form.product_type === '') && res.last_product_type && opts.value.product_types?.includes(res.last_product_type)) form.product_type = res.last_product_type
       const n = res.ticket_count || 0
-      lookupHint.value = { text: `Returning customer${n ? ` · ${n} previous ticket${n > 1 ? 's' : ''}` : ''} — details prefilled`, color: '#1a7f37' }
+      lookupHint.value = { text: `Returning customer${n ? ` · ${n} previous ticket${n > 1 ? 's' : ''}` : ''} — details prefilled`, color: COLORS.success }
     } else {
-      lookupHint.value = { text: 'Customer not found. Continue with new entry.', color: '#943700' }
+      lookupHint.value = { text: 'Customer not found. Continue with new entry.', color: COLORS.warning }
     }
   } catch (e) {
-    lookupHint.value = { text: 'Could not check previous tickets. Try again later.', color: '#ba1a1a' }
+    lookupHint.value = { text: 'Could not check previous tickets. Try again later.', color: COLORS.error }
   }
 }
 
@@ -198,9 +204,11 @@ async function submit() {
   }
 }
 
-function confirmClear() {
+async function confirmClear() {
   const filled = Object.values(form).some(v => String(v).trim().length > 0)
-  if (!filled || confirm('Clear all form fields?')) reset()
+  if (!filled) { reset(); return }
+  const ok = await confirm('Clear all form fields? Any unsaved data will be lost.', 'Clear Form')
+  if (ok) reset()
 }
 function reset() {
   Object.assign(form, blank())

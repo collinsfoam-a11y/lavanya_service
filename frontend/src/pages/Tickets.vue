@@ -28,8 +28,8 @@
         placeholder="Search ticket #, subject, customer or phone…"
         class="lav-search__input"
       />
-      <button v-if="search" class="lav-search__clear" @click="search = ''; reload()">
-        <span class="material-symbols-outlined">close</span>
+      <button v-if="search" class="lav-search__clear" @click="search = ''; reload()" aria-label="Clear search">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
       </button>
     </div>
 
@@ -71,23 +71,23 @@
       <table class="w-full" style="border-collapse:collapse">
         <thead>
           <tr class="text-left font-label-md text-label-md text-on-surface-variant border-b border-outline-variant">
-            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('name')">
-              Ticket# <template v-if="sortKey==='name'">{{ sortDir==='asc' ? '▲' : '▼' }}</template>
+            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('name')" :aria-label="'Sort by ticket number' + (sortKey==='name' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='name' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
+              Ticket# <template v-if="sortKey==='name'"><span aria-hidden="true">{{ sortDir==='asc' ? '▲' : '▼' }}</span></template>
             </th>
-            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('customer')">
-              Customer <template v-if="sortKey==='customer'">{{ sortDir==='asc' ? '▲' : '▼' }}</template>
+            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('customer')" :aria-label="'Sort by customer' + (sortKey==='customer' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='customer' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
+              Customer <template v-if="sortKey==='customer'"><span aria-hidden="true">{{ sortDir==='asc' ? '▲' : '▼' }}</span></template>
             </th>
-            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('status')">
-              Status <template v-if="sortKey==='status'">{{ sortDir==='asc' ? '▲' : '▼' }}</template>
+            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('status')" :aria-label="'Sort by status' + (sortKey==='status' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='status' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
+              Status <template v-if="sortKey==='status'"><span aria-hidden="true">{{ sortDir==='asc' ? '▲' : '▼' }}</span></template>
             </th>
-            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('product')">
-              Product <template v-if="sortKey==='product'">{{ sortDir==='asc' ? '▲' : '▼' }}</template>
+            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('product')" :aria-label="'Sort by product' + (sortKey==='product' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='product' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
+              Product <template v-if="sortKey==='product'"><span aria-hidden="true">{{ sortDir==='asc' ? '▲' : '▼' }}</span></template>
             </th>
-            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('overdue')">
-              SLA <template v-if="sortKey==='overdue'">{{ sortDir==='asc' ? '▲' : '▼' }}</template>
+            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('overdue')" :aria-label="'Sort by SLA' + (sortKey==='overdue' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='overdue' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
+              SLA <template v-if="sortKey==='overdue'"><span aria-hidden="true">{{ sortDir==='asc' ? '▲' : '▼' }}</span></template>
             </th>
-            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('followup')">
-              Follow-up <template v-if="sortKey==='followup'">{{ sortDir==='asc' ? '▲' : '▼' }}</template>
+            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('followup')" :aria-label="'Sort by follow-up date' + (sortKey==='followup' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='followup' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
+              Follow-up <template v-if="sortKey==='followup'"><span aria-hidden="true">{{ sortDir==='asc' ? '▲' : '▼' }}</span></template>
             </th>
             <th class="px-4 py-3"></th>
           </tr>
@@ -111,7 +111,7 @@
             </td>
             <td class="px-4 py-3">
               <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="chip(t.status)">{{ t.status }}</span>
-              <span v-if="t.customer_promise_status === 'Breached'" class="ml-1 px-2 py-0.5 rounded-full font-label-md text-label-md" style="color:#ba1a1a;background:rgba(186,26,26,0.12)">Promise breach</span>
+              <span v-if="t.customer_promise_status === 'Breached'" class="ml-1 px-2 py-0.5 rounded-full font-label-md text-label-md" :style="promiseChip('Breached')">Promise breach</span>
             </td>
             <td class="px-4 py-3 font-body-md text-on-surface">
               <template v-if="product(t)">{{ product(t) }}</template>
@@ -124,10 +124,10 @@
             </td>
             <td class="px-4 py-3 font-label-md text-label-md" :style="followStyle(t.next_follow_up_date)">
               {{ followText(t.next_follow_up_date) }}
-              <span v-if="t.customer_update_due" class="ml-1 px-2 py-0.5 rounded-full font-label-md text-label-md" style="color:#0053db;background:rgba(0,83,219,0.12)">Update due</span>
+              <span v-if="t.customer_update_due" class="ml-1 px-2 py-0.5 rounded-full font-label-md text-label-md" :style="promiseChip('Pending')">Update due</span>
             </td>
             <td class="px-4 py-3">
-              <button class="px-3 py-1 rounded border border-outline-variant text-primary font-label-md hover:bg-surface-container-low md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+              <button class="px-3 py-1 rounded border border-outline-variant text-primary font-label-md hover:bg-surface-container-low md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity" :aria-label="'Open ticket ' + t.name">
                 Open
               </button>
             </td>
@@ -153,7 +153,7 @@ import { call } from '@/api'
 import AppShell from '@/components/AppShell.vue'
 import TicketDetail from '@/components/TicketDetail.vue'
 import SlaBadge from '@/components/SlaBadge.vue'
-import { chip, dueChip, escChip, product, followText, followStyle } from '@/utils'
+import { chip, dueChip, escChip, promiseChip, product, followText, followStyle } from '@/utils'
 
 const route = useRoute()
 

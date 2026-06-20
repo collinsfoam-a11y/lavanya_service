@@ -22,6 +22,11 @@ const routes = [
     component: () => import('@/pages/Reports.vue'),
   },
   {
+    path: '/settings',
+    name: 'Settings',
+    component: () => import('@/pages/Settings.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/pages/NotFound.vue'),

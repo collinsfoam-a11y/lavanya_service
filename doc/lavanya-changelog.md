@@ -35,6 +35,62 @@ The measurable outcome: fixed bug, new capability, performance gain, etc.
 
 ---
 
+## 2026-06-20 23:30 — H2 foundation: theme engine, settings DocType, shared components, tests
+
+### What changed
+- `frontend/src/utils/theme-engine.js` — new runtime theme engine defining 6 themes (Lavanya Light, Lavanya Dark, Lavanya Blue, Lavanya Green, High Contrast, Compact Counter Mode), CSS-variable application, localStorage persistence, invalid-theme fallback.
+- `frontend/src/utils/theme.js` — re-exports theme engine utilities while keeping legacy `COLORS` and chip helpers for backward compatibility.
+- `frontend/src/index.css` — migrated `lav-*` semantic classes and base styles to CSS custom properties so they respond to theme changes.
+- `frontend/tailwind.config.mjs` — color tokens now reference CSS variables.
+- `frontend/src/composables/useTheme.js` — new reactive Vue composable.
+- `frontend/src/components/LavThemeToggle.vue` — new accessible theme selector.
+- `frontend/src/components/AppShell.vue` — added `LavThemeToggle` to header; added Settings nav item.
+- `frontend/src/App.vue` — initializes theme on mount; added `g+s` keyboard shortcut for Settings.
+- `frontend/src/pages/Settings.vue` — new settings page showing theme selector, safety locks, and UI feature flags.
+- `frontend/src/router.js` — registered `/settings` route.
+- `frontend/src/components/LavCard.vue`, `LavSectionHeader.vue`, `LavBadge.vue`, `LavChip.vue`, `LavStatCard.vue`, `LavActionBar.vue`, `LavEmptyState.vue`, `LavLoadingState.vue`, `LavSafetyLockPanel.vue` — new shared components.
+- `lavanya_service/setup/ui_settings.py` — new `Lavanya Service Settings` Single DocType with theme preferences, UI feature flags, and safety-lock mirrors.
+- `lavanya_service/api/ui_settings.py` — new whitelisted `get_lavanya_service_settings` endpoint.
+- `lavanya_service/hooks.py` — wired `ui_settings.create_lavanya_settings` to `after_install` and `after_migrate`.
+- `lavanya_service/tests/theme_settings.py` — new 15-check test module for defaults, theme options, UI flags, safety locks, and API safe-fallback.
+- `doc/h2_uiux_wiring_settings_modernisation_theme_system.md` — consolidated H2 task spec.
+- `doc/h2_theme_system_report.md` — implementation report.
+- `doc/h2_theme_reference.md` — theme reference for future developers.
+- `doc/h2_uiux_wiring_report.md` — UI/UX wiring report.
+- `doc/lavanya-spa-status.md` — added H2 foundation entry and remaining H2 work items.
+- `doc/lavanya-app-reference.md` — documented `Lavanya Service Settings` DocType, `api/ui_settings.py`, `theme_settings` test module, and updated frontend file map.
+
+### Previous state
+- SPA had a static light theme with hardcoded Tailwind colors and a few dark-token helpers in `theme.js`.
+- No `Lavanya Service Settings` DocType existed.
+- No Settings SPA page existed.
+- Shared components were limited to `AppShell`, `TicketDetail`, `LavModal`, `LavConfirm`, `SlaBadge`.
+
+### Current state
+- SPA supports 6 runtime-switchable themes with instant application and localStorage persistence.
+- `Lavanya Service Settings` provides backend defaults for theme, UI flags, and safety locks.
+- Settings page is live at `/frontend/settings`.
+- 10 new shared components are available for page modernization.
+- 15 theme/settings tests pass.
+
+### Why changed
+- H2 requires a modern, configurable UI with multiple themes, accessibility modes, and a settings backbone.
+
+### What was obtained
+- `node node_modules/vite/bin/vite.js build`: PASS.
+- `lavanya_service.tests.theme_settings.run`: 15 pass, 0 fail.
+- `lavanya_service.tests.stitch_console_spa.run`: PASS.
+- `lavanya_service.tests.p2_tests.run`: 18 pass, 0 fail.
+- `lavanya_service.tests.today_work.run`: 23/24 pass (TW-015 group-order mismatch pre-existing, unrelated to theme work).
+- Static checks: no new hardcoded component colors; no native `confirm()` usage.
+
+### Compatibility notes
+- No backend workflow behavior changed.
+- Existing `COLORS`, chip helpers, and dark-token exports in `theme.js` remain available for components that have not yet migrated to CSS variables.
+- `today_work` TW-015 mismatch was present before H2 changes.
+
+---
+
 ## 2026-06-20 22:00 — H2 task spec created: UI/UX Wiring, Settings, Modernisation + Theme System
 
 ### What changed

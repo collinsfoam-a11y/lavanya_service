@@ -40,12 +40,6 @@ def get_manager_dashboard(from_date=None, to_date=None):
 		"closure_pending": counts.get("closure_pending", 0),
 	}
 
-	# Some reports might bypass normal group limits but must respect read permission implicitly
-	# Since these use raw SQL, we must consider permission. 
-	# The raw SQL in manager_dashboard.py does not do doc-level permission checks right now,
-	# but `HD Ticket` read permission is required above.
-	# For strict role checks, we will return full counts if they can access these reports.
-	
 	roles = set(frappe.get_roles(user))
 	is_manager_or_coordinator = bool(roles.intersection({"System Manager", "Lavanya Manager", "Lavanya Service Coordinator", "Lavanya Viewer"}))
 	
@@ -55,8 +49,6 @@ def get_manager_dashboard(from_date=None, to_date=None):
 		summary["repeat_complaints"] = len(get_repeat_complaint_report())
 		summary["warranty_overrides"] = len(get_warranty_override_report())
 	else:
-		# Front Desk / Agent etc should not see full organizational stats for these if not permitted.
-		# For this phase, we default to 0 for non-managers to be safe.
 		summary["products_in_store"] = 0
 		summary["closed_today"] = 0
 		summary["repeat_complaints"] = 0
@@ -228,6 +220,13 @@ def _can_view(meta, roles):
 	return (not meta["manager_only"]) or bool(roles.intersection(_MANAGER_ROLES))
 
 
+def _check_manager(user=None):
+	"""Raise if user is not a manager-level role."""
+	roles = set(frappe.get_roles(user or frappe.session.user))
+	if not roles.intersection(_MANAGER_ROLES):
+		frappe.throw("Not permitted.", frappe.PermissionError)
+
+
 @frappe.whitelist()
 def get_report_catalog():
 	"""List the reports the current user may open, each with a live row count."""
@@ -323,6 +322,425 @@ def get_report_breakdowns():
 		"by_status": [{"label": k, "count": int(v)} for k, v in by_status],
 		"by_closure_type": [{"label": k, "count": int(v)} for k, v in by_closure],
 	}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NEW: Executive Summary — one call for all manager-level counts
+# ═══════════════════════════════════════════════════════════════════════════
+
+@frappe.whitelist()
+def get_executive_summary():
+	"""Return all executive-level counts for the dashboard summary cards."""
+	_check_manager()
+
+	from frappe.utils import today
+
+	cards = []
+
+	# 1. Open tickets
+	total = frappe.db.count("HD Ticket", {"status": ("not in", ["Closed", "Cancelled"])})
+	cards.append({"key": "open_tickets", "label": "Open Tickets", "count": total, "color": "primary", "icon": "confirmation_number"})
+
+	# 2. Overdue follow-ups
+	overdue = frappe.db.count("HD Ticket", {
+		"status": ("not in", ["Closed", "Cancelled"]),
+		"next_follow_up_date": ("<", today()),
+	})
+	cards.append({"key": "overdue_followup", "label": "Overdue Follow-up", "count": overdue, "color": "error", "icon": "warning"})
+
+	# 3. No technician update
+	no_tech = frappe.db.sql("""
+		SELECT COUNT(*) FROM `tabHD Ticket`
+		WHERE status NOT IN ('Closed', 'Cancelled')
+		AND IFNULL(next_action, '') IN ('Verify Technician Called', 'Verify Technician Visit', 'Schedule Technician Visit')
+		AND IFNULL(last_followup_at, '') = ''
+	""")[0][0] if frappe.get_meta("HD Ticket").has_field("next_action") else 0
+	cards.append({"key": "no_technician_update", "label": "No Tech Update", "count": no_tech, "color": "error", "icon": "cell_tower"})
+
+	# 4. Customer not informed
+	not_informed = frappe.db.count("HD Ticket", {
+		"status": ("not in", ["Closed", "Cancelled"]),
+		"customer_informed": ("!=", "Yes"),
+	})
+	cards.append({"key": "customer_not_informed", "label": "Customer Not Informed", "count": not_informed, "color": "warning", "icon": "campaign"})
+
+	# 5. Escalated cases
+	escalated = len(get_escalation_report())
+	cards.append({"key": "escalated_cases", "label": "Escalated Cases", "count": escalated, "color": "error", "icon": "escalator_warning"})
+
+	# 6. Waiting on part
+	part = len(get_waiting_on_part_report())
+	cards.append({"key": "waiting_on_part", "label": "Waiting on Part", "count": part, "color": "warning", "icon": "build"})
+
+	# 7. Customer satisfaction pending
+	sat_pending = frappe.db.sql("""
+		SELECT COUNT(*) FROM `tabHD Ticket`
+		WHERE status = 'Resolved'
+		AND IFNULL(customer_satisfaction_status, '') NOT IN ('Satisfied', '')
+	""")[0][0] if frappe.get_meta("HD Ticket").has_field("customer_satisfaction_status") else 0
+	cards.append({"key": "satisfaction_pending", "label": "Satisfaction Pending", "count": sat_pending, "color": "secondary", "icon": "feedback"})
+
+	# 8. Supplier payment blocked
+	blocked = 0
+	if frappe.db.exists("DocType", "Supplier Payment Block"):
+		try:
+			blocked = frappe.db.sql("SELECT COUNT(*) FROM `tabSupplier Payment Block` WHERE payment_block_status = 'Blocked'")[0][0]
+		except Exception:
+			blocked = 0
+	cards.append({"key": "supplier_payment_blocked", "label": "Payment Blocked", "count": blocked, "color": "error", "icon": "block"})
+
+	# 9. Replacement pending
+	repl = frappe.db.count("HD Ticket", {
+		"status": ("not in", ["Closed", "Cancelled"]),
+		"service_flow_type": "Replacement / Exchange",
+	})
+	cards.append({"key": "replacement_pending", "label": "Replacement Pending", "count": repl, "color": "warning", "icon": "swap_horiz"})
+
+	# 10. Return pending
+	ret = frappe.db.count("HD Ticket", {
+		"status": ("not in", ["Closed", "Cancelled"]),
+		"service_flow_type": "Refund Case",
+	})
+	cards.append({"key": "return_pending", "label": "Return Pending", "count": ret, "color": "warning", "icon": "undo"})
+
+	# 11. Stock complaint pending
+	stock = frappe.db.count("HD Ticket", {
+		"status": ("not in", ["Closed", "Cancelled"]),
+		"service_flow_type": "Stock Complaint",
+	})
+	cards.append({"key": "stock_complaint_pending", "label": "Stock Complaint Pending", "count": stock, "color": "secondary", "icon": "inventory"})
+
+	return {"cards": cards, "total_open": total}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NEW: Brand / Service Center Delay — aggregated per brand
+# ═══════════════════════════════════════════════════════════════════════════
+
+@frappe.whitelist()
+def get_brand_delay_aggregated():
+	"""Per-brand: open, overdue, no-update, avg days, escalated, part pending."""
+	_check_manager()
+
+	from frappe.utils import today
+
+	brands = frappe.db.sql("""
+		SELECT
+			IFNULL(brand, '(no brand)') as brand,
+			COUNT(*) as open_cases,
+			SUM(CASE WHEN next_follow_up_date < %s THEN 1 ELSE 0 END) as overdue,
+			SUM(CASE WHEN IFNULL(customer_informed, '') != 'Yes' THEN 1 ELSE 0 END) as no_tech_update,
+			ROUND(AVG(DATEDIFF(%s, creation)), 0) as avg_days,
+			SUM(CASE WHEN agreement_status = 'Failed' OR escalation_level != 'None' THEN 1 ELSE 0 END) as escalated,
+			SUM(CASE WHEN status = 'Waiting on Part / Approval' THEN 1 ELSE 0 END) as part_pending
+		FROM `tabHD Ticket`
+		WHERE status NOT IN ('Closed', 'Cancelled')
+		GROUP BY brand
+		ORDER BY overdue DESC
+	""", (today(), today()), as_dict=True)
+
+	return {"brands": brands}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NEW: Supplier Control — payment block + active stock complaints
+# ═══════════════════════════════════════════════════════════════════════════
+
+@frappe.whitelist()
+def get_supplier_control():
+	"""Supplier control view: active stock complaints, payment block status."""
+	_check_manager()
+
+	from frappe.utils import today
+
+	# Active stock complaints per supplier (brand)
+	stock_rows = frappe.db.sql("""
+		SELECT
+			IFNULL(brand, '(no brand)') as brand,
+			COUNT(*) as active_stock_complaints,
+			SUM(CASE WHEN next_follow_up_date < %s THEN 1 ELSE 0 END) as overdue_complaints,
+			SUM(CASE WHEN escalation_level != 'None' THEN 1 ELSE 0 END) as escalated
+		FROM `tabHD Ticket`
+		WHERE status NOT IN ('Closed', 'Cancelled')
+		AND service_flow_type = 'Stock Complaint'
+		GROUP BY brand
+		ORDER BY active_stock_complaints DESC
+	""", (today(),), as_dict=True)
+
+	# Payment blocks
+	payment_blocks = frappe.db.get_all("Supplier Payment Block",
+		fields=["name", "brand", "status", "blocked_at", "block_reason", "ticket"],
+		order_by="creation desc") if frappe.db.exists("DocType", "Supplier Payment Block") else []
+
+	# SLA breach count per brand
+	sla_breaches = frappe.db.sql("""
+		SELECT brand, SUM(tickets_breached) as breaches
+		FROM `tabSupplier Performance Log`
+		GROUP BY brand
+	""", as_dict=True) if frappe.db.exists("DocType", "Supplier Performance Log") else []
+
+	# Merge into unified view
+	brands = set()
+	brand_data = {}
+
+	for r in stock_rows:
+		b = r["brand"]
+		brands.add(b)
+		brand_data[b] = {"brand": b, "active_stock_complaints": r["active_stock_complaints"],
+			"overdue_complaints": r["overdue_complaints"], "escalated": r["escalated"],
+			"payment_blocked": False, "block_reason": "", "blocked_at": "",
+			"sla_breaches": 0, "has_block_record": False}
+
+	for b in payment_blocks:
+		bname = b.get("brand") or "(no brand)"
+		bd = brand_data.get(bname)
+		if not bd:
+			bd = {"brand": bname, "active_stock_complaints": 0, "overdue_complaints": 0,
+				"escalated": 0, "sla_breaches": 0}
+			brand_data[bname] = bd
+		if b.get("status") == "Blocked":
+			bd["payment_blocked"] = True
+			bd["block_reason"] = b.get("block_reason", "")
+			bd["blocked_at"] = str(b.get("blocked_at", ""))
+		bd["has_block_record"] = True
+
+	for b in sla_breaches:
+		bname = b.get("brand") or "(no brand)"
+		bd = brand_data.get(bname)
+		if not bd:
+			bd = {"brand": bname, "active_stock_complaints": 0, "overdue_complaints": 0,
+				"escalated": 0, "payment_blocked": False, "block_reason": "", "blocked_at": ""}
+			brand_data[bname] = bd
+		bd["sla_breaches"] = b.get("breaches", 0)
+
+	return {"suppliers": list(brand_data.values())}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NEW: Follow-up Quality — measure whether Lavanya proves follow-up properly
+# ═══════════════════════════════════════════════════════════════════════════
+
+@frappe.whitelist()
+def get_followup_quality():
+	"""Follow-up quality metrics for manager review."""
+	_check_manager()
+
+	from frappe.utils import today
+
+	active = "status NOT IN ('Closed', 'Cancelled')"
+
+	# Tickets without any follow-up logged
+	no_followup = frappe.db.sql(f"""
+		SELECT COUNT(*) FROM `tabHD Ticket`
+		WHERE {active}
+		AND IFNULL(last_followup_summary, '') = ''
+		AND IFNULL(last_followup_at, '') = ''
+	""")[0][0] if frappe.get_meta("HD Ticket").has_field("last_followup_summary") else 0
+
+	# Customer not informed
+	not_informed = frappe.db.count("HD Ticket", {
+		"status": ("not in", ["Closed", "Cancelled"]),
+		"customer_informed": ("!=", "Yes"),
+	})
+
+	# Promise breached
+	promise_breach = frappe.db.count("HD Ticket", {
+		"status": ("not in", ["Closed", "Cancelled"]),
+		"customer_promise_status": "Breached",
+	}) if frappe.get_meta("HD Ticket").has_field("customer_promise_status") else 0
+
+	# No technician update (tickets where tech action is expected but no update)
+	no_tech = frappe.db.sql(f"""
+		SELECT COUNT(*) FROM `tabHD Ticket`
+		WHERE {active}
+		AND IFNULL(next_action, '') IN ('Verify Technician Called', 'Verify Technician Visit', 'Schedule Technician Visit')
+		AND IFNULL(last_followup_at, '') = ''
+	""")[0][0] if frappe.get_meta("HD Ticket").has_field("next_action") else 0
+
+	# Closed with satisfaction
+	closed_sat = frappe.db.sql("""
+		SELECT COUNT(*) FROM `tabHD Ticket`
+		WHERE status = 'Closed'
+		AND IFNULL(customer_satisfaction_status, '') = 'Satisfied'
+	""")[0][0] if frappe.get_meta("HD Ticket").has_field("customer_satisfaction_status") else 0
+
+	# Closed total (for ratio)
+	closed_total = frappe.db.count("HD Ticket", {"status": "Closed"})
+
+	satisfaction_pct = round((closed_sat / closed_total * 100), 1) if closed_total else 0
+
+	return {
+		"no_followup": no_followup,
+		"customer_not_informed": not_informed,
+		"promise_breach": promise_breach,
+		"no_technician_update": no_tech,
+		"closed_with_satisfaction": closed_sat,
+		"closed_total": closed_total,
+		"satisfaction_pct": satisfaction_pct,
+	}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NEW: Aging buckets — breakdown by service flow type and age
+# ═══════════════════════════════════════════════════════════════════════════
+
+@frappe.whitelist()
+def get_aging_data():
+	"""Aging buckets for active tickets: 0-1d, 2-3d, 4-7d, 8-15d, 15+d."""
+	_check_manager()
+
+	from frappe.utils import today
+
+	buckets = [
+		("0-1 days", 0, 1),
+		("2-3 days", 2, 3),
+		("4-7 days", 4, 7),
+		("8-15 days", 8, 15),
+		("15+ days", 16, 9999),
+	]
+
+	# By service flow type
+	flow_types = frappe.db.sql("""
+		SELECT service_flow_type, DATEDIFF(%s, creation) as age_days
+		FROM `tabHD Ticket`
+		WHERE status NOT IN ('Closed', 'Cancelled')
+	""", (today(),), as_dict=True)
+
+	categories = ["open_complaints", "part_pending", "supplier_complaint", "replacement", "return_in_progress", "product_at_store", "payment_block"]
+	aging = {}
+
+	for cat in categories:
+		aging[cat] = []
+		for (label, low, high) in buckets:
+			aging[cat].append({"label": label, "count": 0})
+
+	# Aggregate from flow_types
+	for t in flow_types:
+		ft = t.get("service_flow_type") or ""
+		age = int(t.get("age_days") or 0)
+
+		category = "open_complaints"
+		if ft == "Stock Complaint":
+			category = "supplier_complaint"
+		elif ft == "Replacement / Exchange":
+			category = "replacement"
+		elif ft == "Refund Case":
+			category = "return_in_progress"
+		elif ft in ("Customer Product at Store",):
+			category = "product_at_store"
+
+		if category not in aging:
+			aging[category] = []
+			for (label, low, high) in buckets:
+				aging[category].append({"label": label, "count": 0})
+
+		for i, (label, low, high) in enumerate(buckets):
+			if low <= age <= high:
+				aging[category][i]["count"] += 1
+				break
+
+	# Also count waiting on part
+	part_aging = frappe.db.sql(f"""
+		SELECT DATEDIFF(%s, creation) as age_days
+		FROM `tabHD Ticket`
+		WHERE status NOT IN ('Closed', 'Cancelled')
+		AND status = 'Waiting on Part / Approval'
+	""", (today(),), as_dict=True)
+
+	aging["part_pending"] = []
+	for (label, low, high) in buckets:
+		aging["part_pending"].append({"label": label, "count": 0})
+
+	for t in part_aging:
+		age = int(t.get("age_days") or 0)
+		for i, (label, low, high) in enumerate(buckets):
+			if low <= age <= high:
+				aging["part_pending"][i]["count"] += 1
+				break
+
+	return {"categories": categories, "buckets": buckets, "aging": aging}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Existing: supplier_performance, area_performance, payment_block_status,
+# brand_delay_summary, get_report
+# ═══════════════════════════════════════════════════════════════════════════
+
+@frappe.whitelist()
+def supplier_performance(brand=None, from_date=None, to_date=None):
+	from frappe.utils import add_days, getdate, today
+	to_date = getdate(to_date or today())
+	from_date = getdate(from_date or add_days(to_date, -89))
+
+	roles = set(frappe.get_roles(frappe.session.user))
+	if not roles.intersection(_MANAGER_ROLES):
+		frappe.throw("Not permitted.", frappe.PermissionError)
+
+	filters = {"creation": ["between", (from_date, to_date)]}
+	if brand:
+		filters["brand"] = brand
+
+	rows = frappe.db.get_all("Supplier Performance Log", filters=filters,
+		fields=["brand", "log_date", "tickets_total", "tickets_breached", "tickets_on_time", "sla_compliance_percent"],
+		order_by="log_date desc")
+
+	penalties = {}
+	if brand:
+		sla = frappe.db.get_value("Supplier SLA Definition", {"brand": brand, "enabled": 1}, "penalty_percent")
+		if sla:
+			breached_count = sum(r.tickets_breached for r in rows)
+			penalties[brand] = {"penalty_percent": float(sla), "breached_tickets": breached_count, "estimated_penalty": round(float(sla) * breached_count, 2)}
+
+	return {"rows": rows, "from_date": str(from_date), "to_date": str(to_date), "penalties": penalties}
+
+
+@frappe.whitelist()
+def area_performance(area=None, from_date=None, to_date=None):
+	from frappe.utils import add_days, getdate, today
+	to_date = getdate(to_date or today())
+	from_date = getdate(from_date or add_days(to_date, -89))
+
+	roles = set(frappe.get_roles(frappe.session.user))
+	if not roles.intersection(_MANAGER_ROLES):
+		frappe.throw("Not permitted.", frappe.PermissionError)
+
+	filters = {"creation": ["between", (from_date, to_date)]}
+	if area:
+		filters["area"] = area
+
+	rows = frappe.db.get_all("Area Performance Log", filters=filters,
+		fields=["area", "log_date", "tickets_total", "tickets_closed", "tickets_overdue", "closure_rate_percent"],
+		order_by="log_date desc")
+	return {"rows": rows, "from_date": str(from_date), "to_date": str(to_date)}
+
+
+@frappe.whitelist()
+def payment_block_status():
+	roles = set(frappe.get_roles(frappe.session.user))
+	if not roles.intersection(_MANAGER_ROLES):
+		frappe.throw("Not permitted.", frappe.PermissionError)
+
+	rows = frappe.db.get_all("Supplier Payment Block",
+		fields=["name", "brand", "status", "blocked_at", "block_reason", "ticket"],
+		order_by="creation desc")
+	return {"rows": rows}
+
+
+@frappe.whitelist()
+def brand_delay_summary(brand=None):
+	roles = set(frappe.get_roles(frappe.session.user))
+	if not roles.intersection(_MANAGER_ROLES):
+		frappe.throw("Not permitted.", frappe.PermissionError)
+
+	filters = {"status": ("!=", "Closed"), "docstatus": 0}
+	if brand:
+		filters["brand"] = brand
+
+	rows = frappe.db.get_all("HD Ticket", filters=filters,
+		fields=["brand", "name", "current_service_stage", "creation", "modified",
+			"TIMESTAMPDIFF(DAY, creation, NOW()) as age_days"],
+		order_by="creation desc")
+	return {"rows": rows}
 
 
 @frappe.whitelist()
