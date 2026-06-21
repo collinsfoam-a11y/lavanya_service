@@ -89,12 +89,13 @@
           <!-- Customer Journey Summary Card -->
           <LavCustomerJourneyCard :ticket="ticket" />
 
+          <!-- Closure Guard — UX-R1: made prominent -->
           <section class="rounded-xl border p-4" :class="closureGuard.allowed ? 'border-success bg-success-container' : 'border-error bg-error-container'">
-            <div class="flex items-start gap-3">
-              <span class="material-symbols-outlined" :class="closureGuard.allowed ? 'text-success' : 'text-error'" aria-hidden="true">{{ closureGuard.allowed ? 'verified' : 'lock' }}</span>
-              <div>
-                <h3 class="font-headline-md text-headline-md" :class="closureGuard.allowed ? 'text-success' : 'text-error'">{{ closureGuard.allowed ? 'Closure Allowed' : 'Closure Not Allowed' }}</h3>
-                <p class="font-body-md text-on-surface mt-1">Reason: {{ closureGuard.reason }}</p>
+            <div class="flex items-start gap-4">
+              <span class="material-symbols-outlined text-4xl" :class="closureGuard.allowed ? 'text-success' : 'text-error'" aria-hidden="true">{{ closureGuard.allowed ? 'verified' : 'lock' }}</span>
+              <div class="flex-1">
+                <h3 class="font-headline-lg text-headline-lg" :class="closureGuard.allowed ? 'text-success' : 'text-error'">{{ closureGuard.allowed ? 'Closure Allowed' : 'Closure Not Allowed' }}</h3>
+                <p class="font-body-lg text-body-lg text-on-surface mt-1 font-semibold">{{ closureGuard.reason }}</p>
               </div>
             </div>
           </section>
@@ -541,7 +542,14 @@
             </div>
           </section>
 
-          <!-- H5B: Customer Product History -->
+          <!-- UX-R1: Collapsible lower-priority sections -->
+          <div class="mb-3">
+            <button @click="showDetails = !showDetails" class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-md hover:bg-surface-container-low transition-colors">
+              <span class="material-symbols-outlined" style="font-size:18px">{{ showDetails ? 'expand_less' : 'expand_more' }}</span>
+              {{ showDetails ? 'Hide details' : 'Show more (brand info, CRM, records, technician, appointment, proof)' }}
+            </button>
+          </div>
+
           <section id="sec-customer-products" v-if="ticket.customer_products?.length">
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Customer Products ({{ ticket.customer_products.length }})</h3>
             <div class="flex flex-col gap-3">
@@ -563,6 +571,8 @@
               </div>
             </div>
           </section>
+
+          <template v-if="showDetails">
 
           <!-- H5B: Brand Info Card -->
           <section id="sec-brand-info" v-if="ticket.brand_info?.name">
@@ -794,6 +804,7 @@
               </div>
             </div>
           </section>
+          </template>
 
           <!-- Follow-up history (structured, from tagged log entries) -->
           <section id="sec-followup" v-if="followUpLog.length" class="border-t border-outline-variant pt-4 mt-4">
@@ -1173,6 +1184,7 @@ const activityLoading = ref(false)
 const noteText = ref('')
 const noteError = ref('')
 const postingNote = ref(false)
+const showDetails = ref(false)  // UX-R1: collapsible sections toggle
 
 // Repeat-complaint detection / linking
 const repeatCandidates = ref([])

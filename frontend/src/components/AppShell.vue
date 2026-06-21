@@ -150,7 +150,7 @@ const navItems = [
   { label: 'Settings', mobileLabel: 'Settings', icon: 'settings', to: '/settings', subtitle: 'Theme, safety locks, and feature flags' },
 ]
 
-const mobileNavItems = computed(() => navItems.filter((i) => ['/', '/tickets', '/field', '/settings'].includes(i.to)))
+const mobileNavItems = computed(() => navItems.filter((i) => ['/', '/tickets', '/field', '/whatsapp', '/settings'].includes(i.to)))
 
 async function confirmLogout() {
   const ok = await confirm('Are you sure you want to log out?', 'Logout')
