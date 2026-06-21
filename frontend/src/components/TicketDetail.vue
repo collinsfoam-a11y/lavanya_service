@@ -585,6 +585,88 @@
             </div>
           </section>
 
+          <!-- H5E: Linked Service Records -->
+          <section id="sec-linked-records" v-if="hasLinkedRecords">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Service Records</h3>
+            <div class="flex flex-col gap-3">
+              <!-- Replacement Record -->
+              <div v-if="ticket.linked_records?.replacement?.length" v-for="rec in ticket.linked_records.replacement" :key="rec.name"
+                   class="rounded-xl p-4 bg-surface-container border" :style="{ borderLeft: '4px solid var(--lav-secondary)' }">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-secondary">swap_horiz</span>
+                  <span class="font-label-lg text-on-surface font-semibold">Replacement Record</span>
+                  <span class="ml-auto font-label-md text-primary">{{ rec.name }}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 font-label-md text-on-surface-variant">
+                  <div>Status: <span class="text-on-surface">{{ rec.status || '—' }}</span></div>
+                  <div>Old S/N: <span class="text-on-surface">{{ rec.old_serial_no || '—' }}</span></div>
+                  <div>New S/N: <span class="text-on-surface">{{ rec.new_serial_no || '—' }}</span></div>
+                  <div>Collected: <span class="text-on-surface">{{ rec.old_unit_collected_at?.substring(0,16) || '—' }}</span></div>
+                </div>
+              </div>
+              <!-- Return Record -->
+              <div v-if="ticket.linked_records?.return_service?.length" v-for="rec in ticket.linked_records.return_service" :key="rec.name"
+                   class="rounded-xl p-4 bg-surface-container border" :style="{ borderLeft: '4px solid var(--lav-warning)' }">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-warning">keyboard_return</span>
+                  <span class="font-label-lg text-on-surface font-semibold">Return Record</span>
+                  <span class="ml-auto font-label-md text-primary">{{ rec.name }}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 font-label-md text-on-surface-variant">
+                  <div>Refund: <span class="text-on-surface">{{ rec.refund_status || '—' }}</span></div>
+                  <div>Reason: <span class="text-on-surface">{{ rec.return_reason || '—' }}</span></div>
+                  <div>Requested: <span class="text-on-surface">{{ rec.return_requested_at?.substring(0,10) || '—' }}</span></div>
+                </div>
+              </div>
+              <!-- Stock Complaint Record -->
+              <div v-if="ticket.linked_records?.stock_complaint?.length" v-for="rec in ticket.linked_records.stock_complaint" :key="rec.name"
+                   class="rounded-xl p-4 bg-surface-container border" :style="{ borderLeft: '4px solid var(--lav-danger)' }">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-danger">inventory_2</span>
+                  <span class="font-label-lg text-on-surface font-semibold">Stock Complaint</span>
+                  <span class="ml-auto font-label-md text-primary">{{ rec.name }}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 font-label-md text-on-surface-variant">
+                  <div>Supplier: <span class="text-on-surface">{{ rec.supplier || '—' }}</span></div>
+                  <div>Notified: <span class="text-on-surface">{{ rec.supplier_notified_at?.substring(0,10) || '—' }}</span></div>
+                  <div>Credit Note: <span class="text-on-surface">{{ rec.credit_note_received_at?.substring(0,10) || '—' }}</span></div>
+                </div>
+              </div>
+              <!-- Store Service Record -->
+              <div v-if="ticket.linked_records?.store_service?.length" v-for="rec in ticket.linked_records.store_service" :key="rec.name"
+                   class="rounded-xl p-4 bg-surface-container border" :style="{ borderLeft: '4px solid var(--lav-primary)' }">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-primary">store</span>
+                  <span class="font-label-lg text-on-surface font-semibold">Store Service</span>
+                  <span class="ml-auto font-label-md text-primary">{{ rec.name }}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 font-label-md text-on-surface-variant">
+                  <div>Diagnosis: <span class="text-on-surface">{{ rec.diagnosis || '—' }}</span></div>
+                  <div>Handed Over: <span class="text-on-surface">{{ rec.product_handed_over_at?.substring(0,16) || '—' }}</span></div>
+                  <div>Collected: <span class="text-on-surface">{{ rec.customer_collected_at?.substring(0,16) || '—' }}</span></div>
+                </div>
+              </div>
+              <!-- Communication Log -->
+              <div v-if="ticket.linked_records?.communication_log?.length">
+                <div class="font-label-md text-label-md text-on-surface-variant mb-2">Communication Log ({{ ticket.linked_records.communication_log.length }})</div>
+                <div v-for="entry in ticket.linked_records.communication_log" :key="entry.name"
+                     class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-lowest border border-outline-variant">
+                  <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px">
+                    {{ entry.communication_type === 'Call' ? 'phone_in_talk' : entry.communication_type === 'WhatsApp' ? 'chat' : entry.communication_type === 'SMS' ? 'sms' : 'mail' }}
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-body-md text-on-surface">{{ entry.summary || '(no summary)' }}</div>
+                    <div class="font-label-md text-on-surface-variant">
+                      {{ entry.communication_type }} · {{ entry.direction || 'Outbound' }}
+                      <template v-if="entry.agent"> · {{ entry.agent }}</template>
+                      <template v-if="entry.communication_date"> · {{ entry.communication_date?.substring(0,16) }}</template>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <!-- H5C: Technician Assignment -->
           <section id="sec-technician" v-if="ticket.technicians?.length || ticket.stage?.service_charge_type">
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Technician Assignment</h3>
@@ -1105,6 +1187,12 @@ const proofCategories = [
   { label: 'WhatsApp Screenshot Import', icon: 'chat', context: 'Customer communication' },
 ]
 
+// H5E: linked service records summary
+const hasLinkedRecords = computed(() => {
+  const r = ticket.value?.linked_records || {}
+  return Object.values(r).some(arr => (arr || []).length > 0)
+})
+
 const SECTIONS = [
   { id: 'sec-stage', label: 'Stage' },
   { id: 'sec-reminder', label: 'Reminder' },
@@ -1119,6 +1207,7 @@ const SECTIONS = [
   { id: 'sec-receipt', label: 'Custody' },
   { id: 'sec-technician', label: 'Technician' },
   { id: 'sec-appointment', label: 'Appointment' },
+  { id: 'sec-linked-records', label: 'Records' },
   { id: 'sec-proof', label: 'Proof' },
   { id: 'sec-followup', label: 'Follow-ups' },
   { id: 'sec-activity', label: 'Activity' },

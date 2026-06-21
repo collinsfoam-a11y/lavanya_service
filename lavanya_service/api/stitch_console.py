@@ -430,6 +430,29 @@ def schedule_appointment(ticket_name, appointment_datetime, technician=None, not
     )
 
 
+def _linked_service_records(ticket_id):
+    """H5E: fetch linked service records for a ticket (read-only). Returns dict
+    keyed by record type. Silently skips missing DocTypes."""
+    records = {}
+    record_types = {
+        "replacement": ("Replacement Record", ["name", "brand", "old_serial_no", "new_serial_no", "status", "old_unit_collected_at", "new_unit_dispatched_at"]),
+        "return_service": ("Return Service Record", ["name", "refund_status", "return_reason", "return_requested_at", "brand_notified_at"]),
+        "stock_complaint": ("Stock Complaint Record", ["name", "supplier", "issue_identified_at", "supplier_notified_at", "credit_note_received_at"]),
+        "store_service": ("Store Service Record", ["name", "product_handed_over_at", "diagnosis", "brand_sc_notified_at", "customer_collected_at"]),
+        "demo_installation": ("Demo Installation Record", ["name", "technician", "scheduled_at", "demo_conducted_at", "installation_completed_at"]),
+        "communication_log": ("Customer Communication Log", ["name", "communication_date", "communication_type", "direction", "agent", "summary"]),
+    }
+    for key, (doctype, fields) in record_types.items():
+        try:
+            if not frappe.db.exists("DocType", doctype):
+                continue
+            rows = frappe.get_all(doctype, filters={"ticket": ticket_id}, fields=fields, order_by="modified desc", limit=5)
+            records[key] = rows
+        except Exception:
+            records[key] = []
+    return records
+
+
 @frappe.whitelist()
 def get_ticket_detail(ticket_id):
     if frappe.session.user == "Guest":
@@ -523,6 +546,7 @@ def get_ticket_detail(ticket_id):
         "customer_products": customer_products,
         "brand_info": brand_info,
         "technicians": technicians,
+        "linked_records": _linked_service_records(ticket_id),
         "workflow": {
             "status": ticket.status,
             "pending_reason": ticket.get("pending_reason"),
