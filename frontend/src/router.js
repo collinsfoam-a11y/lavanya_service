@@ -37,6 +37,11 @@ const routes = [
     component: () => import('@/pages/WhatsAppInbox.vue'),
   },
   {
+    path: '/customer-360',
+    name: 'Customer360',
+    component: () => import('@/pages/Customer360.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/pages/NotFound.vue'),

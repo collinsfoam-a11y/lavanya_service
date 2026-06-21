@@ -472,6 +472,12 @@
               <div class="col-span-2"><span class="block text-label-md text-outline">Address</span> {{ ticket.customer?.address || '—' }}</div>
               <div><span class="block text-label-md text-outline">Pincode</span> {{ ticket.customer?.pincode || '—' }}</div>
             </div>
+            <div class="mt-2">
+              <router-link v-if="ticket.customer?.mobile" :to="'/customer-360?mobile=' + ticket.customer.mobile" class="text-primary hover:underline font-label-md text-body-md flex items-center gap-1">
+                <span class="material-symbols-outlined" style="font-size:16px">person_search</span>
+                View Customer 360
+              </router-link>
+            </div>
           </section>
 
           <!-- Product Summary -->
