@@ -569,4 +569,92 @@ Full static safety verification passed. Pilot readiness report documents:
 - Merge to `feature/phase-2-frappe-ui-scaffold` with `--no-ff`
 - SPA build verification pending (requires Windows host `node_modules`)
 - TW-015 known pre-existing group-order mismatch in today_work tests
+
+---
+
+## 2026-06-21 14:00 — H6A: Read-only WhatsApp inbox and draft foundation
+
+### What changed
+- `lavanya_service/setup/whatsapp_inbox.py` — WhatsApp Inbound Message + WhatsApp Draft Outbound DocTypes
+- `lavanya_service/api/whatsapp_inbox.py` — 6 API endpoints (list_inbound, list_draft, create_draft, review_draft, review_inbound, link_to_ticket, get_ticket_drafts)
+- `lavanya_service/hooks.py` — doc_event validate hook on WhatsApp Draft Outbound for `_block_live_send` guard
+- `frontend/src/pages/WhatsAppInbox.vue` — Inbound + Draft tabs with review/link actions
+- `frontend/src/router.js` — `/whatsapp` route
+- `frontend/src/components/AppShell.vue` — WhatsApp nav item
+
+### Previous state
+No WhatsApp inbox; customer messages not captured. Draft outbound existed only as dry-run template preview on Ticket Detail.
+
+### Current state
+WhatsApp Inbound Message DocType captures customer messages read-only. Draft Outbound creates drafts only — `live_send_blocked=1` locked. Server-side guard blocks "Sent (External)" status, `external_message_id`, and `sent_at`. Manager review workflow: Draft → Manager Reviewed → Approved (Ready). No live send path exists.
+
+### Compatibility notes
+- `_block_live_send()` enforced via hooks.py `validate` — cannot be bypassed from Desk/API
+- All API endpoints read-only or draft-only
+- No Twilio/360dialog/WhatsApp Business API calls
+
+---
+
+## 2026-06-21 14:30 — H6B: Read-only CRM relationship card
+
+### What changed
+- `lavanya_service/setup/crm_settings.py` — 8 CRM safety fields on Lavanya Service Settings (all default 0/Disabled)
+- `lavanya_service/integrations/crm/detector.py` — CRM detection (is_crm_installed, can_read_crm)
+- `lavanya_service/integrations/crm/adapter.py` — Read-only CRM relationship adapter (0 writes)
+- `lavanya_service/api/stitch_console.py` — `_crm_relationship_payload()` enriches get_ticket_detail
+- `frontend/src/components/TicketDetail.vue` — CRM Relationship card with service risk/sales opportunity badges
+- `frontend/src/pages/Settings.vue` — CRM safety state card + "CRM automation: DISABLED" lock
+
+### Previous state
+CRM relationship visibility was missing. No customer CRM context in service tickets.
+
+### Current state
+CRM detector checks if Frappe CRM is installed. Adapter fetches contact/organization/open-deal counts (read-only). Service risk computed from escalation/overdue/satisfaction. Sales opportunity computed from warranty status/repeat/replacement. 0 CRM record creation paths. Settings confirm CRM automation disabled.
+
+### Compatibility notes
+- Adapter has 0 insert/save/create on CRM DocTypes
+- `can_read_crm()` gates all lookups
+- Settings defaults: `crm_enabled=0`, `crm_mode=Disabled`
+
+---
+
+## 2026-06-21 15:00 — H6C: Read-only Customer 360 view
+
+### What changed
+- `lavanya_service/api/customer_360.py` — `get_customer_360(mobile)` endpoint (5 sections: identity, products, tickets, CRM, WhatsApp)
+- `frontend/src/pages/Customer360.vue` — Full Customer 360 page with search, identity card, ticket stats, products, CRM summary, WhatsApp summary
+- `frontend/src/router.js` — `/customer-360?mobile=` route
+- `frontend/src/components/AppShell.vue` — Customer 360 nav item
+- `frontend/src/components/TicketDetail.vue` — "View Customer 360" link from customer section
+
+### Previous state
+No single-page customer intelligence view. Staff had to navigate between Tickets, Ticket Detail, and Reports to see customer context.
+
+### Current state
+Customer 360 aggregates identity (profile + ticket fallback), products (warranty history), tickets (active/closed with stats), CRM (from H6B adapter), and WhatsApp (from H6A inbox). All read-only. Links from Ticket Detail pass mobile via query param.
+
+### Compatibility notes
+- All data sources are read-only endpoints
+- 0 CRM writes, 0 WhatsApp sends, 0 ERP posting
+- Falls back gracefully if CRM or WhatsApp DocTypes are missing
+
+---
+
+## 2026-06-21 15:30 — H6D: Pilot regression gate
+
+### What changed
+- `doc/h6d_pilot_regression_report.md` — Complete regression report (20 commits, 9 pages, 18 components, 19 TicketDetail sections)
+- `doc/lavanya-changelog.md` — This entry
+- Static safety scan: 0 COLORS Vue, 0 native dialogs, 0 live WhatsApp API, 0 CRM writes
+
+### Previous state
+H3B-H6C feature stack complete but no final regression documentation.
+
+### Current state
+Full safety scan passed. Regression report documents entire stack. Merge instructions prepared for `feature/phase-2-frappe-ui-scaffold → main`.
+
+### Compatibility notes
+- Merge to main with `--no-ff`
+- TW-015 known pre-existing
+- SPA build requires Windows host `node_modules`
 - No migration needed
