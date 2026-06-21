@@ -453,6 +453,58 @@ def _linked_service_records(ticket_id):
     return records
 
 
+def _crm_relationship_payload(ticket):
+	"""H6B: read-only CRM relationship context for a ticket.
+	Never creates CRM records. Never triggers WhatsApp/ERP/accounting."""
+	try:
+		from lavanya_service.integrations.crm.adapter import get_crm_relationship
+
+		payload = get_crm_relationship(
+			customer_mobile=ticket.get("phone_1"),
+			customer_name=ticket.get("customer_name"),
+		)
+
+		# Service risk: ticket has critical quality, escalation, or is overdue
+		quality = ticket.get("followup_stage") or ""
+		escalation = ticket.get("escalation_level") or ""
+		overdue = ticket.get("overdue_status") or ""
+		satisfaction = ticket.get("customer_satisfaction_status") or ""
+		repeat = ticket.get("is_repeated_complaint") == "Yes"
+
+		if escalation and escalation not in ("None", None):
+			payload["service_risk"] = True
+		elif overdue in ("Overdue", "Breached"):
+			payload["service_risk"] = True
+		elif satisfaction == "Not Satisfied":
+			payload["service_risk"] = True
+		elif repeat:
+			payload["service_risk"] = True
+
+		# Service-to-sales opportunity: warranty expired, repeat defect, high-cost repair
+		warranty = ticket.get("warranty_status") or ""
+		service_path = ticket.get("service_path") or ""
+		charge_type = ticket.get("service_charge_type") or ""
+		estimated = ticket.get("estimated_amount") or 0
+
+		if warranty in ("Out of Warranty", "Brand Denied", "Expired"):
+			payload["service_to_sales_opportunity"] = True
+		elif repeat:
+			payload["service_to_sales_opportunity"] = True
+		elif service_path in ("replacement_brand", "return_service"):
+			payload["service_to_sales_opportunity"] = True
+		elif charge_type == "Paid" and float(estimated or 0) > 0:
+			payload["service_to_sales_opportunity"] = True
+
+		return payload
+	except Exception:
+		return {
+			"available": False,
+			"enabled": False,
+			"mode": "Disabled",
+			"warnings": ["CRM lookup failed safely."],
+		}
+
+
 @frappe.whitelist()
 def get_ticket_detail(ticket_id):
     if frappe.session.user == "Guest":
@@ -547,6 +599,7 @@ def get_ticket_detail(ticket_id):
         "brand_info": brand_info,
         "technicians": technicians,
         "linked_records": _linked_service_records(ticket_id),
+        "crm_relationship": _crm_relationship_payload(ticket),
         "workflow": {
             "status": ticket.status,
             "pending_reason": ticket.get("pending_reason"),

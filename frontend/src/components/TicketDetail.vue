@@ -489,6 +489,52 @@
             </div>
           </section>
 
+          <!-- H6B: CRM Relationship Card -->
+          <section id="sec-crm" v-if="ticket.crm_relationship?.available || ticket.crm_relationship?.warnings?.length">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center gap-2">
+              <span class="material-symbols-outlined" style="font-size:22px">handshake</span>
+              CRM Relationship
+            </h3>
+            <!-- CRM disabled/unavailable banner -->
+            <div v-if="!ticket.crm_relationship.enabled" class="rounded-xl p-4 bg-surface-container border border-outline-variant">
+              <div class="flex items-center gap-2 text-on-surface-variant font-body-md">
+                <span class="material-symbols-outlined" style="font-size:20px">info</span>
+                {{ ticket.crm_relationship.warnings?.[0] || 'CRM integration is disabled.' }}
+              </div>
+            </div>
+            <!-- CRM active card -->
+            <div v-else class="rounded-xl bg-surface-container border border-outline-variant p-4">
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 font-body-md text-on-surface-variant mb-3">
+                <div>
+                  <span class="block text-label-md text-outline">Contact</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.crm_relationship.contact_linked ? ticket.crm_relationship.contact_name : 'Not linked' }}</span>
+                </div>
+                <div>
+                  <span class="block text-label-md text-outline">Organization</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.crm_relationship.organization || '—' }}</span>
+                </div>
+                <div>
+                  <span class="block text-label-md text-outline">Open Deals</span>
+                  <span class="text-on-surface font-semibold" :class="ticket.crm_relationship.open_deals > 0 ? 'text-primary' : ''">{{ ticket.crm_relationship.open_deals || 0 }}</span>
+                </div>
+              </div>
+              <!-- Indicators -->
+              <div class="flex flex-wrap gap-2">
+                <span v-if="ticket.crm_relationship.service_to_sales_opportunity" class="px-2.5 py-0.5 rounded-full font-label-md text-label-md inline-flex items-center gap-1" :style="{ background: 'color-mix(in srgb, var(--lav-secondary) 12%, transparent)', color: 'var(--lav-secondary)' }">
+                  <span class="material-symbols-outlined" style="font-size:14px">lightbulb</span> Sales opportunity
+                </span>
+                <span v-if="ticket.crm_relationship.service_risk" class="px-2.5 py-0.5 rounded-full font-label-md text-label-md inline-flex items-center gap-1" :style="{ background: 'color-mix(in srgb, var(--lav-danger) 12%, transparent)', color: 'var(--lav-danger)' }">
+                  <span class="material-symbols-outlined" style="font-size:14px">warning</span> Service risk
+                </span>
+              </div>
+              <div class="mt-3 pt-3 border-t border-outline-variant flex items-center gap-2">
+                <span class="font-label-md text-label-md text-on-surface-variant">Mode: {{ ticket.crm_relationship.mode }}</span>
+                <span class="text-on-surface-variant">·</span>
+                <button disabled class="px-3 py-1 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md cursor-not-allowed" title="CRM record creation is disabled for safety">Create Opportunity (future)</button>
+              </div>
+            </div>
+          </section>
+
           <!-- H5B: Customer Product History -->
           <section id="sec-customer-products" v-if="ticket.customer_products?.length">
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Customer Products ({{ ticket.customer_products.length }})</h3>
@@ -1203,6 +1249,7 @@ const SECTIONS = [
   { id: 'sec-product', label: 'Product' },
   { id: 'sec-customer-products', label: 'History' },
   { id: 'sec-brand-info', label: 'Brand' },
+  { id: 'sec-crm', label: 'CRM' },
   { id: 'sec-workflow', label: 'Workflow' },
   { id: 'sec-receipt', label: 'Custody' },
   { id: 'sec-technician', label: 'Technician' },

@@ -51,6 +51,12 @@ def _ensure_whatsapp_inbox():
 	return create_whatsapp_inbox()
 
 
+def _ensure_crm_settings():
+	"""H6B: idempotently add CRM safety fields to Lavanya Service Settings."""
+	from lavanya_service.setup.crm_settings import ensure_crm_settings_fields
+	return ensure_crm_settings_fields()
+
+
 def _steps():
 	"""Ordered (label, callable) setup steps.
 
@@ -84,6 +90,7 @@ def _steps():
 		("h5_operational_data_foundation", ensure_h5_operational_data_foundation),
 		("h5d_service_records", _ensure_h5d_service_records),
 		("whatsapp_inbox", _ensure_whatsapp_inbox),
+		("crm_settings_fields", _ensure_crm_settings),
 		
 		# 2. Helpdesk configurations (Statuses, Priorities, Types)
 		("helpdesk_statuses_priorities_types", configure_statuses_priorities_types),

@@ -103,6 +103,42 @@
           </div>
         </LavCard>
 
+        <!-- H6B: CRM Safety State -->
+        <LavCard class="mb-6 border-outline-variant">
+          <LavSectionHeader title="CRM Integration" icon="handshake" />
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined" :class="settings.crm_enabled ? 'text-success' : 'text-on-surface-variant'" aria-hidden="true">{{ settings.crm_enabled ? 'toggle_on' : 'toggle_off' }}</span>
+              <div>
+                <div class="font-body-md text-on-surface">CRM Mode</div>
+                <div class="font-label-md text-label-md text-on-surface-variant">{{ settings.crm_mode || 'Disabled' }}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-on-surface-variant">visibility</span>
+              <div>
+                <div class="font-body-md text-on-surface">Read-only lookup</div>
+                <div class="font-label-md text-label-md text-on-surface-variant">{{ settings.crm_readonly_lookup_enabled ? 'Enabled' : 'Disabled' }}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined" :class="settings.crm_create_lead_enabled ? 'text-warning' : 'text-success'" aria-hidden="true">{{ settings.crm_create_lead_enabled ? 'warning' : 'lock' }}</span>
+              <div>
+                <div class="font-body-md text-on-surface">Lead creation</div>
+                <div class="font-label-md text-label-md text-on-surface-variant">Disabled (safety default)</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined" :class="settings.crm_create_deal_enabled ? 'text-warning' : 'text-success'" aria-hidden="true">{{ settings.crm_create_deal_enabled ? 'warning' : 'lock' }}</span>
+              <div>
+                <div class="font-body-md text-on-surface">Deal creation</div>
+                <div class="font-label-md text-label-md text-on-surface-variant">Disabled (safety default)</div>
+              </div>
+            </div>
+          </div>
+          <p class="font-label-md text-label-md text-on-surface-variant mt-3">CRM provides read-only relationship context only. No leads, deals, or records are created from service tickets.</p>
+        </LavCard>
+
         <div v-if="canManage" class="sticky bottom-4 z-20 flex flex-wrap items-center gap-3 rounded-xl border border-outline-variant bg-surface/95 p-3 shadow-lg backdrop-blur">
           <button
             @click="saveSettings"
@@ -162,6 +198,8 @@ const safetyLocks = computed(() => [
   { key: 'erp_posting_disabled', label: 'ERP posting', locked: settings.value.erp_posting_disabled === 1 },
   { key: 'penalty_apply_disabled', label: 'Penalty apply', locked: settings.value.penalty_apply_disabled === 1 },
   { key: 'dry_run_mode_on', label: 'Dry-run mode', locked: settings.value.dry_run_mode_on === 1 },
+  // H6B: CRM safety locks
+  { key: 'crm_disabled', label: 'CRM automation', locked: !settings.value.crm_enabled || settings.value.crm_mode !== 'Read Only' || !settings.value.crm_create_lead_enabled },
 ])
 
 const uiFlags = computed(() => [
