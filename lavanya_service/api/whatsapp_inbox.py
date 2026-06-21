@@ -8,6 +8,7 @@ Safety boundaries:
 - No ERP posting, accounting entries, or penalty application.
 - No CRM auto-conversion.
 - Approval moves status to "Approved (Ready)" but does NOT send.
+- "Sent (External)" status is blocked: requires live_send_blocked=0 (currently impossible).
 """
 
 import frappe
@@ -18,10 +19,29 @@ INBOUND_DOCTYPE = "WhatsApp Inbound Message"
 DRAFT_DOCTYPE = "WhatsApp Draft Outbound"
 TICKET_DOCTYPE = "HD Ticket"
 
+BLOCKED_SEND_STATUS = "Sent (External)"
+BLOCKED_SEND_FIELDS = ("external_message_id", "sent_at")
+
 
 def _require_not_guest():
 	if frappe.session.user == "Guest":
 		frappe.throw("Not permitted", frappe.PermissionError)
+
+
+def _block_live_send(doc):
+	"""H6A server-side guard: prevent any draft from being marked as Sent (External)
+	while live_send_blocked is active. This guard cannot be bypassed by Desk/API."""
+	if doc.get("live_send_blocked") and doc.get("review_status") == BLOCKED_SEND_STATUS:
+		frappe.throw(
+			_("Live WhatsApp sending is disabled. Drafts cannot be marked as '{0}' while live_send_blocked is active.").format(BLOCKED_SEND_STATUS),
+			frappe.ValidationError,
+		)
+	for field in BLOCKED_SEND_FIELDS:
+		if doc.get(field):
+			frappe.throw(
+				_("Live WhatsApp sending is disabled. Field '{0}' cannot be set while live_send_blocked is active.").format(field),
+				frappe.ValidationError,
+			)
 
 
 @frappe.whitelist()
@@ -126,6 +146,9 @@ def review_draft(draft_name, action, notes=None):
 		doc.rejection_reason = (notes or "").strip()
 	else:
 		frappe.throw(f"Unknown action: {action}")
+
+	# H6A guard: block transition to Sent (External) while live_send_blocked
+	_block_live_send(doc)
 
 	doc.save(ignore_permissions=True)
 

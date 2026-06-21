@@ -524,6 +524,9 @@ doc_events = {
 	"Stock Complaint Record": {
 		"after_insert": "lavanya_service.workflow.stage_advancers.advance_on_record_created",
 	},
+	"WhatsApp Draft Outbound": {
+		"validate": "lavanya_service.api.whatsapp_inbox._block_live_send",
+	},
 }
 
 
