@@ -18,6 +18,12 @@ PERMLEVEL_1_FIELDS = [
     "next_follow_up_date",
     "service_product_receipt",
     "work_narration",
+    "store_service_reference",
+    "replacement_reference",
+    "return_reference",
+    "demo_installation_reference",
+    "stock_complaint_reference",
+    "payment_block_eligible",
 ]
 
 

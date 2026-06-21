@@ -33,6 +33,7 @@ def _steps():
 	from lavanya_service.setup.masters import create_supporting_masters
 	from lavanya_service.setup.service_receipt import create_service_receipt_doctypes_and_link
 	from lavanya_service.setup.customer_profile import ensure_lavanya_customer_profile
+	from lavanya_service.setup.operational_masters import ensure_h5_operational_data_foundation
 	from lavanya_service.setup.permission_fixes import restrict_hd_ticket_all_permission
 	from lavanya_service.setup.sla_fixes import ensure_helpdesk_sla_defaults
 
@@ -47,6 +48,7 @@ def _steps():
 		("supporting_masters", create_supporting_masters),
 		("service_receipt_doctypes", create_service_receipt_doctypes_and_link),
 		("customer_profile_doctype", ensure_lavanya_customer_profile),
+		("h5_operational_data_foundation", ensure_h5_operational_data_foundation),
 		
 		# 2. Helpdesk configurations (Statuses, Priorities, Types)
 		("helpdesk_statuses_priorities_types", configure_statuses_priorities_types),

@@ -25,6 +25,9 @@ SERVICE_PATH_OPTIONS = "\n".join([
     "lavanya_paid_goodwill",
     "demo_installation",
     "stock_supplier",
+    "store_service",
+    "replacement_brand",
+    "return_service",
 ])
 
 SERVICE_CHARGE_TYPE_OPTIONS = "\n".join([

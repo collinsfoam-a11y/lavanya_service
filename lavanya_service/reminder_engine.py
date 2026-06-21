@@ -334,7 +334,13 @@ def _persist_state(ticket, stage_due, due_soon, escalation, status, next_followu
 	if due_soon is not None and meta.has_field("pre_overdue_alert_at"):
 		values["pre_overdue_alert_at"] = due_soon
 	if meta.has_field("escalation_level"):
-		values["escalation_level"] = escalation
+		current = frappe.db.get_value("HD Ticket", name, "escalation_level") or "None"
+		current_order = _ESCALATION_ORDER.get(current, 0)
+		computed_order = _ESCALATION_ORDER.get(escalation or "None", 0)
+		# H1: Only increase — never downgrade a manual escalation set by
+		# mark_no_update / escalate_case. Scheduler may raise but not reduce.
+		if computed_order > current_order:
+			values["escalation_level"] = escalation
 	if meta.has_field("overdue_status"):
 		values["overdue_status"] = status
 	# Manual follow-up is sacred unless force=True was explicitly requested.

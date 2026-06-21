@@ -388,25 +388,14 @@ def add_ticket_note(ticket_id, note):
 def schedule_appointment(ticket_name, appointment_datetime, technician=None, notes=None):
     """Schedule a site-visit appointment for a ticket (date+time+technician).
     Stored in the Lavanya Service Appointment doctype — no HD Ticket schema change."""
-    if frappe.session.user == "Guest":
-        frappe.throw("Not permitted", frappe.PermissionError)
-    if not frappe.db.exists("HD Ticket", ticket_name):
-        frappe.throw("Ticket not found.")
-    if not frappe.has_permission("HD Ticket", "write", doc=ticket_name):
-        frappe.throw("Not permitted", frappe.PermissionError)
+    from lavanya_service.api.operational_masters import create_service_appointment
 
-    dt = (appointment_datetime or "").replace("T", " ").strip()
-    if not dt:
-        frappe.throw("Appointment date & time is required.")
-
-    appt = frappe.new_doc("Lavanya Service Appointment")
-    appt.ticket = ticket_name
-    appt.appointment_datetime = dt
-    appt.technician = (technician or "").strip() or None
-    appt.notes = (notes or "").strip() or None
-    appt.status = "Scheduled"
-    appt.insert()
-    return {"ok": True, "appointment": appt.name, "message": "Appointment scheduled"}
+    return create_service_appointment(
+        ticket_name,
+        appointment_datetime,
+        technician=technician,
+        notes=notes,
+    )
 
 
 @frappe.whitelist()

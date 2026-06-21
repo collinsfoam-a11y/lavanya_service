@@ -31,6 +31,7 @@ lavanya_service/
     customer_intake.py           # lookup_customer_by_mobile, sync_customer_profile_from_ticket
     intake_masters.py            # Brand/Category/Item CRUD for form scripts
     manager_reports.py           # Report catalog + drill-down
+    operational_masters.py       # H5 customer product, warranty history, master lookup APIs
     prep.py                      # P2.1 supplier penalty summary/list/detail/actions
     product_receipt_actions.py   # Product receipt custody moves
     qr_intake.py                 # QR complaint intake (guest-facing)
@@ -53,6 +54,7 @@ lavanya_service/
   setup/
     install.py                   # after_install / after_migrate entry point
     masters.py                   # Brand/SC/Technician/FreeService DocType creation + seed
+    operational_masters.py       # H5 customer product/proof DocTypes + master extensions
     service_receipt.py           # Service Product Receipt + Custody Log Entry DocTypes
     customer_profile.py          # Lavanya Customer Profile DocType + form scripts
     helpdesk_config.py           # Statuses, priorities, types configuration
@@ -83,6 +85,7 @@ lavanya_service/
     e2e_followup_scenario.py     # End-to-end follow-up scenario
     frappe_ui_console.py         # Frappe UI console tests
     fresh_install_integrity.py   # Fresh install integrity checks
+    h5_operational_masters.py    # H5 operational masters + service data foundation tests
     intake_masters.py            # Intake master CRUD tests
     phone_normalization.py       # Phone normalization tests
     pilot_readiness.py           # Pilot readiness checks
@@ -133,6 +136,7 @@ lavanya_service/
     lavanya-changelog.md         # Change audit trail
     h4_uiux_upgrade_audit.md     # H4 page-by-page UI/UX audit
     h4_uiux_upgrade_report.md    # H4 implementation report
+    h5_operational_masters_report.md # H5 backend foundation report
 
   fixtures/                      # JSON record fixtures
     role.json, custom_field.json, client_script.json,
@@ -367,6 +371,54 @@ Single DocType for SPA/UI configuration.
 
 **Source:** `setup/ui_settings.py`
 
+### 3.15 Lavanya Customer Product
+| Field | Type | Details |
+|-------|------|---------|
+| customer_profile | Link -> Lavanya Customer Profile | Customer owner |
+| primary_mobile | Data | Required, normalized mobile, indexed |
+| customer_name | Data | Snapshot from ticket/profile |
+| brand | Link -> Brand Service Master | |
+| product_category | Link -> Lavanya Product Category | |
+| product_item | Link -> Lavanya Product Item | |
+| product_type | Data | Legacy product type snapshot |
+| model_no | Data | |
+| serial_no | Data | Indexed appliance serial |
+| purchase_date | Date | |
+| warranty_status | Select | In Warranty / Out of Warranty / Unknown / Extended Warranty / Brand Denied |
+| warranty_start_date / warranty_end_date | Date | Optional warranty window |
+| source_ticket / last_ticket | Link -> HD Ticket | First and latest related ticket |
+| ticket_count | Int | Count of linked warranty-history ticket rows |
+| warranty_history | Table -> Lavanya Warranty History Entry | Ticket-by-ticket warranty timeline |
+| disabled | Check | Excluded from active lookups |
+
+**Source:** `setup/operational_masters.py:create_customer_product_doctype()`
+
+### 3.16 Lavanya Warranty History Entry
+Child table for `Lavanya Customer Product.warranty_history`.
+
+| Field | Type | Details |
+|-------|------|---------|
+| ticket | Link -> HD Ticket | Source ticket |
+| warranty_status | Select | Warranty status at that ticket |
+| purchase_date | Date | |
+| warranty_start_date / warranty_end_date | Date | |
+| recorded_at | Datetime | Sync timestamp |
+| notes | Small Text | |
+
+### 3.17 Lavanya Proof Category
+Controlled proof-category master for invoices, warranty cards, product photos,
+service-center job sheets, and handover acknowledgements.
+
+| Field | Type | Details |
+|-------|------|---------|
+| category_name | Data | Required, unique, autoname |
+| context | Select | All / Customer Product at Store / Warranty Claim / Stock Complaint / Replacement / DOA / Return |
+| requires_notes | Check | |
+| active | Check | Default 1 |
+| description | Small Text | |
+
+**Source:** `setup/operational_masters.py:create_proof_category_doctype()`
+
 ---
 
 ## 4. HD Ticket Custom Fields (~85 fields)
@@ -496,7 +548,20 @@ All endpoints are `@frappe.whitelist()`. POST endpoints are marked with `[POST]`
 | `save_lavanya_service_settings(values)` | POST | Save editable theme/UI flag fields; manager-only; safety-lock fields ignored |
 | `reset_lavanya_service_settings` | POST | Reset all settings to safe defaults; manager-only |
 
-### 5.7 Overrides (`overrides/client.py`)
+### 5.7 Operational Masters (`api/operational_masters.py`)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `sync_customer_product_from_ticket` | POST | Create/update `Lavanya Customer Product` and warranty history from one HD Ticket |
+| `get_customer_product_history` | GET | Return normalized-mobile product timeline with warranty history |
+| `list_service_centers` | GET | Filter active service centers by brand/pincode |
+| `list_local_technicians` | GET | Filter active technicians by product skill and area |
+| `validate_proof_category` | GET/POST | Validate controlled proof category/context |
+| `get_master_suggestions` | GET | Combined brand/service-center/technician/proof suggestions |
+| `create_service_appointment` | POST | Create appointment with optional technician/service-center links |
+| `update_service_appointment_status` | POST | Move appointment to Scheduled/Completed/Cancelled/No Show |
+
+### 5.8 Overrides (`overrides/client.py`)
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -600,7 +665,7 @@ Pre-overdue lead times: graduated by SLA bucket (10 min for 30-min SLA, up to 4h
 
 ---
 
-## 9. Tests (30 modules)
+## 9. Tests (31 modules)
 
 All tests are plain `run()` functions (not `test_*`), executed via bench console.
 
@@ -633,6 +698,7 @@ All tests are plain `run()` functions (not `test_*`), executed via bench console
 | `today_work_page` | Today's Work page | — |
 | `today_work` | Today's Work logic | 24 |
 | `theme_settings` | H2/H4 theme, settings, and static UI wiring tests | 29 |
+| `h5_operational_masters` | H5 customer product, warranty history, master lookup, proof, appointment, safety invariants | 13 |
 | `warranty_recommendation` | Warranty recommendation tests | — |
 | `workflow_quick_actions` | Quick action functions | — |
 
@@ -729,13 +795,14 @@ Executed in order by `setup/install.py:ensure_lavanya_service_setup()`:
 1. Create custom DocTypes + seed brand masters
 2. Create Service Product Receipt + Custody Log Entry DocTypes
 3. Create Lavanya Customer Profile DocType
-4. Configure HD statuses, priorities, types
-5. Create Product Category + Item DocTypes + HD Ticket link fields
-6. Configure default ticket template fields
-7. Create Default SLA
-8. Configure runtime defaults
-9. Fix HD Ticket "All" permission (read-only)
-10. Ensure SLA defaults
+4. Create H5 customer product / proof DocTypes and master extensions
+5. Configure HD statuses, priorities, types
+6. Create Product Category + Item DocTypes + HD Ticket link fields
+7. Configure default ticket template fields
+8. Create Default SLA
+9. Configure runtime defaults
+10. Fix HD Ticket "All" permission (read-only)
+11. Ensure SLA defaults
 
 Additional post-install hooks:
 - `setup/appointment.py` — Lavanya Service Appointment DocType

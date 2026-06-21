@@ -33,14 +33,18 @@ CURRENT_SERVICE_STAGES = [
 	"Technician Visit Pending", "Technician Visited - Issue Pending",
 	# Waiting
 	"Spare Pending", "Estimate Approval Pending", "Customer Not Reachable", "Waiting on Customer",
-	# Product at store
-	"Product Received at Store", "Handed to Service Center", "Returned to Store", "Ready for Pickup", "Delivered to Customer",
-	# Installation
-	"Installation Registration Pending", "Installation Technician Visit Pending", "Installation Completed",
+	# Product at store (store service)
+	"Product Received at Store", "Brand SC Notified", "Brand SC Picked Up", "Brand SC Diagnosis Pending", "Diagnosis Received", "Product Returned to Store", "Customer Notified for Collection", "Product Handed Over",
+	# Installation / Demo
+	"Installation Registration Pending", "Installation Technician Visit Pending", "Demo Scheduled", "Installation Completed",
+	# Replacement / Exchange
+	"Old Unit Collected", "New Unit Dispatched", "Brand Reimbursement Pending", "Reimbursement Received",
+	# Return / Refund
+	"Return Requested", "Return Reason Verified", "Brand Notified for Return", "Customer Refund Processed",
 	# Periodic service
 	"Periodic Service Due", "Customer Contact Pending", "Service Scheduled", "Feedback Pending",
 	# Stock
-	"Stock Proof Pending", "Supplier Follow-up Pending", "Credit Note Pending", "Replacement Pending", "Stock Decision Pending",
+	"Stock Proof Pending", "Supplier Follow-up Pending", "Credit Note Pending", "Supplier Notified", "Credit Note Received", "Replacement Pending", "Stock Decision Pending",
 	# Closure
 	"Customer Verification Pending", "Closure Confirmation Pending", "Closed", "Cancelled",
 ]
@@ -55,6 +59,13 @@ NEXT_ACTIONS = [
 	"Request Documents", "Capture Proof", "Follow up Supplier", "Hand to Service Center",
 	"Mark Returned to Store", "Mark Ready for Pickup", "Deliver to Customer", "Schedule Service",
 	"Record Feedback", "Reschedule Follow-up", "Manager Override",
+	# Expansion: store service
+	"Notify Brand SC for Pickup", "Await Brand SC Diagnosis", "Record Diagnosis Received",
+	"Notify Customer for Collection", "Hand Over Product",
+	# Expansion: replacement
+	"Arrange Old Unit Collection", "Dispatch New Unit", "Follow Up Brand Reimbursement", "Record Reimbursement Received",
+	# Expansion: return
+	"Verify Return Reason", "Notify Brand for Return", "Process Customer Refund",
 ]
 
 OVERDUE_STATUSES = ["Not Due", "Due Soon", "Overdue", "Breached"]
@@ -80,6 +91,119 @@ TICKET_TYPE_TO_FLOW = {
 	"Free Service": "Periodic / Free Service",
 }
 
+# service_path -> service_flow_type (for the new sub-flows).
+SERVICE_PATH_TO_FLOW = {
+	"store_service": "Customer Product at Store",
+	"replacement_brand": "Replacement / Exchange",
+	"return_service": "Customer Complaint - Site",
+}
+
+# Ordered stages per flow for stage advancement.
+FLOW_STAGES_ORDERED = {
+	"Customer Complaint - Site": [
+		"Complaint Received", "Details Pending", "Warranty Check Pending",
+		"Brand Registration Pending", "Brand Registered", "Service Center Follow-up",
+		"Technician Visit Pending", "Technician Visited - Issue Pending",
+		"Spare Pending", "Estimate Approval Pending",
+		"Customer Not Reachable", "Waiting on Customer",
+		"Return Requested", "Return Reason Verified", "Brand Notified for Return", "Customer Refund Processed",
+		"Customer Verification Pending", "Closure Confirmation Pending",
+	],
+	"Customer Product at Store": [
+		"Product Received at Store", "Brand SC Notified", "Brand SC Picked Up",
+		"Brand SC Diagnosis Pending", "Diagnosis Received",
+		"Product Returned to Store", "Customer Notified for Collection", "Product Handed Over",
+		"Customer Verification Pending", "Closure Confirmation Pending",
+	],
+	"Installation / Demo": [
+		"Installation Registration Pending", "Installation Technician Visit Pending",
+		"Demo Scheduled", "Installation Completed",
+		"Customer Verification Pending", "Closure Confirmation Pending",
+	],
+	"Periodic / Free Service": [
+		"Periodic Service Due", "Customer Contact Pending", "Service Scheduled", "Feedback Pending",
+		"Customer Verification Pending", "Closure Confirmation Pending",
+	],
+	"Stock Complaint": [
+		"Stock Proof Pending", "Supplier Follow-up Pending", "Credit Note Pending",
+		"Supplier Notified", "Credit Note Received", "Replacement Pending", "Stock Decision Pending",
+		"Customer Verification Pending", "Closure Confirmation Pending",
+	],
+	"Out of Warranty Local Service": [
+		"Complaint Received", "Details Pending", "Warranty Check Pending",
+		"Technician Visit Pending", "Technician Visited - Issue Pending",
+		"Spare Pending", "Estimate Approval Pending",
+		"Customer Not Reachable", "Waiting on Customer",
+		"Customer Verification Pending", "Closure Confirmation Pending",
+	],
+	"Extended Warranty Claim": [
+		"Extended Warranty Check Pending", "Claim Registration Pending", "Provider Follow-up", "Provider Denied",
+		"Customer Verification Pending", "Closure Confirmation Pending",
+	],
+	"Replacement / Exchange": [
+		"Complaint Received", "Warranty Check Pending",
+		"Old Unit Collected", "New Unit Dispatched",
+		"Brand Reimbursement Pending", "Reimbursement Received",
+		"Customer Verification Pending", "Closure Confirmation Pending",
+	],
+	"Refund Case": [
+		"Complaint Received", "Details Pending",
+		"Return Requested", "Return Reason Verified", "Brand Notified for Return", "Customer Refund Processed",
+		"Customer Verification Pending", "Closure Confirmation Pending",
+	],
+	"Finance Sale Service Issue": [
+		"Complaint Received", "Details Pending",
+		"Customer Verification Pending", "Closure Confirmation Pending",
+	],
+	"Reopened / Repeat Complaint": [
+		"Complaint Received",
+		"Customer Verification Pending", "Closure Confirmation Pending",
+	],
+}
+
+
+def derive_flow_from_path(path):
+	return SERVICE_PATH_TO_FLOW.get(path)
+
+
+
+
+# ── H1 Fix 5: Bridge between current_service_stage and followup_stage ──────────
+# current_service_stage = canonical workflow stage (the "where am I" field)
+# followup_stage = post-brand follow-up sub-stage (the "what follow-up step am I on" field)
+# This mapping allows code to derive a current_service_stage from a followup_stage
+# when a quick action only sets followup_stage.
+FOLLOWUP_STAGE_TO_SERVICE_STAGE = {
+	"registration_done": "Brand Registered",
+	"part_pending": "Spare Pending",
+	"technician_called": "Service Center Follow-up",
+	"technician_visited": "Service Center Follow-up",
+	"sc_followup_done": "Service Center Follow-up",
+	"customer_informed": "Waiting on Customer",
+	"no_technician_update": "Customer Not Reachable",
+	"customer_satisfied": "Customer Verification Pending",
+	"customer_not_satisfied": "Customer Verification Pending",
+	"customer_confirmation_pending": "Customer Verification Pending",
+}
+
+
+def derive_stage_from_followup(followup_stage):
+	"""Map a followup_stage value to its corresponding current_service_stage."""
+	return FOLLOWUP_STAGE_TO_SERVICE_STAGE.get(followup_stage)
+
+def get_next_stage(stage, flow):
+	ordered = FLOW_STAGES_ORDERED.get(flow, [])
+	if not ordered:
+		return None
+	try:
+		idx = ordered.index(stage)
+		if idx + 1 < len(ordered):
+			return ordered[idx + 1]
+	except ValueError:
+		pass
+	return None
+
+
 # Per-stage default next action (used when assigning defaults / advancing).
 STAGE_DEFAULT_ACTION = {
 	"Complaint Received": "Check Warranty",
@@ -97,9 +221,24 @@ STAGE_DEFAULT_ACTION = {
 	"Customer Not Reachable": "Call Customer",
 	"Waiting on Customer": "Await Customer Response",
 	"Product Received at Store": "Hand to Service Center",
-	"Handed to Service Center": "Follow up Service Center",
-	"Returned to Store": "Mark Ready for Pickup",
-	"Ready for Pickup": "Deliver to Customer",
+	"Brand SC Notified": "Await Brand SC Diagnosis",
+	"Brand SC Picked Up": "Follow up Service Center",
+	"Brand SC Diagnosis Pending": "Follow up Service Center",
+	"Diagnosis Received": "Inform Customer",
+	"Product Returned to Store": "Notify Customer for Collection",
+	"Customer Notified for Collection": "Hand Over Product",
+	"Product Handed Over": "Confirm Closure",
+	"Old Unit Collected": "Dispatch New Unit",
+	"New Unit Dispatched": "Follow Up Brand Reimbursement",
+	"Brand Reimbursement Pending": "Follow Up Brand Reimbursement",
+	"Reimbursement Received": "Confirm Closure",
+	"Return Requested": "Verify Return Reason",
+	"Return Reason Verified": "Notify Brand for Return",
+	"Brand Notified for Return": "Process Customer Refund",
+	"Customer Refund Processed": "Confirm Closure",
+	"Demo Scheduled": "Await Technician Visit",
+	"Supplier Notified": "Follow up Supplier",
+	"Credit Note Received": "Confirm Closure",
 	"Periodic Service Due": "Call Customer",
 	"Stock Proof Pending": "Capture Proof",
 	"Customer Verification Pending": "Verify with Customer",
@@ -122,9 +261,10 @@ STAGE_SLA_MINUTES = {
 	"Technician Visit Pending": 24 * _H,
 	"Spare Pending": 24 * _H,
 	"Estimate Approval Pending": 24 * _H,
-	"Handed to Service Center": 24 * _H,
-	"Returned to Store": 4 * _H,
-	"Ready for Pickup": 24 * _H,
+	"Brand SC Diagnosis Pending": 48 * _H,
+	"Brand Reimbursement Pending": 72 * _H,
+	"Return Reason Verified": 24 * _H,
+	"Brand Notified for Return": 72 * _H,
 	"Customer Contact Pending": 24 * _H,
 	"Stock Proof Pending": 2 * _H,
 	"Supplier Follow-up Pending": 24 * _H,

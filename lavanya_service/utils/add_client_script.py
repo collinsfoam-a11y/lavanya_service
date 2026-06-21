@@ -44,9 +44,9 @@ function updateVisibility(frm) {
 
     // 1. Warranty / Brand Service
     if (isBrandRecommended || status === PENDING_REGISTRATION || doc.brand_ticket_number || doc.registration_date) {
-        frm.toggle_display("lavanya_brand_service_section", true);
+        frm.toggle_display("brand_service_section", true);
     } else {
-        frm.toggle_display("lavanya_brand_service_section", false);
+        frm.toggle_display("brand_service_section", false);
     }
 
     // 2. Product at Store

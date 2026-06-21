@@ -35,6 +35,43 @@ The measurable outcome: fixed bug, new capability, performance gain, etc.
 
 ---
 
+## 2026-06-21 08:35 — H5 operational masters and service data foundation
+
+### What changed
+- `lavanya_service/setup/operational_masters.py` — added idempotent H5 setup for `Lavanya Customer Product`, `Lavanya Warranty History Entry`, `Lavanya Proof Category`, proof-category seeds, and extension fields on Brand Service Master, Service Center Master, Local Technician Master, Lavanya Service Appointment, and Service Product Receipt.
+- `lavanya_service/api/operational_masters.py` — added customer product sync/history APIs, service-center and technician filtered lookups, proof-category validation, master suggestions, and appointment create/status APIs.
+- `lavanya_service/setup/install.py` — wired H5 setup into the existing install/migrate path.
+- `lavanya_service/api/stitch_console.py` — delegated appointment creation to the H5 API while preserving existing free-text technician compatibility.
+- `lavanya_service/tests/h5_operational_masters.py` — added 13 rollback-safe checks for H5 DocTypes, product/warranty history, duplicate serial handling, lookups, proof validation, appointment transitions, and no communication/email/notification side effects.
+- `doc/h5_operational_masters_report.md` — added the H5 implementation and safety-boundary report.
+- `doc/lavanya-app-reference.md` and `doc/lavanya-spa-status.md` — documented H5 DocTypes, APIs, setup step, test module, and verification status.
+
+### Previous state
+Customer profile, product item/category, service receipt, appointment, brand/service-center/technician masters, and repeat-detection foundations existed, but there was no customer-owned product record or warranty history timeline. Existing appointment records stored technician as free text only, and proof categories were not controlled by a master.
+
+### Current state
+H5 provides a dedicated customer product/warranty-history data foundation, controlled proof categories, richer operational master fields, filtered master lookup APIs, and appointment status transitions without creating a separate architecture or changing ERP/accounting behavior.
+
+### Why changed
+H5 requires operational masters and service data foundations before deeper showroom receiving, warranty history, and product-history UI can be safely built.
+
+### What was obtained
+- Python compile check on changed modules: PASS.
+- `lavanya_service.tests.h5_operational_masters.run`: 13 pass, 0 fail.
+- `lavanya_service.tests.theme_settings.run`: 29 pass, 0 fail.
+- `lavanya_service.tests.stitch_console_spa.run`: PASS.
+- `lavanya_service.tests.p2_tests.run`: 18 pass, 0 fail.
+- `lavanya_service.tests.today_work.run`: 23 pass, 1 fail; TW-015 remains the documented pre-existing group-order mismatch.
+- `node node_modules/vite/bin/vite.js build`: PASS, with existing Browserslist warning only.
+- H5 APIs create no `Communication`, `Email Queue`, or `Notification Log` rows.
+
+### Compatibility notes
+- No live WhatsApp/SMS, ERP posting, ERP draft posting, accounting entry, stock posting, penalty application, automatic closure, or automatic repeat-linking was introduced.
+- The existing `stitch_console.schedule_appointment` endpoint keeps accepting free-text technician names; it fills `technician_link` only when a matching `Local Technician Master` exists.
+- Request-time H5 APIs do not call setup functions to avoid transaction commits during tests or user workflows; setup remains in install/migrate and explicit setup execution.
+
+---
+
 ## 2026-06-20 23:30 — H2 foundation: theme engine, settings DocType, shared components, tests
 
 ### What changed
