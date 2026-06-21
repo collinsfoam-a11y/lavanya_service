@@ -267,3 +267,37 @@ def get_current_user_roles():
         'is_agent': 'Lavanya Helpdesk Agent' in roles,
         'is_front_desk': 'Lavanya Front Desk' in roles
     }
+
+
+# P0-1: Appointment handler wrappers
+@frappe.whitelist(methods=["POST"])
+def confirm_appointment(ticket_name, appointment_datetime=None, technician=None, notes=None):
+	return quick_actions.confirm_appointment(ticket_name, appointment_datetime=appointment_datetime, technician=technician, notes=notes)
+
+@frappe.whitelist(methods=["POST"])
+def mark_appointment_missed(ticket_name, reason=None, reschedule_date=None, notes=None):
+	return quick_actions.mark_appointment_missed(ticket_name, reason=reason, reschedule_date=reschedule_date, notes=notes)
+
+@frappe.whitelist(methods=["POST"])
+def mark_technician_visited(ticket_name, visit_result=None, notes=None):
+	return quick_actions.mark_technician_visited(ticket_name, visit_result=visit_result, notes=notes)
+
+@frappe.whitelist(methods=["POST"])
+def verify_customer_after_appointment(ticket_name, confirmed=None, satisfaction=None, notes=None):
+	return quick_actions.verify_customer_after_appointment(ticket_name, confirmed=confirmed, satisfaction=satisfaction, notes=notes)
+
+
+# P0-2: Part-pending handler wrappers
+@frappe.whitelist(methods=["POST"])
+def record_part_required(ticket_name, part_name=None, part_expected_date=None, next_follow_up_date=None, notes=None):
+	return quick_actions.record_part_required(ticket_name, part_name=part_name, part_expected_date=part_expected_date, next_follow_up_date=next_follow_up_date, notes=notes)
+
+@frappe.whitelist(methods=["POST"])
+def update_part_eta(ticket_name, new_eta=None, delay_reason=None, notes=None):
+	return quick_actions.update_part_eta(ticket_name, new_eta=new_eta, delay_reason=delay_reason, notes=notes)
+
+
+# P0-3: Reverification loop wrapper
+@frappe.whitelist(methods=["POST"])
+def set_reverification_date(ticket_name, reverify_at=None, notes=None):
+	return quick_actions.set_reverification_date(ticket_name, reverify_at=reverify_at, notes=notes)

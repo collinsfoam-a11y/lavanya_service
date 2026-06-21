@@ -1955,6 +1955,71 @@ const ACTIONS = {
       { key: 'notes', label: 'Notes', type: 'textarea', required: false },
     ],
   },
+  // P0: Appointment handlers
+  confirm_appointment: {
+    title: 'Confirm Appointment', icon: 'event_available', submitLabel: 'Confirm',
+    endpoint: 'lavanya_service.api.workflow_actions.confirm_appointment',
+    fields: [
+      { key: 'appointment_datetime', label: 'Date & Time', type: 'datetime-local', required: false },
+      { key: 'technician', label: 'Technician', type: 'text', required: false },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  mark_appointment_missed: {
+    title: 'Mark Appointment Missed', icon: 'event_busy', submitLabel: 'Mark Missed',
+    endpoint: 'lavanya_service.api.workflow_actions.mark_appointment_missed',
+    fields: [
+      { key: 'reason', label: 'Reason', type: 'textarea', required: true, placeholder: 'Why was the appointment missed?' },
+      { key: 'reschedule_date', label: 'Reschedule Date', type: 'date', required: false },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  mark_technician_visited: {
+    title: 'Mark Technician Visited', icon: 'handyman', submitLabel: 'Record Visit',
+    endpoint: 'lavanya_service.api.workflow_actions.mark_technician_visited',
+    fields: [
+      { key: 'visit_result', label: 'Visit Result', type: 'text', required: false, placeholder: 'Repaired / PCBs required / Revisit needed' },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  verify_customer_after_visit: {
+    title: 'Verify Customer After Visit', icon: 'contact_phone', submitLabel: 'Record Verification',
+    endpoint: 'lavanya_service.api.workflow_actions.verify_customer_after_appointment',
+    fields: [
+      { key: 'confirmed', label: 'Customer Confirms', type: 'select', required: true, options: ['Yes', 'Cleared', 'Satisfied', 'No', 'Not Cleared', 'Still Issue', 'Part Pending'] },
+      { key: 'satisfaction', label: 'Satisfaction (optional)', type: 'select', required: false, options: ['Satisfied', 'Not Satisfied', 'Customer Not Reachable', 'Not Required'] },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  // P0: Part-pending actions
+  record_part_required: {
+    title: 'Record Part Required', icon: 'build', submitLabel: 'Mark Part Pending',
+    endpoint: 'lavanya_service.api.workflow_actions.record_part_required',
+    fields: [
+      { key: 'part_name', label: 'Part Name', type: 'text', required: true, placeholder: 'e.g. PCB, Compressor' },
+      { key: 'part_expected_date', label: 'Part ETA', type: 'date', required: true },
+      { key: 'next_follow_up_date', label: 'Next Follow-up', type: 'date', required: true },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  update_part_eta: {
+    title: 'Update Part ETA', icon: 'schedule', submitLabel: 'Update ETA',
+    endpoint: 'lavanya_service.api.workflow_actions.update_part_eta',
+    fields: [
+      { key: 'new_eta', label: 'New ETA Date', type: 'date', required: true },
+      { key: 'delay_reason', label: 'Delay Reason', type: 'text', required: false, placeholder: 'Supplier delayed / Out of stock' },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
+  // P0: Reverification loop
+  set_reverification_date: {
+    title: 'Set Reverification Date', icon: 'event_repeat', submitLabel: 'Set Date',
+    endpoint: 'lavanya_service.api.workflow_actions.set_reverification_date',
+    fields: [
+      { key: 'reverify_at', label: 'Reverify Date', type: 'date', required: true },
+      { key: 'notes', label: 'Notes', type: 'textarea', required: false },
+    ],
+  },
 }
 
 const actionKey = ref(null)
