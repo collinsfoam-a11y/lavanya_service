@@ -44,13 +44,35 @@
           <span class="font-label-md text-label-md text-on-surface-variant">Mobile <span class="text-error">*</span></span>
             <input v-model="form.mobile" type="tel" class="lav-input" placeholder="10-digit mobile" @blur="lookupCustomer" />
           <span v-if="lookupHint" class="font-label-md text-label-md" :style="{ color: lookupHint.color || 'var(--lav-success)' }">{{ lookupHint.text }}</span>
+          <!-- H5B: previous customer products for quick intake -->
+          <div v-if="customerProducts.length" class="mt-2 rounded-lg border border-outline-variant bg-surface-container-low p-3">
+            <div class="font-label-md text-label-md text-on-surface-variant mb-2">Previous products ({{ customerProducts.length }})</div>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="p in customerProducts.slice(0,5)"
+                :key="p.name"
+                type="button"
+                class="px-3 py-1.5 rounded-lg border border-outline-variant bg-surface text-on-surface font-label-md hover:bg-surface-container-low transition-colors"
+                @click="selectPreviousProduct(p)"
+                :title="p.brand + ' ' + p.model_no + ' · S/N: ' + (p.serial_no || '—')"
+              >
+                {{ p.brand }} {{ p.product_type }} {{ p.model_no }}
+                <span class="font-label-md text-label-md text-on-surface-variant ml-1">· {{ p.warranty_status }}</span>
+                <span v-if="p.ticket_count > 1" class="ml-1 px-1.5 py-0.5 rounded font-label-md text-label-md" :style="{ background: 'color-mix(in srgb, var(--lav-warning) 12%, transparent)', color: 'var(--lav-warning)' }">{{ p.ticket_count }}x</span>
+              </button>
+            </div>
+          </div>
         </label>
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface-variant">Brand <span class="text-error">*</span></span>
-          <select v-model="form.brand" class="lav-input">
+          <select v-model="form.brand" class="lav-input" @change="onBrandChange">
             <option value="" disabled>Select brand…</option>
             <option v-for="b in opts.brands" :key="b" :value="b">{{ b }}</option>
           </select>
+          <span v-if="selectedBrandMeta" class="font-label-md text-label-md text-on-surface-variant mt-0.5">
+            Toll-free: {{ selectedBrandMeta.toll_free || 'N/A' }} · Default SLA: {{ selectedBrandMeta.default_sla_hours || '4' }}h
+            <template v-if="selectedBrandMeta.free_service_supported"> · Free service supported</template>
+          </span>
         </label>
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface-variant">Product Type <span class="text-error">*</span></span>
@@ -139,15 +161,21 @@ const submitting = ref(false)
 const error = ref('')
 const created = ref(null)
 const lookupHint = ref({ text: '', color: '' })
+const customerProducts = ref([])
 
 async function lookupCustomer() {
   const m = (form.mobile || '').replace(/\D/g, '')
   if (m.length < 10) {
     lookupHint.value = { text: '', color: '' }
+    customerProducts.value = []
     return
   }
   try {
-    const res = await call('lavanya_service.api.customer_intake.lookup_customer_by_mobile', { mobile: form.mobile })
+    const [res, prodRes] = await Promise.all([
+      call('lavanya_service.api.customer_intake.lookup_customer_by_mobile', { mobile: form.mobile }),
+      call('lavanya_service.api.operational_masters.get_customer_product_history', { mobile: form.mobile }).catch(() => ({ products: [] })),
+    ])
+    customerProducts.value = prodRes?.products || []
     if (res && res.found) {
       if (!form.customer_name) form.customer_name = res.customer_name || ''
       if (!form.address) form.address = res.address || ''
@@ -174,6 +202,27 @@ const form = reactive(blank())
 const canSubmit = computed(() =>
   form.customer_name.trim() && form.mobile.trim() && form.brand && form.product_type && form.complaint_details.trim(),
 )
+
+const selectedBrandMeta = computed(() => {
+  if (!form.brand) return null
+  return (opts.value.brand_metadata || []).find(b => b.name === form.brand) || null
+})
+
+function onBrandChange() {
+  const meta = selectedBrandMeta.value
+  if (meta && meta.default_sla_hours) {
+    // Pre-fill expected SLA date: today + SLA hours
+  }
+}
+
+function selectPreviousProduct(p) {
+  if (!form.brand || form.brand !== p.brand) form.brand = p.brand
+  if (!form.product_type || form.product_type !== p.product_type) form.product_type = p.product_type
+  if (!form.model_no) form.model_no = p.model_no || ''
+  if (!form.serial_no) form.serial_no = p.serial_no || ''
+  if (!form.warranty_status || form.warranty_status === 'Unknown') form.warranty_status = p.warranty_status || 'Unknown'
+  showToast(`Prefilled from ${p.brand} ${p.product_type}`)
+}
 
 async function loadOptions() {
   loadingOptions.value = true

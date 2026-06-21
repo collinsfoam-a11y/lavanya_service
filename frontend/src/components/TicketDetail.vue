@@ -486,6 +486,60 @@
             </div>
           </section>
 
+          <!-- H5B: Customer Product History -->
+          <section id="sec-customer-products" v-if="ticket.customer_products?.length">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Customer Products ({{ ticket.customer_products.length }})</h3>
+            <div class="flex flex-col gap-3">
+              <div v-for="cp in ticket.customer_products" :key="cp.name" class="rounded-xl p-4 bg-surface-container border border-outline-variant">
+                <div class="flex items-start justify-between gap-3 mb-2">
+                  <div class="font-body-md font-semibold text-on-surface">{{ cp.brand }} {{ cp.product_type }} · {{ cp.model_no || '—' }}</div>
+                  <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md shrink-0" :style="chip(cp.warranty_status)">{{ cp.warranty_status }}</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 font-label-md text-label-md text-on-surface-variant">
+                  <div>S/N: <span class="text-on-surface">{{ cp.serial_no || '—' }}</span></div>
+                  <div>Purchase: <span class="text-on-surface">{{ cp.purchase_date || '—' }}</span></div>
+                  <div>Warranty: <span class="text-on-surface">{{ cp.warranty_end_date || '—' }}</span></div>
+                  <div>Invoice: <span class="text-on-surface">{{ cp.invoice_number || '—' }}</span></div>
+                </div>
+                <div v-if="cp.ticket_count > 1" class="mt-2 flex items-center gap-2">
+                  <span class="material-symbols-outlined text-warning" style="font-size:16px">repeat</span>
+                  <span class="font-label-md text-label-md text-on-surface-variant">{{ cp.ticket_count }} service tickets for this product</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- H5B: Brand Info Card -->
+          <section id="sec-brand-info" v-if="ticket.brand_info?.name">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Brand Info</h3>
+            <div class="rounded-xl p-4 bg-surface-container border border-outline-variant">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 font-body-md text-on-surface-variant">
+                <div>
+                  <span class="block text-label-md text-outline">Toll-free</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.brand_info.toll_free || '—' }}</span>
+                </div>
+                <div>
+                  <span class="block text-label-md text-outline">Default SLA</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.brand_info.default_sla_hours }}h</span>
+                </div>
+                <div>
+                  <span class="block text-label-md text-outline">Registration Channel</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.brand_info.registration_channel || '—' }}</span>
+                </div>
+                <div>
+                  <span class="block text-label-md text-outline">Free Service</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.brand_info.free_service_supported ? 'Supported' : 'Not available' }}</span>
+                </div>
+              </div>
+              <div v-if="ticket.brand_info.portal_url" class="mt-3 pt-3 border-t border-outline-variant">
+                <a :href="ticket.brand_info.portal_url" target="_blank" class="text-primary hover:underline font-label-md flex items-center gap-1">
+                  <span class="material-symbols-outlined" style="font-size:16px">open_in_new</span>
+                  Brand Portal
+                </a>
+              </div>
+            </div>
+          </section>
+
           <!-- Workflow Summary -->
           <section id="sec-workflow">
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Workflow</h3>
@@ -928,6 +982,8 @@ const SECTIONS = [
   { id: 'sec-followup-tracking', label: 'Follow-up Tracking' },
   { id: 'sec-customer', label: 'Customer' },
   { id: 'sec-product', label: 'Product' },
+  { id: 'sec-customer-products', label: 'History' },
+  { id: 'sec-brand-info', label: 'Brand' },
   { id: 'sec-workflow', label: 'Workflow' },
   { id: 'sec-receipt', label: 'Custody' },
   { id: 'sec-followup', label: 'Follow-ups' },
