@@ -2,6 +2,58 @@ import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 
+def _require_doctype(name):
+    if not frappe.db.exists("DocType", name):
+        frappe.throw(f"Missing required DocType: {name}")
+
+
+def _ensure_doctype(name, fields, *, istable=0):
+    if frappe.db.exists("DocType", name):
+        return "exists"
+
+    doc = frappe.get_doc(
+        {
+            "doctype": "DocType",
+            "name": name,
+            "module": "Lavanya Service",
+            "custom": 1,
+            "istable": istable,
+            "editable_grid": 1,
+            "track_changes": 1,
+            "allow_rename": 0,
+            "sort_field": "modified",
+            "sort_order": "DESC",
+            "fields": fields,
+            "permissions": [] if istable else [{"role": "System Manager", "read": 1, "write": 1, "create": 1}],
+        }
+    )
+    doc.insert(ignore_permissions=True)
+    frappe.db.commit()
+    frappe.clear_cache(doctype=name)
+    return "created"
+
+
+def _field(fieldname, label, fieldtype, **kwargs):
+    row = {"fieldname": fieldname, "label": label, "fieldtype": fieldtype}
+    row.update(kwargs)
+    return row
+
+
+def create_followup_log_entry():
+    return _ensure_doctype(
+        "Follow-up Log Entry",
+        [
+            _field("stage", "Stage", "Select", options=FOLLOWUP_STAGE_OPTIONS, reqd=1, in_list_view=1),
+            _field("completed_at", "Completed At", "Datetime", reqd=1, in_list_view=1),
+            _field("user", "User", "Link", options="User", reqd=1, in_list_view=1),
+            _field("is_re_entry", "Re-entry", "Check", default=0, in_list_view=1),
+            _field("action_label", "Action", "Data", in_list_view=1),
+            _field("notes", "Notes", "Small Text"),
+        ],
+        istable=1,
+    )
+
+
 FOLLOWUP_STAGE_OPTIONS = "\n".join([
     "registration_done",
     "technician_call_pending",
@@ -67,6 +119,7 @@ PAYMENT_STATUS_OPTIONS = "\n".join([
 
 
 def create_followup_fields():
+    create_followup_log_entry()
     fields = {
         "HD Ticket": [
             {
@@ -179,10 +232,24 @@ def create_followup_fields():
                 "read_only": 1,
             },
             {
+                "fieldname": "lavanya_followup_log_section",
+                "label": "Follow-up Log",
+                "fieldtype": "Section Break",
+                "insert_after": "parked_reason",
+                "collapsible": 1,
+            },
+            {
+                "fieldname": "followup_log",
+                "label": "Follow-up Log",
+                "fieldtype": "Table",
+                "options": "Follow-up Log Entry",
+                "insert_after": "lavanya_followup_log_section",
+            },
+            {
                 "fieldname": "lavanya_part_section",
                 "label": "Part Tracking",
                 "fieldtype": "Section Break",
-                "insert_after": "parked_reason",
+                "insert_after": "followup_log",
                 "collapsible": 1,
             },
             {

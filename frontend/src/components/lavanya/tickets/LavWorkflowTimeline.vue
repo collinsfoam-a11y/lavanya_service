@@ -26,6 +26,9 @@
             {{ step.label }}
           </div>
           <span v-if="step.state === 'complete'" class="material-symbols-outlined text-success" style="font-size:16px">check_circle</span>
+          <span v-if="step.reEntryCount > 1" class="text-xs px-1.5 py-0.5 rounded-full bg-warning/20 text-warning font-medium">
+            ×{{ step.reEntryCount }}
+          </span>
         </div>
         <div v-if="step.sub" class="font-label-md text-label-md text-on-surface-variant mt-0.5">{{ step.sub }}</div>
       </div>
@@ -41,67 +44,58 @@ const props = defineProps({
 })
 
 const STEP_ORDER = [
-  { key: 'complaint_received', label: 'Complaint Received', icon: 'inbox' },
-  { key: 'brand_registered', label: 'Brand Registered', icon: 'verified' },
-  { key: 'technician_called', label: 'Technician Called', icon: 'phone_in_talk' },
-  { key: 'technician_visited', label: 'Technician Visited', icon: 'handyman' },
-  { key: 'part_pending', label: 'Part / Work Pending', icon: 'build' },
-  { key: 'customer_informed', label: 'Customer Informed', icon: 'campaign' },
-  { key: 'customer_confirmation', label: 'Customer Confirmation', icon: 'fact_check' },
-  { key: 'closed', label: 'Closed / Reopened', icon: 'task_alt' },
+  { key: 'registration_done', label: 'Complaint Registered', icon: 'inbox', stages: ['registration_done'] },
+  { key: 'technician_called', label: 'Technician Called', icon: 'phone_in_talk', stages: ['technician_called'] },
+  { key: 'technician_visited', label: 'Technician Visited', icon: 'handyman', stages: ['technician_visited'] },
+  { key: 'sc_followup_done', label: 'SC Follow-up', icon: 'support_agent', stages: ['sc_followup_done'] },
+  { key: 'part_pending', label: 'Part Tracking', icon: 'build', stages: ['part_pending'] },
+  { key: 'customer_informed', label: 'Customer Informed', icon: 'campaign', stages: ['customer_informed'] },
+  { key: 'customer_confirmation', label: 'Customer Confirmation', icon: 'fact_check', stages: ['customer_confirmation_pending', 'customer_satisfied', 'customer_not_satisfied'] },
+  { key: 'closed', label: 'Closed', icon: 'task_alt', stages: [] },
 ]
 
+const log = computed(() => props.ticket?.followup_log || [])
+const currentStage = computed(() => props.ticket?.followup_stage || '')
+const status = computed(() => props.ticket?.status || '')
+
+function logHasStage(stages) {
+  return log.value.some(entry => stages.includes(entry.stage))
+}
+
+function logCount(stages) {
+  return log.value.filter(entry => stages.includes(entry.stage)).length
+}
+
+function lastLogEntry(stages) {
+  const entries = log.value.filter(entry => stages.includes(entry.stage))
+  return entries.length > 0 ? entries[entries.length - 1] : null
+}
+
 function resolveState(key) {
-  const t = props.ticket
-  const s = t?.stage || t || {}
-  const status = (t?.status || '').toString()
-  const fs = (s.followup_stage || '').toString()
-  const overdue = (s.overdue_status || t?.overdue_status || '').toString()
-  const promise = (s.customer_promise_status || t?.customer_promise_status || '').toString()
-  const satisfaction = (s.customer_satisfaction_status || '').toString()
-  const informed = (s.customer_informed_status || s.customer_informed || '').toString()
+  const step = STEP_ORDER.find(s => s.key === key)
+  if (!step) return 'future'
 
-  const isClosed = status === 'Closed' || status === 'Resolved' || status === 'Cancelled'
+  const isClosed = status.value === 'Closed' || status.value === 'Resolved' || status.value === 'Cancelled'
 
-  const completed = {
-    complaint_received: true,
-    brand_registered: status === 'Brand Registered' || status === 'In Progress' || status === 'Waiting on Part / Approval' || status === 'Waiting on Customer' || status === 'Ready for Pickup' || isClosed || fs !== '',
-    technician_called: fs === 'technician_called' || fs === 'technician_visited' || fs === 'sc_followup_done' || fs === 'customer_informed' || fs === 'customer_confirmation_pending' || fs === 'customer_not_satisfied' || isClosed,
-    technician_visited: fs === 'technician_visited' || fs === 'sc_followup_done' || fs === 'customer_informed' || fs === 'customer_confirmation_pending' || fs === 'customer_not_satisfied' || isClosed,
-    part_pending: fs === 'part_pending' || status === 'Waiting on Part / Approval' || (status === 'Ready for Pickup' && fs !== 'part_pending') || isClosed,
-    customer_informed: (informed && informed !== 'Pending') || fs === 'customer_informed' || fs === 'customer_confirmation_pending' || fs === 'customer_not_satisfied' || isClosed,
-    customer_confirmation: satisfaction === 'Satisfied' || satisfaction === 'Not Required' || (satisfaction === 'Not Satisfied' && !isClosed) || isClosed,
-    closed: isClosed,
+  // Closed step
+  if (key === 'closed') {
+    if (isClosed) return 'complete'
+    if (currentStage.value === 'customer_satisfied' || currentStage.value === 'customer_confirmation_pending') return 'current'
+    return 'future'
   }
 
-  if (completed[key]) return 'complete'
+  // Check if stage exists in log → complete
+  if (logHasStage(step.stages)) return 'complete'
 
-  const current = {
-    brand_registered: status === 'New' || status === 'Open',
-    technician_called: status === 'Brand Registered' && fs !== 'technician_called',
-    technician_visited: fs === 'technician_called',
-    part_pending: fs === 'technician_visited' && status !== 'Waiting on Part / Approval',
-    customer_informed: status === 'Waiting on Part / Approval' || (fs === 'part_pending' && informed === 'Pending'),
-    customer_confirmation: (status === 'Ready for Pickup' || fs === 'customer_informed') && !satisfaction,
-    closed: satisfaction === 'Satisfied' || satisfaction === 'Not Required',
-  }
-
-  if (current[key]) {
-    if (overdue === 'Overdue' || promise === 'Breached') return 'overdue'
+  // Check if this is the current active stage
+  if (step.stages.includes(currentStage.value)) {
     return 'current'
   }
 
-  const waiting = {
-    part_pending: fs === 'part_pending' || status === 'Waiting on Part / Approval',
-    customer_informed: informed === 'Pending',
-    customer_confirmation: status === 'Ready for Pickup' && !satisfaction,
-  }
-  if (waiting[key]) return 'waiting'
-
-  const blocked = {
-    customer_confirmation: satisfaction === 'Not Satisfied',
-  }
-  if (blocked[key]) return 'blocked'
+  // Check waiting states
+  if (key === 'part_pending' && currentStage.value === 'technician_visited') return 'waiting'
+  if (key === 'customer_informed' && currentStage.value === 'part_pending') return 'waiting'
+  if (key === 'customer_confirmation' && currentStage.value === 'customer_informed') return 'waiting'
 
   return 'future'
 }
@@ -110,20 +104,21 @@ const steps = computed(() =>
   STEP_ORDER.map((step) => ({
     ...step,
     state: resolveState(step.key),
-    sub: subtext(step.key),
+    reEntryCount: logCount(step.stages),
+    sub: subtext(step),
   }))
 )
 
-function subtext(key) {
-  const t = props.ticket
-  const s = t?.stage || t || {}
-  if (key === 'complaint_received') return `${(t?.ticketAge || 0)} days open`
-  if (key === 'technician_called' && s.technician_called_at) return s.technician_called_at.substring(0, 16)
-  if (key === 'technician_visited' && s.technician_visited_at) return s.technician_visited_at.substring(0, 16)
-  if (key === 'part_pending' && s.part_expected_date) return 'Expected ' + s.part_expected_date.substring(0, 10)
-  if (key === 'customer_informed' && s.customer_informed_at) return s.customer_informed_at.substring(0, 16)
-  if (key === 'customer_confirmation' && s.customer_satisfaction_status) return s.customer_satisfaction_status
-  if (key === 'closed' && t?.closure_date) return t.closure_date.substring(0, 16)
+function subtext(step) {
+  const entry = lastLogEntry(step.stages)
+  if (!entry) {
+    if (step.key === 'closed') return `${props.ticket?.ticketAge || 0} days open`
+    return ''
+  }
+  const date = entry.completed_at ? entry.completed_at.substring(0, 16) : ''
+  const user = entry.user ? entry.user.split('@')[0] : ''
+  if (entry.is_re_entry) return `Re-entry · ${date}`
+  if (date) return `${date}`
   return ''
 }
 

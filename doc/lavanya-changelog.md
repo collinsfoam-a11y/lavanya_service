@@ -7,6 +7,48 @@
 
 ---
 
+## 2026-06-21 19:00 — State-Logging: Follow-up Log child table + re-entry detection
+
+### What changed
+- `lavanya_service/setup/followup_fields.py` — Created `Follow-up Log Entry` child table doctype (6 fields: stage, completed_at, user, is_re_entry, action_label, notes). Added `followup_log` Table field and `lavanya_followup_log_section` Section Break to HD Ticket.
+- `lavanya_service/hooks.py` — Added `Follow-up Log Entry` to DocType fixture exports. Added `followup_log` and `lavanya_followup_log_section` to Custom Field fixture exports.
+- `lavanya_service/workflow/quick_actions.py` — Added `_append_followup_log()` helper that detects re-entry and requires notes on revisited stages. Added log calls to all 25 stage transition sites. Added `notes` parameter to `record_sc_followup`, `inform_customer`, `customer_confirmed`.
+- `lavanya_service/api/workflow_actions.py` — Updated `record_sc_followup`, `inform_customer`, `customer_confirmed` wrappers to pass `notes` through.
+- `lavanya_service/api/stitch_console.py` — Added `followup_log` array to ticket detail API response.
+- `frontend/src/components/lavanya/tickets/LavWorkflowTimeline.vue` — Rewrote to derive completed/active/pending state from `followup_log` instead of `followup_stage`. Shows re-entry count badges.
+- `lavanya_service/tests/e2e_followup_scenario.py` — Updated test calls to pass `notes` on re-entries. Added `2j2 followup_log has entry` assertion. Total: 147/147 PASS.
+
+### Previous state
+- `followup_stage` was overwritten on every transition — only the current stage was known
+- No structured history of stage transitions
+- No re-entry detection
+- UI derived state from current `followup_stage` only
+
+### Current state
+- Every stage transition appends a `Follow-up Log` entry with timestamp, user, re-entry flag
+- Re-entry is detected when a stage already exists in the log — requires mandatory notes
+- UI derives completed/active/pending from log history
+- Full journey audit trail preserved in structured child table
+
+### Why changed
+- Shift from "State-Overwrite" to "State-Logging" architecture
+- Enable UI to show which stages were completed, how many times, and when
+- Support re-entry loop with audit trail
+
+### What was obtained
+- Structured follow-up history on every ticket
+- Re-entry detection with mandatory reason
+- UI timeline driven by log, not by current stage only
+- 147/147 E2E tests passing
+- Safety scan: 10/10 PASS
+
+### Compatibility notes
+- `followup_stage` field still exists and is still written — backward compatible
+- Old tickets without log entries will show empty timeline (future steps only)
+- No breaking changes to existing API response shapes
+
+---
+
 ## 2026-06-21 13:00 — S1-TEST-FIX-R1: Missing part_fitted_confirmed field + legacy test patch
 
 ### What changed

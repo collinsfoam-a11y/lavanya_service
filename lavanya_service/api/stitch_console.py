@@ -652,6 +652,17 @@ def get_ticket_detail(ticket_id):
             # Follow-up tracking (Phase 1N-6B)
             "service_path": ticket.get("service_path"),
             "followup_stage": ticket.get("followup_stage"),
+            "followup_log": [
+                {
+                    "stage": row.get("stage"),
+                    "completed_at": row.get("completed_at"),
+                    "user": row.get("user"),
+                    "is_re_entry": row.get("is_re_entry"),
+                    "action_label": row.get("action_label"),
+                    "notes": row.get("notes"),
+                }
+                for row in (ticket.get("followup_log") or [])
+            ],
             "service_charge_type": ticket.get("service_charge_type"),
             "customer_satisfaction_status": ticket.get("customer_satisfaction_status"),
             "customer_informed_status": ticket.get("customer_informed_status"),

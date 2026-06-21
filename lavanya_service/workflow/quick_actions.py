@@ -259,6 +259,28 @@ def _sync_customer_informed(doc, channel):
 	doc.customer_informed_channel = channel
 
 
+def _append_followup_log(doc, stage, action_label, notes=None):
+	"""Append a Follow-up Log entry for the stage transition.
+
+	Detects re-entry: if the stage already exists in the log, marks as re-entry
+	and requires a reason note.
+	"""
+	existing_stages = [row.stage for row in (doc.followup_log or [])]
+	is_re_entry = stage in existing_stages
+
+	if is_re_entry and not notes:
+		frappe.throw(_("Reason for re-entry is required when revisiting a stage."))
+
+	doc.append("followup_log", {
+		"stage": stage,
+		"completed_at": now_datetime(),
+		"user": _acting_user(),
+		"is_re_entry": int(is_re_entry),
+		"action_label": action_label,
+		"notes": notes,
+	})
+
+
 # followup_stage values that represent an UNRESOLVED verification loop — a ticket
 # in any of these has an open "next action" and may not reach a terminal state.
 _CLOSURE_VERIFICATION_STATES = {
@@ -376,6 +398,7 @@ def register_brand_complaint(
 		doc.service_center = service_center
 	doc.status = "Brand Registered"
 	doc.followup_stage = "registration_done"
+	_append_followup_log(doc, "registration_done", "Brand Complaint Registered")
 
 	_save_ticket(doc)
 	return _result(doc, _("Brand complaint registered"))
@@ -460,6 +483,7 @@ def waiting_for_part(ticket_name, pending_reason=None, next_follow_up_date=None)
 	doc.pending_reason = pending_reason
 	doc.next_follow_up_date = next_follow_up_date
 	doc.followup_stage = "part_pending"
+	_append_followup_log(doc, "part_pending", "Part Pending")
 
 	_save_ticket(doc)
 	return _result(doc, _("Ticket marked waiting on part / approval"))
@@ -479,7 +503,7 @@ def mark_product_ready(ticket_name, next_follow_up_date=None):
 	return _result(doc, _("Product marked ready for pickup"))
 
 
-def customer_confirmed(ticket_name, work_narration=None, closure_type=None):
+def customer_confirmed(ticket_name, work_narration=None, closure_type=None, notes=None):
 	_require_roles("Customer Confirmed", {ROLE_MANAGER, ROLE_COORDINATOR})
 
 	work_narration = _require(work_narration, "Work Narration")
@@ -502,6 +526,7 @@ def customer_confirmed(ticket_name, work_narration=None, closure_type=None):
 	if doc.customer_satisfaction_status not in ("Satisfied", "Not Required"):
 		doc.customer_satisfaction_status = "Satisfied"
 	doc.followup_stage = "customer_satisfied"
+	_append_followup_log(doc, "customer_satisfied", "Customer Confirmed", notes=notes)
 
 	_assert_closure_gates(doc)
 
@@ -679,6 +704,7 @@ def verify_technician_called(ticket_name, technician_name=None, notes=None):
 	_block_if_final(doc)
 
 	doc.followup_stage = "technician_called"
+	_append_followup_log(doc, "technician_called", "Technician Called", notes=notes)
 
 	entry = "[Follow-up] Verify Technician Called"
 	if technician_name:
@@ -699,6 +725,7 @@ def verify_technician_visit(ticket_name, technician_name=None, visit_result=None
 	_block_if_final(doc)
 
 	doc.followup_stage = "technician_visited"
+	_append_followup_log(doc, "technician_visited", "Technician Visited", notes=notes)
 
 	entry = "[Follow-up] Verify Technician Visit"
 	if technician_name:
@@ -714,7 +741,7 @@ def verify_technician_visit(ticket_name, technician_name=None, visit_result=None
 	return _result(doc, _("Technician visit verified"))
 
 
-def record_sc_followup(ticket_name, follow_up_result=None, next_follow_up_date=None, customer_informed_status=None):
+def record_sc_followup(ticket_name, follow_up_result=None, next_follow_up_date=None, customer_informed_status=None, notes=None):
 	_require_roles("Record SC Follow-up", {ROLE_MANAGER, ROLE_COORDINATOR})
 
 	follow_up_result = _require(follow_up_result, "Follow-up Result")
@@ -726,6 +753,7 @@ def record_sc_followup(ticket_name, follow_up_result=None, next_follow_up_date=N
 	_block_if_final(doc)
 
 	doc.followup_stage = "sc_followup_done"
+	_append_followup_log(doc, "sc_followup_done", "SC Follow-up Done", notes=notes)
 	doc.last_service_center_followup = now_datetime()
 	doc.customer_informed_status = customer_informed_status
 	if next_follow_up_date:
@@ -742,7 +770,7 @@ def record_sc_followup(ticket_name, follow_up_result=None, next_follow_up_date=N
 	return _result(doc, _("SC follow-up recorded: {0}").format(follow_up_result))
 
 
-def inform_customer(ticket_name, message=None, channel=None):
+def inform_customer(ticket_name, message=None, channel=None, notes=None):
 	_require_roles("Inform Customer", {ROLE_MANAGER, ROLE_COORDINATOR, ROLE_AGENT})
 
 	channel = _require(channel, "Channel")
@@ -751,6 +779,7 @@ def inform_customer(ticket_name, message=None, channel=None):
 	_block_if_final(doc)
 
 	doc.followup_stage = "customer_informed"
+	_append_followup_log(doc, "customer_informed", "Customer Informed", notes=notes)
 	_sync_customer_informed(doc, channel)
 
 	entry = "[Follow-up] Inform Customer — Channel: {0}".format(channel)
@@ -774,6 +803,7 @@ def mark_no_update(ticket_name, notes=None):
 	_block_if_final(doc)
 
 	doc.followup_stage = "no_technician_update"
+	_append_followup_log(doc, "no_technician_update", "No Technician Update", notes=notes)
 	doc.escalation_level = _increment_escalation(doc.escalation_level)
 	doc.no_update_count = (doc.no_update_count or 0) + 1
 
@@ -828,6 +858,7 @@ def resume_followup(ticket_name, next_follow_up_date=None, notes=None):
 	doc.status = "In Progress"
 	doc.pending_reason = "Service Follow-up Required"
 	doc.followup_stage = "technician_call_pending"
+	_append_followup_log(doc, "technician_call_pending", "Resume Follow-up", notes=notes)
 
 	entry = "[Follow-up] Resumed from Pending Customer Response — next {0}".format(doc.next_follow_up_date)
 	if notes:
@@ -873,10 +904,13 @@ def record_satisfaction(ticket_name, satisfaction_status=None, notes=None):
 
 	if satisfaction_status == "Satisfied":
 		doc.followup_stage = "customer_satisfied"
+		_append_followup_log(doc, "customer_satisfied", "Satisfaction Recorded", notes=notes)
 	elif satisfaction_status == "Not Satisfied":
 		doc.followup_stage = "customer_not_satisfied"
+		_append_followup_log(doc, "customer_not_satisfied", "Satisfaction Recorded", notes=notes)
 	else:
 		doc.followup_stage = "customer_confirmation_pending"
+		_append_followup_log(doc, "customer_confirmation_pending", "Satisfaction Recorded", notes=notes)
 
 	entry = "[Follow-up] Record Satisfaction — Status: {0}".format(satisfaction_status)
 	if notes:
@@ -927,6 +961,7 @@ def notify_brand_sc_for_pickup(ticket_name, brand_sc=None, notes=None):
 	if brand_sc:
 		doc.service_center = brand_sc
 	doc.followup_stage = "sc_followup_done"
+	_append_followup_log(doc, "sc_followup_done", "Brand SC Notified for Pickup", notes=notes)
 
 	entry = "[Store Service] Brand SC notified for pickup"
 	if brand_sc:
@@ -948,6 +983,7 @@ def record_diagnosis_received(ticket_name, diagnosis=None, notes=None):
 
 	doc.current_service_stage = "Diagnosis Received"
 	doc.followup_stage = "sc_followup_done"
+	_append_followup_log(doc, "sc_followup_done", "Diagnosis Received", notes=notes)
 
 	entry = "[Store Service] Diagnosis received"
 	if diagnosis:
@@ -969,6 +1005,7 @@ def notify_customer_for_collection(ticket_name, notes=None):
 
 	doc.current_service_stage = "Customer Notified for Collection"
 	doc.followup_stage = "customer_informed"
+	_append_followup_log(doc, "customer_informed", "Customer Notified for Collection", notes=notes)
 	doc.customer_informed = "Yes"
 	doc.customer_informed_at = now_datetime()
 
@@ -990,6 +1027,7 @@ def hand_over_product(ticket_name, notes=None):
 
 	doc.current_service_stage = "Product Handed Over"
 	doc.followup_stage = "customer_satisfied"
+	_append_followup_log(doc, "customer_satisfied", "Product Handed Over", notes=notes)
 
 	entry = "[Store Service] Product handed over to customer"
 	if notes:
@@ -1031,6 +1069,7 @@ def dispatch_new_unit(ticket_name, new_serial_no=None, notes=None):
 
 	doc.current_service_stage = "New Unit Dispatched"
 	doc.followup_stage = "sc_followup_done"
+	_append_followup_log(doc, "sc_followup_done", "New Unit Dispatched", notes=notes)
 
 	entry = "[Replacement] New unit dispatched"
 	if new_serial_no:
@@ -1131,6 +1170,7 @@ def confirm_appointment(ticket_name, appointment_datetime=None, technician=None,
 	_block_if_final(doc)
 
 	doc.followup_stage = "technician_visit_pending"
+	_append_followup_log(doc, "technician_visit_pending", "Appointment Confirmed", notes=notes)
 	if appointment_datetime:
 		doc.next_follow_up_date = appointment_datetime
 	if technician:
@@ -1158,6 +1198,7 @@ def mark_appointment_missed(ticket_name, reason=None, reschedule_date=None, note
 	_block_if_final(doc)
 
 	doc.followup_stage = "no_technician_update"
+	_append_followup_log(doc, "no_technician_update", "Appointment Missed", notes=notes)
 	doc.escalation_level = _increment_escalation(doc.escalation_level)
 	if reschedule_date:
 		doc.next_follow_up_date = reschedule_date
@@ -1182,6 +1223,7 @@ def mark_technician_visited(ticket_name, visit_result=None, notes=None):
 	_block_if_final(doc)
 
 	doc.followup_stage = "technician_visited"
+	_append_followup_log(doc, "technician_visited", "Technician Visited", notes=notes)
 	doc.no_update_count = 0  # reset if update was received
 
 	entry = "[Follow-up] Technician Visited"
@@ -1212,15 +1254,19 @@ def verify_customer_after_appointment(ticket_name, confirmed=None, satisfaction=
 
 	if confirmed in ("Yes", "Cleared", "Satisfied"):
 		doc.followup_stage = "customer_satisfied"
+		_append_followup_log(doc, "customer_satisfied", "Post-Appointment Verified", notes=notes)
 		doc.customer_satisfaction_status = "Satisfied"
 	elif confirmed in ("No", "Not Cleared", "Still Issue"):
 		doc.followup_stage = "customer_not_satisfied"
+		_append_followup_log(doc, "customer_not_satisfied", "Post-Appointment Verified", notes=notes)
 		doc.customer_satisfaction_status = "Not Satisfied"
 	elif confirmed == "Part Pending":
 		doc.followup_stage = "part_pending"
+		_append_followup_log(doc, "part_pending", "Post-Appointment Verified", notes=notes)
 		doc.status = "Waiting on Part / Approval"
 	else:
 		doc.followup_stage = "customer_confirmation_pending"
+		_append_followup_log(doc, "customer_confirmation_pending", "Post-Appointment Verified", notes=notes)
 
 	if satisfaction:
 		doc.customer_satisfaction_status = str(satisfaction).strip()
@@ -1253,6 +1299,7 @@ def record_part_required(ticket_name, part_name=None, part_expected_date=None, n
 	doc.part_name = part_name
 	doc.part_expected_date = part_expected_date
 	doc.followup_stage = "part_pending"
+	_append_followup_log(doc, "part_pending", "Part Required", notes=notes)
 	doc.status = "Waiting on Part / Approval"
 	doc.next_follow_up_date = next_follow_up_date
 

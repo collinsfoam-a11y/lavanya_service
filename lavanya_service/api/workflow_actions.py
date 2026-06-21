@@ -61,9 +61,9 @@ def mark_product_ready(ticket_name, next_follow_up_date=None):
 
 
 @frappe.whitelist(methods=["POST"])
-def customer_confirmed(ticket_name, work_narration=None, closure_type=None):
+def customer_confirmed(ticket_name, work_narration=None, closure_type=None, notes=None):
 	return quick_actions.customer_confirmed(
-		ticket_name, work_narration=work_narration, closure_type=closure_type
+		ticket_name, work_narration=work_narration, closure_type=closure_type, notes=notes
 	)
 
 
@@ -117,17 +117,17 @@ def verify_technician_visit(ticket_name, technician_name=None, visit_result=None
 
 
 @frappe.whitelist(methods=["POST"])
-def record_sc_followup(ticket_name, follow_up_result=None, next_follow_up_date=None, customer_informed_status=None):
+def record_sc_followup(ticket_name, follow_up_result=None, next_follow_up_date=None, customer_informed_status=None, notes=None):
 	return quick_actions.record_sc_followup(
 		ticket_name, follow_up_result=follow_up_result, next_follow_up_date=next_follow_up_date,
-		customer_informed_status=customer_informed_status
+		customer_informed_status=customer_informed_status, notes=notes
 	)
 
 
 @frappe.whitelist(methods=["POST"])
-def inform_customer(ticket_name, message=None, channel=None):
+def inform_customer(ticket_name, message=None, channel=None, notes=None):
 	return quick_actions.inform_customer(
-		ticket_name, message=message, channel=channel
+		ticket_name, message=message, channel=channel, notes=notes
 	)
 
 

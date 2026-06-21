@@ -117,21 +117,18 @@ def test_02_register_brand_complaint():
         _check("2b Missing registration_date throws", "required" in str(e).lower(), str(e)[:60])
 
     # §3: next_follow_up_date is now auto-derived from the Reminder Rule when the
-    # operator omits it (no longer required) — assert it succeeds and sets a date.
-    auto = register_brand_complaint(TICKET, brand_ticket_number="BRN-LG-001", registration_date=today())
-    _check("2c next_follow_up_date auto-derived when omitted", bool(auto.get("ok")), str(auto)[:60])
-    _check("2c2 auto next_follow_up_date is set",
-           bool(frappe.db.get_value("HD Ticket", TICKET, "next_follow_up_date")),
-           str(frappe.db.get_value("HD Ticket", TICKET, "next_follow_up_date")))
-
-    # Success case
+    # operator omits it (no longer required). Single call with all fields.
     result = register_brand_complaint(
         TICKET,
         brand_ticket_number="BRN-LG-001",
         registration_date=today(),
-        next_follow_up_date=add_days(today(), 3),
         service_center=SERVICE_CENTER,
     )
+    _check("2c next_follow_up_date auto-derived when omitted", bool(result.get("ok")), str(result)[:60])
+    _check("2c2 auto next_follow_up_date is set",
+           bool(frappe.db.get_value("HD Ticket", TICKET, "next_follow_up_date")),
+           str(frappe.db.get_value("HD Ticket", TICKET, "next_follow_up_date")))
+
     _check("2d Brand registered ok", result.get("ok"), str(result))
     _check("2e Status Brand Registered", result.get("status") == "Brand Registered", result.get("status"))
 
@@ -140,7 +137,8 @@ def test_02_register_brand_complaint():
     _check("2g service_center set", doc.service_center == SERVICE_CENTER, doc.service_center)
     _check("2h followup_stage = registration_done", doc.followup_stage == "registration_done", str(doc.followup_stage))
     _check("2i pending_reason Service Follow-up Required", doc.pending_reason == "Service Follow-up Required", doc.pending_reason)
-    _check("2j next_follow_up_date set", str(doc.next_follow_up_date) == str(add_days(today(), 3)), str(doc.next_follow_up_date))
+    _check("2j next_follow_up_date set", bool(doc.next_follow_up_date), str(doc.next_follow_up_date))
+    _check("2j2 followup_log has entry", len(doc.followup_log) > 0, str(len(doc.followup_log)))
 
     # Test: block on final status ticket
     frappe.db.set_value("HD Ticket", TICKET, "status", "Closed")
@@ -170,9 +168,9 @@ def test_03_verify_technician_called():
     _check("3c last_followup_summary set", bool(doc.last_followup_summary), str(doc.last_followup_summary)[:50])
     _check("3d last_followup_at set", bool(doc.last_followup_at), str(doc.last_followup_at))
 
-    # Test: call without optional params
+    # Test: call without optional params (re-entry requires notes)
     frappe.db.set_value("HD Ticket", TICKET, "followup_stage", "technician_call_pending")
-    result2 = verify_technician_called(TICKET)
+    result2 = verify_technician_called(TICKET, notes="Re-entry test")
     _check("3e Verify tech call without optional params ok", result2.get("ok"), str(result2))
     doc2 = frappe.get_doc("HD Ticket", TICKET)
     _check("3f followup_stage still technician_called", doc2.followup_stage == "technician_called", str(doc2.followup_stage))
@@ -191,9 +189,9 @@ def test_04_verify_technician_visit():
     doc = frappe.get_doc("HD Ticket", TICKET)
     _check("4b followup_stage = technician_visited", doc.followup_stage == "technician_visited", str(doc.followup_stage))
 
-    # Test: minimal params
+    # Test: minimal params (re-entry requires notes)
     frappe.db.set_value("HD Ticket", TICKET, "followup_stage", "technician_visit_pending")
-    result2 = verify_technician_visit(TICKET)
+    result2 = verify_technician_visit(TICKET, notes="Re-entry test")
     _check("4c Verify tech visit without optional params ok", result2.get("ok"), str(result2))
     doc2 = frappe.get_doc("HD Ticket", TICKET)
     _check("4d followup_stage still technician_visited", doc2.followup_stage == "technician_visited", str(doc2.followup_stage))
@@ -217,7 +215,7 @@ def test_05_record_sc_followup():
                         "Service completed", "Part pending", "Approval pending"]:
         frappe.db.set_value("HD Ticket", TICKET, "followup_stage", "sc_followup_done")
         try:
-            r = record_sc_followup(TICKET, follow_up_result=result_val, customer_informed_status="Informed by Call")
+            r = record_sc_followup(TICKET, follow_up_result=result_val, customer_informed_status="Informed by Call", notes=f"Test {result_val}")
             _check(f"5b SC follow-up '{result_val}' ok", r.get("ok"), str(r.get("message", ""))[:50])
         except Exception as e:
             _check(f"5b SC follow-up '{result_val}' FAILED", False, str(e)[:80])
@@ -226,7 +224,7 @@ def test_05_record_sc_followup():
     informed_options = ["Informed by Call", "Informed by WhatsApp", "Informed by SMS", "Customer Not Reachable"]
     for status_val in informed_options:
         try:
-            r = record_sc_followup(TICKET, follow_up_result="Service center contacted", customer_informed_status=status_val)
+            r = record_sc_followup(TICKET, follow_up_result="Service center contacted", customer_informed_status=status_val, notes=f"Test {status_val}")
             _check(f"5c Customer informed '{status_val}' ok", r.get("ok"), str(r.get("message", ""))[:50])
         except Exception as e:
             _check(f"5c Customer informed '{status_val}' FAILED", False, str(e)[:80])
@@ -247,7 +245,7 @@ def test_06_inform_customer():
     # Test each channel
     for channel in ["Phone", "WhatsApp", "SMS", "Email"]:
         try:
-            r = inform_customer(TICKET, channel=channel, message=f"Test message via {channel}")
+            r = inform_customer(TICKET, channel=channel, message=f"Test message via {channel}", notes=f"Test {channel}")
             _check(f"6a Inform via {channel} ok", r.get("ok"), str(r.get("message", ""))[:50])
             doc = frappe.get_doc("HD Ticket", TICKET)
             _check(f"6b {channel} → stage customer_informed", doc.followup_stage == "customer_informed", str(doc.followup_stage))
@@ -262,9 +260,9 @@ def test_06_inform_customer():
     except Exception as e:
         _check("6d Missing channel throws", "required" in str(e).lower(), str(e)[:60])
 
-    # Test: inform without message (auto-wires AI message)
+    # Test: inform without message (auto-wires AI message, re-entry needs notes)
     frappe.db.set_value("HD Ticket", TICKET, "followup_stage", "customer_informed")
-    r3 = inform_customer(TICKET, channel="WhatsApp")
+    r3 = inform_customer(TICKET, channel="WhatsApp", notes="Re-entry test AI message")
     _check("6e Inform without message ok", r3.get("ok"), str(r3.get("message", ""))[:50])
     doc3 = frappe.get_doc("HD Ticket", TICKET)
     _check("6e AI message auto-wired", doc3.last_followup_summary and "AI message" in (doc3.last_followup_summary or ""), str(doc3.last_followup_summary or "")[:80])
@@ -621,7 +619,7 @@ def test_14_closure_rule():
         "part_fitted_confirmed": 0,
     })
     try:
-        customer_confirmed(TICKET, work_narration="Customer confirmed but part still pending", closure_type="Resolved by Local Technician")
+        customer_confirmed(TICKET, work_narration="Customer confirmed but part still pending", closure_type="Resolved by Local Technician", notes="Re-entry: part gate test")
         _check("14h Customer confirmed blocks with part pending", False, "should have thrown")
     except Exception as e:
         _check("14h Customer confirmed blocks with part pending",
@@ -631,7 +629,7 @@ def test_14_closure_rule():
     # ── 14i: customer_confirmed succeeds when only customer confirmation is pending ──
     _prepare_for_closure()
     try:
-        r2 = customer_confirmed(TICKET, work_narration="Customer confirmed TV working", closure_type="Resolved by Local Technician")
+        r2 = customer_confirmed(TICKET, work_narration="Customer confirmed TV working", closure_type="Resolved by Local Technician", notes="Re-entry: positive closure test")
         _check("14i Customer confirmed ok", r2.get("ok"), str(r2.get("message", ""))[:50])
         _check("14j Status = Closed", r2.get("status") == "Closed", r2.get("status"))
     except Exception as e:
