@@ -263,14 +263,14 @@
               </div>
               <div>
                 <span class="block text-label-md text-outline">Customer Update Due</span>
-                <span v-if="ticket.reminder.customer_update_due" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ color: COLORS.warning, background: hexToRgba(COLORS.warning, 0.12) }">Due now</span>
+                <span v-if="ticket.reminder.customer_update_due" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ color: 'var(--lav-warning)', background: `color-mix(in srgb, var(--lav-warning) 12%, transparent)` }">Due now</span>
                 <template v-else>No</template>
               </div>
               <div><span class="block text-label-md text-outline">Reminder Rule</span> {{ ticket.reminder.reminder_rule_applied || 'No rule (fallback)' }}</div>
               <div>
                 <span class="block text-label-md text-outline">Next Follow-up</span>
                 {{ fmtDT(ticket.reminder.next_follow_up_date) }}
-                <span v-if="ticket.reminder.manual_followup" class="ml-1 px-1.5 py-0.5 rounded font-label-md text-label-md" :style="{ color: COLORS.secondary, background: hexToRgba(COLORS.secondary, 0.12) }">manual</span>
+                <span v-if="ticket.reminder.manual_followup" class="ml-1 px-1.5 py-0.5 rounded font-label-md text-label-md" :style="{ color: 'var(--lav-secondary)', background: `color-mix(in srgb, var(--lav-secondary) 12%, transparent)` }">manual</span>
               </div>
               <div><span class="block text-label-md text-outline">Due Soon At</span> {{ fmtDT(ticket.reminder.computed_due_soon_at) }}</div>
               <div><span class="block text-label-md text-outline">Stage Due At</span> {{ fmtDT(ticket.reminder.computed_stage_due_at) }}</div>
@@ -878,7 +878,7 @@ import LavActionBar from '@/components/LavActionBar.vue'
 import LavWorkflowTimeline from '@/components/lavanya/tickets/LavWorkflowTimeline.vue'
 import LavCustomerJourneyCard from '@/components/lavanya/tickets/LavCustomerJourneyCard.vue'
 import LavFollowupQualityBadge from '@/components/lavanya/tickets/LavFollowupQualityBadge.vue'
-import { chip, dueChip, promiseChip, escChip, stageChip, satisfactionChip, informedChip, fmtDT, ticketAge, relTime, hexToRgba, COLORS, qualityBadge, friendlyLabel } from '@/utils'
+import { chip, dueChip, promiseChip, escChip, stageChip, satisfactionChip, informedChip, fmtDT, ticketAge, relTime, qualityBadge, friendlyLabel } from '@/utils'
 import { useToast } from '@/utils/toast'
 import { useConfirm } from '@/utils/confirm'
 import LavConfirm from '@/components/LavConfirm.vue'
@@ -955,23 +955,28 @@ const showNotificationTemplatePicker = ref(false)
 
 const selectedNotificationTemplateDoc = computed(() => notificationTemplates.value.find(t => t.name === selectedNotificationTemplate.value))
 
+// CSS-var-safe background tint helper (replaces hexToRgba for theme responsiveness)
+function _bg(colorVar, alpha = 0.12) {
+  return `color-mix(in srgb, ${colorVar} ${Math.round(alpha * 100)}%, transparent)`
+}
+
 function notificationChannelChip(channel) {
-  const color = channel === 'WhatsApp' ? COLORS.success : channel === 'SMS' ? COLORS.primary : channel === 'Internal' ? COLORS.secondary : COLORS.neutral
-  return { background: hexToRgba(color, 0.12), color }
+  const color = channel === 'WhatsApp' ? 'var(--lav-success)' : channel === 'SMS' ? 'var(--lav-primary)' : channel === 'Internal' ? 'var(--lav-secondary)' : 'var(--lav-muted)'
+  return { background: _bg(color), color }
 }
 
 function notificationStatusChip(status) {
   const map = {
-    Queued: COLORS.primary,
-    'Approval Pending': COLORS.warning,
-    Approved: COLORS.success,
-    Skipped: COLORS.neutral,
-    Failed: COLORS.error,
-    Cancelled: COLORS.neutral,
-    Sent: COLORS.success,
+    Queued: 'var(--lav-primary)',
+    'Approval Pending': 'var(--lav-warning)',
+    Approved: 'var(--lav-success)',
+    Skipped: 'var(--lav-muted)',
+    Failed: 'var(--lav-danger)',
+    Cancelled: 'var(--lav-muted)',
+    Sent: 'var(--lav-success)',
   }
-  const color = map[status] || COLORS.neutral
-  return { background: hexToRgba(color, 0.12), color }
+  const color = map[status] || 'var(--lav-muted)'
+  return { background: _bg(color), color }
 }
 
 async function loadNotificationData() {
@@ -1054,9 +1059,9 @@ const loadFollowupFlow = async () => {
 }
 const aiBusy = ref(false)
 function aiStatusChip(s) {
-	const map = { Suggested: COLORS.secondary, Accepted: COLORS.success, Ignored: COLORS.neutral, 'Review Needed': COLORS.error }
-	const c = map[s] || COLORS.neutral
-	return { background: hexToRgba(c, 0.12), color: c }
+	const map = { Suggested: 'var(--lav-secondary)', Accepted: 'var(--lav-success)', Ignored: 'var(--lav-muted)', 'Review Needed': 'var(--lav-danger)' }
+	const c = map[s] || 'var(--lav-muted)'
+	return { background: _bg(c), color: c }
 }
 async function acceptAiSuggestion() {
 	aiBusy.value = true
@@ -1084,20 +1089,20 @@ async function ignoreAiSuggestion() {
 }
 
 const FOLLOWUP_ACTION_STYLES = {
-	'Verify Technician Called': { icon: 'phone_in_talk', bg: hexToRgba(COLORS.primary), fg: COLORS.primary },
-	'Verify Technician Visit': { icon: 'handyman', bg: hexToRgba(COLORS.secondary), fg: COLORS.secondary },
-	'Record SC Follow-up': { icon: 'support_agent', bg: hexToRgba(COLORS.secondary), fg: COLORS.secondary },
-	'Inform Customer': { icon: 'campaign', bg: hexToRgba(COLORS.success), fg: COLORS.success },
-	'Mark No Update': { icon: 'warning', bg: hexToRgba(COLORS.warning), fg: COLORS.warning },
-	'Escalate Case': { icon: 'escalator_warning', bg: hexToRgba(COLORS.error), fg: COLORS.error },
-	'Record Satisfaction': { icon: 'sentiment_satisfied', bg: hexToRgba(COLORS.success), fg: COLORS.success },
-	'Record Customer Approval': { icon: 'contract', bg: hexToRgba(COLORS.tertiary), fg: COLORS.tertiary },
+	'Verify Technician Called': { icon: 'phone_in_talk', bg: _bg('var(--lav-primary)'), fg: 'var(--lav-primary)' },
+	'Verify Technician Visit': { icon: 'handyman', bg: _bg('var(--lav-secondary)'), fg: 'var(--lav-secondary)' },
+	'Record SC Follow-up': { icon: 'support_agent', bg: _bg('var(--lav-secondary)'), fg: 'var(--lav-secondary)' },
+	'Inform Customer': { icon: 'campaign', bg: _bg('var(--lav-success)'), fg: 'var(--lav-success)' },
+	'Mark No Update': { icon: 'warning', bg: _bg('var(--lav-warning)'), fg: 'var(--lav-warning)' },
+	'Escalate Case': { icon: 'escalator_warning', bg: _bg('var(--lav-danger)'), fg: 'var(--lav-danger)' },
+	'Record Satisfaction': { icon: 'sentiment_satisfied', bg: _bg('var(--lav-success)'), fg: 'var(--lav-success)' },
+	'Record Customer Approval': { icon: 'contract', bg: _bg('var(--lav-tertiary)'), fg: 'var(--lav-tertiary)' },
 }
 function followupActionStyle(text) {
 	for (const [key, style] of Object.entries(FOLLOWUP_ACTION_STYLES)) {
 		if (text.includes(key)) return style
 	}
-	return { icon: 'support_agent', bg: hexToRgba(COLORS.neutral, 0.12), fg: COLORS.neutral }
+	return { icon: 'support_agent', bg: _bg('var(--lav-muted)', 0.12), fg: 'var(--lav-muted)' }
 }
 function followupActionIcon(text) { return followupActionStyle(text).icon }
 function followupActionBg(text) { return followupActionStyle(text).bg }
@@ -1106,28 +1111,28 @@ function followupActionFg(text) { return followupActionStyle(text).fg }
 // Follow-up tracking banner state
 const followupBanner = computed(() => {
 	const s = ticket.value?.stage || {}
-	const _c = (c, a = 0.12) => ({ bg: hexToRgba(c, a), fg: c })
+	const _c = (colorVar, a = 0.12) => ({ bg: _bg(colorVar, a), fg: colorVar })
 	if (s.customer_satisfaction_status === 'Satisfied' || s.customer_satisfaction_status === 'Not Required')
-		return { ..._c(COLORS.success), icon: 'sentiment_satisfied', title: 'Customer Satisfied', sub: 'No further follow-up needed.' }
+		return { ..._c('var(--lav-success)'), icon: 'sentiment_satisfied', title: 'Customer Satisfied', sub: 'No further follow-up needed.' }
 	if (s.customer_satisfaction_status === 'Not Satisfied')
-		return { ..._c(COLORS.error), icon: 'sentiment_dissatisfied', title: 'Customer Not Satisfied', sub: 'Escalate or follow up to resolve concerns.' }
+		return { ..._c('var(--lav-danger)'), icon: 'sentiment_dissatisfied', title: 'Customer Not Satisfied', sub: 'Escalate or follow up to resolve concerns.' }
 	if (s.escalation_level && s.escalation_level !== 'None')
-		return { ..._c(COLORS.error), icon: 'escalator_warning', title: `Escalated — ${s.escalation_level}`, sub: 'Case requires higher-level attention.' }
+		return { ..._c('var(--lav-danger)'), icon: 'escalator_warning', title: `Escalated — ${s.escalation_level}`, sub: 'Case requires higher-level attention.' }
 	if (s.followup_stage === 'no_technician_update')
-		return { ..._c(COLORS.warning), icon: 'warning', title: 'No Update from Technician', sub: 'No response from service center — escalation may be needed.' }
+		return { ..._c('var(--lav-warning)'), icon: 'warning', title: 'No Update from Technician', sub: 'No response from service center — escalation may be needed.' }
 	if (s.followup_stage === 'part_pending')
-		return { ..._c(COLORS.warning), icon: 'build', title: 'Awaiting Part', sub: s.part_delay_reason || 'Part not yet received.' }
+		return { ..._c('var(--lav-warning)'), icon: 'build', title: 'Awaiting Part', sub: s.part_delay_reason || 'Part not yet received.' }
 	if (!s.customer_informed_status || s.customer_informed_status === 'Pending')
-		return { ..._c(COLORS.warning), icon: 'campaign', title: 'Customer Not Informed', sub: 'Customer needs to be contacted about their service status.' }
+		return { ..._c('var(--lav-warning)'), icon: 'campaign', title: 'Customer Not Informed', sub: 'Customer needs to be contacted about their service status.' }
 	if (s.customer_informed_status === 'Customer Not Reachable')
-		return { ..._c(COLORS.error), icon: 'person_off', title: 'Customer Not Reachable', sub: 'Multiple attempts failed — document efforts.' }
+		return { ..._c('var(--lav-danger)'), icon: 'person_off', title: 'Customer Not Reachable', sub: 'Multiple attempts failed — document efforts.' }
 	if (s.followup_stage === 'technician_call_pending')
-		return { ..._c(COLORS.primary, 0.08), icon: 'phone_in_talk', title: 'Technician Call Pending', sub: 'Verify if technician has called the customer.' }
+		return { ..._c('var(--lav-primary)', 0.08), icon: 'phone_in_talk', title: 'Technician Call Pending', sub: 'Verify if technician has called the customer.' }
 	if (s.followup_stage === 'technician_visit_pending')
-		return { ..._c(COLORS.primary, 0.08), icon: 'handyman', title: 'Technician Visit Pending', sub: 'Verify if technician has visited the customer.' }
+		return { ..._c('var(--lav-primary)', 0.08), icon: 'handyman', title: 'Technician Visit Pending', sub: 'Verify if technician has visited the customer.' }
 	if (s.followup_stage === 'customer_confirmation_pending')
-		return { ..._c(COLORS.tertiary), icon: 'how_to_reg', title: 'Awaiting Customer Confirmation', sub: 'Waiting for customer to confirm service completion.' }
-	return { ..._c(COLORS.primary, 0.08), icon: 'support_agent', title: 'Follow-up in Progress', sub: 'Ticket is actively being followed up.' }
+		return { ..._c('var(--lav-tertiary)'), icon: 'how_to_reg', title: 'Awaiting Customer Confirmation', sub: 'Waiting for customer to confirm service completion.' }
+	return { ..._c('var(--lav-primary)', 0.08), icon: 'support_agent', title: 'Follow-up in Progress', sub: 'Ticket is actively being followed up.' }
 })
 
 // ── Workflow Timeline Stages ──
