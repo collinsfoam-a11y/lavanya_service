@@ -116,11 +116,13 @@ def test_02_register_brand_complaint():
     except Exception as e:
         _check("2b Missing registration_date throws", "required" in str(e).lower(), str(e)[:60])
 
-    try:
-        register_brand_complaint(TICKET, brand_ticket_number="BRN-LG-001", registration_date=today())
-        _check("2c Missing next_follow_up_date throws", False, "should have thrown")
-    except Exception as e:
-        _check("2c Missing next_follow_up_date throws", "required" in str(e).lower(), str(e)[:60])
+    # §3: next_follow_up_date is now auto-derived from the Reminder Rule when the
+    # operator omits it (no longer required) — assert it succeeds and sets a date.
+    auto = register_brand_complaint(TICKET, brand_ticket_number="BRN-LG-001", registration_date=today())
+    _check("2c next_follow_up_date auto-derived when omitted", bool(auto.get("ok")), str(auto)[:60])
+    _check("2c2 auto next_follow_up_date is set",
+           bool(frappe.db.get_value("HD Ticket", TICKET, "next_follow_up_date")),
+           str(frappe.db.get_value("HD Ticket", TICKET, "next_follow_up_date")))
 
     # Success case
     result = register_brand_complaint(
@@ -507,39 +509,133 @@ def test_13_today_work_buckets():
 
 
 def test_14_closure_rule():
-    """Step 14: Test closure rules"""
-    print("\n=== 14. Closure Rules ===")
+    """Step 14: Test closure rules — v2.1 shared gate contract.
+
+    Proves four things:
+    1. close_ticket blocks if satisfaction is missing.
+    2. close_ticket succeeds when all gates are satisfied.
+    3. customer_confirmed cannot bypass unresolved technician/appointment/service stages.
+    4. customer_confirmed succeeds only when the only remaining gate is customer confirmation.
+    """
+    print("\n=== 14. Closure Rules (v2.1 shared gate) ===")
     from lavanya_service.workflow.quick_actions import close_ticket, customer_confirmed
     _login_as("uat.coordinator@lavanya.local")
 
-    frappe.db.set_value("HD Ticket", TICKET, "status", "Resolved")
-    frappe.db.set_value("HD Ticket", TICKET, "customer_satisfaction_status", "Pending")
+    # ── Helper: neutralize all physical/verification gates for clean satisfaction testing ──
+    def _prepare_for_closure():
+        frappe.db.set_value("HD Ticket", TICKET, {
+            "status": "Resolved",
+            "part_required": 0,
+            "part_fitted_confirmed": 1,
+            "followup_stage": "customer_confirmation_pending",
+            "customer_confirmation_received": "No",
+            "customer_satisfaction_status": "Satisfied",
+        })
 
-    # close_ticket should block when satisfaction is not Satisfied/Not Required
+    # ── 14a: close_ticket blocks when satisfaction is missing ──
+    _prepare_for_closure()
+    frappe.db.set_value("HD Ticket", TICKET, "customer_satisfaction_status", "Pending")
     try:
         close_ticket(TICKET, work_narration="Fixed", closure_type="Resolved by Local Technician", customer_confirmation_received="Yes")
         _check("14a Close blocks without satisfaction", False, "should have thrown")
     except Exception as e:
         _check("14a Close blocks without satisfaction", "satisfaction" in str(e).lower(), str(e)[:80])
 
-    # Set satisfaction and try again
-    frappe.db.set_value("HD Ticket", TICKET, "customer_satisfaction_status", "Satisfied")
+    # ── 14b: close_ticket blocks when part_required=1 and part_fitted_confirmed missing ──
+    _prepare_for_closure()
+    frappe.db.set_value("HD Ticket", TICKET, "part_required", 1)
+    frappe.db.set_value("HD Ticket", TICKET, "part_fitted_confirmed", 0)
+    try:
+        close_ticket(TICKET, work_narration="Fixed", closure_type="Resolved by Local Technician", customer_confirmation_received="Yes")
+        _check("14b Close blocks with part pending", False, "should have thrown")
+    except Exception as e:
+        _check("14b Close blocks with part pending", "part" in str(e).lower() or "fitted" in str(e).lower(), str(e)[:80])
+
+    # ── 14c: close_ticket succeeds when all gates satisfied ──
+    _prepare_for_closure()
     try:
         r = close_ticket(TICKET, work_narration="Panel replaced - TV working", closure_type="Resolved by Local Technician", customer_confirmation_received="Yes")
-        _check("14b Close with satisfaction ok", r.get("ok"), str(r.get("message", ""))[:50])
-        _check("14c Status = Closed", r.get("status") == "Closed", r.get("status"))
+        _check("14c Close with all gates satisfied", r.get("ok"), str(r.get("message", ""))[:50])
+        _check("14d Status = Closed", r.get("status") == "Closed", r.get("status"))
     except Exception as e:
-        _check("14b Close with satisfaction FAILED", False, str(e)[:80])
+        _check("14c Close with all gates satisfied FAILED", False, str(e)[:80])
 
-    # Test customer_confirmed
-    frappe.db.set_value("HD Ticket", TICKET, "status", "Resolved")
-    frappe.db.set_value("HD Ticket", TICKET, "customer_satisfaction_status", "Satisfied")
+    # ── 14e: customer_confirmed blocks unresolved technician_call_pending stage ──
+    frappe.db.set_value("HD Ticket", TICKET, {
+        "status": "Resolved",
+        "followup_stage": "technician_call_pending",
+        "customer_satisfaction_status": "Satisfied",
+        "customer_confirmation_received": "No",
+        "part_required": 0,
+        "part_fitted_confirmed": 1,
+    })
+    try:
+        customer_confirmed(TICKET, work_narration="Customer says okay", closure_type="Resolved by Local Technician")
+        _check("14e Customer confirmed blocks unresolved tech_call", False, "should have thrown")
+    except Exception as e:
+        _check("14e Customer confirmed blocks unresolved tech_call",
+               "follow-up stage" in str(e).lower() or "verification" in str(e).lower(),
+               str(e)[:100])
+
+    # ── 14f: customer_confirmed blocks unresolved appointment_missed stage ──
+    frappe.db.set_value("HD Ticket", TICKET, {
+        "status": "Resolved",
+        "followup_stage": "appointment_missed",
+        "customer_satisfaction_status": "Satisfied",
+        "customer_confirmation_received": "No",
+        "part_required": 0,
+        "part_fitted_confirmed": 1,
+    })
+    try:
+        customer_confirmed(TICKET, work_narration="Customer says okay but appointment unresolved", closure_type="Resolved by Local Technician")
+        _check("14f Customer confirmed blocks unresolved appointment", False, "should have thrown")
+    except Exception as e:
+        _check("14f Customer confirmed blocks unresolved appointment",
+               "follow-up stage" in str(e).lower() or "verification" in str(e).lower(),
+               str(e)[:100])
+
+    # ── 14g: customer_confirmed blocks unresolved no_technician_update stage ──
+    frappe.db.set_value("HD Ticket", TICKET, {
+        "status": "Resolved",
+        "followup_stage": "no_technician_update",
+        "customer_satisfaction_status": "Satisfied",
+        "customer_confirmation_received": "No",
+        "part_required": 0,
+        "part_fitted_confirmed": 1,
+    })
+    try:
+        customer_confirmed(TICKET, work_narration="Customer says okay but no tech update", closure_type="Resolved by Local Technician")
+        _check("14g Customer confirmed blocks unresolved no_tech_update", False, "should have thrown")
+    except Exception as e:
+        _check("14g Customer confirmed blocks unresolved no_tech_update",
+               "follow-up stage" in str(e).lower() or "verification" in str(e).lower(),
+               str(e)[:100])
+
+    # ── 14h: customer_confirmed blocks unresolved part gate even with valid stage ──
+    frappe.db.set_value("HD Ticket", TICKET, {
+        "status": "Resolved",
+        "followup_stage": "customer_confirmation_pending",
+        "customer_satisfaction_status": "Satisfied",
+        "customer_confirmation_received": "No",
+        "part_required": 1,
+        "part_fitted_confirmed": 0,
+    })
+    try:
+        customer_confirmed(TICKET, work_narration="Customer confirmed but part still pending", closure_type="Resolved by Local Technician")
+        _check("14h Customer confirmed blocks with part pending", False, "should have thrown")
+    except Exception as e:
+        _check("14h Customer confirmed blocks with part pending",
+               "part" in str(e).lower() or "fitted" in str(e).lower(),
+               str(e)[:100])
+
+    # ── 14i: customer_confirmed succeeds when only customer confirmation is pending ──
+    _prepare_for_closure()
     try:
         r2 = customer_confirmed(TICKET, work_narration="Customer confirmed TV working", closure_type="Resolved by Local Technician")
-        _check("14d Customer confirmed ok", r2.get("ok"), str(r2.get("message", ""))[:50])
-        _check("14e Status = Closed", r2.get("status") == "Closed", r2.get("status"))
+        _check("14i Customer confirmed ok", r2.get("ok"), str(r2.get("message", ""))[:50])
+        _check("14j Status = Closed", r2.get("status") == "Closed", r2.get("status"))
     except Exception as e:
-        _check("14d Customer confirmed FAILED", False, str(e)[:80])
+        _check("14i Customer confirmed FAILED", False, str(e)[:80])
 
 
 def test_15_role_gating():

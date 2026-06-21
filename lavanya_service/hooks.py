@@ -354,6 +354,7 @@ fixtures = [
 					"part_required",
 					"part_name",
 					"part_expected_date",
+					"part_fitted_confirmed",
 					"part_delay_reason",
 					"customer_informed_about_part_delay",
 					"last_service_center_followup",

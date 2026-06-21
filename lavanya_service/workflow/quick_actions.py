@@ -30,7 +30,7 @@ during the elevated save.
 
 import frappe
 from frappe import _
-from frappe.utils import now_datetime, today
+from frappe.utils import now_datetime, today, add_to_date, getdate
 
 from lavanya_service.setup.hd_ticket_fields import (
 	CLOSURE_TYPE_OPTIONS,
@@ -258,6 +258,90 @@ def _sync_customer_informed(doc, channel):
 	doc.customer_informed_by = _acting_user()
 	doc.customer_informed_channel = channel
 
+
+# followup_stage values that represent an UNRESOLVED verification loop — a ticket
+# in any of these has an open "next action" and may not reach a terminal state.
+_CLOSURE_VERIFICATION_STATES = {
+	"technician_call_pending", "technician_visit_pending",
+	"customer_confirmation_pending", "customer_not_satisfied",
+	"no_technician_update", "appointment_missed",
+}
+
+# Stages where customer_confirmed is the correct resolution path.  Any other
+# verification state must be resolved through its own action first —
+# customer_confirmed must not be a side-door around an active service loop.
+_CUSTOMER_CONFIRM_RESOLVABLE_STAGES = {
+	None, "",
+	"customer_confirmation_pending",
+	"customer_satisfied",
+}
+
+
+def _default_next_followup(doc, first=False):
+	"""Config-derived successor date (§3 determinism): the next follow-up is a
+	function of the ticket's Reminder Rule, never an operator coin-flip. Callers
+	pass the operator value first and fall back to this when it is blank, so a
+	manual override is always honoured.
+
+	first=True uses the rule's first-follow-up offset (e.g. D+2 after brand
+	registration); otherwise the repeat cadence (e.g. every 2 days)."""
+	from lavanya_service import reminder_engine as rem
+	try:
+		rule = rem.resolve_reminder_rule(doc)
+	except Exception:
+		rule = None
+	key = "first_followup_after_minutes" if first else "repeat_every_minutes"
+	fallback = rem.FALLBACK_FIRST_FOLLOWUP_MIN if first else rem.FALLBACK_REPEAT_MIN
+	mins = rem._minutes(rule, key, fallback)
+	return getdate(add_to_date(now_datetime(), minutes=mins))
+
+
+def _assert_closure_gates(doc):
+	"""Single source of truth for the closure Control Law: a ticket may not reach
+	a terminal state while any physical, verification, or satisfaction gate is open.
+
+	Called by EVERY path that closes a ticket (close_ticket, customer_confirmed)
+	so no action can be a side-door around the gate.
+	"""
+	# Physical gate 1: flow-specific linked records (replacement/return/stock/custody).
+	_validate_closure_prerequisites(doc)
+
+	# Physical gate 2: a pending part that is not confirmed fitted.
+	if doc.get("part_required") and not doc.get("part_fitted_confirmed"):
+		frappe.throw(_(
+			"Ticket cannot be closed. Part '{0}' is still pending (ETA: {1}). "
+			"Confirm part is fitted and customer confirms issue resolved before closure."
+		).format(doc.get("part_name", "Unknown"), doc.get("part_expected_date", "Unknown")))
+
+	# Verification gate: an unresolved verification loop.
+	# customer_confirmation_pending is only blocking when the customer has NOT
+	# yet confirmed — once customer_confirmation_received=Yes, this stage is
+	# the expected final step before closure.
+	stage = doc.get("followup_stage")
+	if stage in _CLOSURE_VERIFICATION_STATES:
+		if stage == "customer_confirmation_pending" and doc.get("customer_confirmation_received") == "Yes":
+			pass  # Customer confirmed — verification loop resolved
+		else:
+			frappe.throw(_(
+				"Ticket cannot be closed. Follow-up stage is '{0}' — customer verification is unresolved. "
+				"Verify with customer and record satisfaction before closure."
+			).format(stage))
+
+	# Satisfaction gate: satisfaction must be documented.
+	satisfaction = doc.customer_satisfaction_status
+	if satisfaction not in ("Satisfied", "Not Required"):
+		frappe.throw(_(
+			"Ticket cannot be closed. Customer satisfaction must be 'Satisfied' "
+			"or documented as 'Not Required' (current: {0})."
+		).format(satisfaction or "Not Set"))
+
+	# Confirmation gate: customer must have confirmed issue resolved.
+	if doc.get("customer_confirmation_received") != "Yes":
+		frappe.throw(_(
+			"Ticket cannot be closed. Customer confirmation is required."
+		))
+
+
 # ---------------------------------------------------------------------------
 # Quick actions
 # ---------------------------------------------------------------------------
@@ -274,10 +358,13 @@ def register_brand_complaint(
 
 	brand_ticket_number = _require(brand_ticket_number, "Brand Ticket Number")
 	registration_date = _require(registration_date, "Registration Date")
-	next_follow_up_date = _require(next_follow_up_date, "Next Follow-up Date")
 
 	doc = _load_ticket(ticket_name)
 	_block_if_final(doc)
+
+	# §3: auto-derive the D+2 verification date from the Reminder Rule when the
+	# operator does not supply one. Never blank — the loop cannot be forgotten.
+	next_follow_up_date = next_follow_up_date or _default_next_followup(doc, first=True)
 
 	doc.manufacturer_registration_required = "Yes"
 	doc.manufacturer_registered = "Yes"
@@ -332,17 +419,17 @@ def follow_up_service_center(ticket_name, follow_up_result=None, next_follow_up_
 		if next_follow_up_date:
 			doc.next_follow_up_date = next_follow_up_date
 	elif follow_up_result == "Part pending":
-		next_follow_up_date = _require(next_follow_up_date, "Next Follow-up Date")
+		next_follow_up_date = next_follow_up_date or _default_next_followup(doc)
 		doc.status = "Waiting on Part / Approval"
 		doc.pending_reason = "Part Pending"
 		doc.next_follow_up_date = next_follow_up_date
 	elif follow_up_result == "Approval pending":
-		next_follow_up_date = _require(next_follow_up_date, "Next Follow-up Date")
+		next_follow_up_date = next_follow_up_date or _default_next_followup(doc)
 		doc.status = "Waiting on Part / Approval"
 		doc.pending_reason = APPROVAL_PENDING_REASON
 		doc.next_follow_up_date = next_follow_up_date
 	else:
-		next_follow_up_date = _require(next_follow_up_date, "Next Follow-up Date")
+		next_follow_up_date = next_follow_up_date or _default_next_followup(doc)
 		doc.status = "In Progress"
 		doc.pending_reason = "Service Follow-up Required"
 		doc.next_follow_up_date = next_follow_up_date
@@ -401,9 +488,23 @@ def customer_confirmed(ticket_name, work_narration=None, closure_type=None):
 	doc = _load_ticket(ticket_name)
 	_block_if_final(doc)
 
-	_validate_closure_prerequisites(doc)
+	# Capture the stage BEFORE overwriting.  customer_confirmed is only valid
+	# when the remaining verification loop is the customer-confirmation step
+	# itself.  Any other active service/technician state must be resolved first.
+	previous_stage = doc.get("followup_stage")
+	if previous_stage not in _CUSTOMER_CONFIRM_RESOLVABLE_STAGES:
+		frappe.throw(_(
+			"Ticket cannot be closed by customer confirmation. Follow-up stage is '{0}' — "
+			"the active verification loop must be resolved first."
+		).format(previous_stage))
 
 	doc.customer_confirmation_received = "Yes"
+	if doc.customer_satisfaction_status not in ("Satisfied", "Not Required"):
+		doc.customer_satisfaction_status = "Satisfied"
+	doc.followup_stage = "customer_satisfied"
+
+	_assert_closure_gates(doc)
+
 	doc.work_narration = work_narration
 	doc.closure_type = closure_type
 	doc.closed_by = _acting_user()
@@ -433,42 +534,13 @@ def close_ticket(
 	doc = _load_ticket(ticket_name)
 	_block_if_final(doc)
 
-	# H1: Block closure unless linked records are complete for flow-specific prerequisites.
-	_validate_closure_prerequisites(doc)
-
-	# P0-2: Block closure if part is pending with no customer confirmation of fitting.
-	if doc.get("part_required") and not doc.get("part_fitted_confirmed"):
-		frappe.throw(_(
-			"Ticket cannot be closed. Part '{0}' is still pending (ETA: {1}). "
-			"Confirm part is fitted and customer confirms issue resolved before closure."
-		).format(doc.get("part_name", "Unknown"), doc.get("part_expected_date", "Unknown")))
-
-	# P0-3: Block closure if customer verification loop is unresolved.
-	verification_states = {
-		"technician_call_pending", "technician_visit_pending",
-		"customer_confirmation_pending", "customer_not_satisfied",
-		"no_technician_update", "appointment_missed",
-	}
-	if doc.get("followup_stage") in verification_states:
-		frappe.throw(_(
-			"Ticket cannot be closed. Follow-up stage is '{0}' — customer verification is unresolved. "
-			"Verify with customer and record satisfaction before closure."
-		).format(doc.get("followup_stage")))
-
-	# Block closure unless customer satisfaction is documented (Satisfied or Not Required).
-	# This prevents closing tickets after brand/service-center says "completed" without
-	# customer confirmation — a critical real-world follow-up guarantee.
-	satisfaction = doc.customer_satisfaction_status
-	if satisfaction not in ("Satisfied", "Not Required"):
-		frappe.throw(_(
-			"Ticket cannot be closed. Customer satisfaction must be 'Satisfied' "
-			"or documented as 'Not Required' (current: {0})."
-		).format(satisfaction or "Not Set"))
+	# Control Law: enforce all physical, verification, and satisfaction gates.
+	doc.customer_confirmation_received = customer_confirmation_received
+	_assert_closure_gates(doc)
 
 	doc.status = "Closed"
 	doc.work_narration = work_narration
 	doc.closure_type = closure_type
-	doc.customer_confirmation_received = customer_confirmation_received
 	doc.closed_by = _acting_user()
 	doc.closure_date = now_datetime()
 
@@ -707,13 +779,64 @@ def mark_no_update(ticket_name, notes=None):
 
 	entry = "[Follow-up] Mark No Update — Escalation: {0}".format(doc.escalation_level)
 	entry += " · Count: {0}".format(doc.no_update_count)
+
+	# §5 bounded non-response: once the configured attempt cap is breached, park the
+	# ticket as Pending Customer Response so it leaves Today's Work instead of
+	# spinning an unbounded reverification loop against a silent customer.
+	from lavanya_service import reminder_engine as rem
+	max_attempts = rem.resolve_max_followup_attempts(doc)
+	parked = False
+	if max_attempts and doc.no_update_count >= max_attempts:
+		doc.parked_pending_customer = 1
+		doc.parked_at = now_datetime()
+		doc.parked_reason = (
+			"Auto-parked after {0} consecutive no-updates (cap {1}). "
+			"Awaiting customer response; resume to re-enter the follow-up loop."
+		).format(doc.no_update_count, max_attempts)
+		doc.status = "Waiting on Customer"
+		doc.pending_reason = "Customer Not Reachable"
+		entry += " · PARKED → Pending Customer Response"
+		parked = True
+
 	if notes:
 		entry += " · Notes: {0}".format(notes)
 	doc.add_comment("Comment", entry)
 	_set_last_followup(doc, entry)
 
 	_save_ticket(doc)
+	if parked:
+		return _result(doc, _("No update marked; ticket parked as Pending Customer Response (cap {0} reached)").format(max_attempts))
 	return _result(doc, _("No update marked; escalated to {0}").format(doc.escalation_level))
+
+
+def resume_followup(ticket_name, next_follow_up_date=None, notes=None):
+	"""§5: un-park a Pending Customer Response ticket (customer responded) and
+	re-enter the follow-up loop. Resets the no-update counter and sets a fresh,
+	config-derived next verification date so the ticket re-appears in Today's Work."""
+	_require_roles("Resume Follow-up", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	if not doc.get("parked_pending_customer"):
+		frappe.throw(_("Ticket is not parked — nothing to resume."))
+
+	doc.parked_pending_customer = 0
+	doc.parked_reason = ""
+	doc.no_update_count = 0
+	doc.next_follow_up_date = next_follow_up_date or _default_next_followup(doc)
+	doc.status = "In Progress"
+	doc.pending_reason = "Service Follow-up Required"
+	doc.followup_stage = "technician_call_pending"
+
+	entry = "[Follow-up] Resumed from Pending Customer Response — next {0}".format(doc.next_follow_up_date)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Follow-up resumed; next verification {0}").format(doc.next_follow_up_date))
 
 
 def escalate_case(ticket_name, reason=None):
@@ -1007,7 +1130,7 @@ def confirm_appointment(ticket_name, appointment_datetime=None, technician=None,
 	doc = _load_ticket(ticket_name)
 	_block_if_final(doc)
 
-	doc.followup_stage = "appointment_confirmed"
+	doc.followup_stage = "technician_visit_pending"
 	if appointment_datetime:
 		doc.next_follow_up_date = appointment_datetime
 	if technician:
@@ -1034,7 +1157,7 @@ def mark_appointment_missed(ticket_name, reason=None, reschedule_date=None, note
 	doc = _load_ticket(ticket_name)
 	_block_if_final(doc)
 
-	doc.followup_stage = "appointment_missed"
+	doc.followup_stage = "no_technician_update"
 	doc.escalation_level = _increment_escalation(doc.escalation_level)
 	if reschedule_date:
 		doc.next_follow_up_date = reschedule_date
@@ -1168,19 +1291,17 @@ def update_part_eta(ticket_name, new_eta=None, delay_reason=None, notes=None):
 	return _result(doc, _("Part ETA updated to {0}").format(new_eta))
 
 
-# ---------------------------------------------------------------------------
-# P0-3: Auto-verification loop — set next customer verification date
-# ---------------------------------------------------------------------------
-
 def set_reverification_date(ticket_name, reverify_at=None, notes=None):
 	"""Set the next customer verification checkpoint. Used after every
 	service-center/technician remark to enforce the follow-up loop."""
 	_require_roles("Set Reverification Date", {ROLE_MANAGER, ROLE_COORDINATOR})
 
-	reverify_at = _require(reverify_at, "Reverification Date")
 	doc = _load_ticket(ticket_name)
 	_block_if_final(doc)
 
+	# §3: deterministic default from the Reminder Rule when not explicitly set —
+	# a verification date is a function, not a coordinator's coin-flip.
+	reverify_at = reverify_at or _default_next_followup(doc)
 	doc.next_follow_up_date = reverify_at
 
 	entry = "[Follow-up] Reverification set — Date: {0}".format(reverify_at)

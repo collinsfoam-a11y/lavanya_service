@@ -7,6 +7,144 @@
 
 ---
 
+## 2026-06-21 13:00 — S1-TEST-FIX-R1: Missing part_fitted_confirmed field + legacy test patch
+
+### What changed
+- `lavanya_service/setup/followup_fields.py` — Added `part_fitted_confirmed` Check field to the Part Tracking section. This field was referenced by `_assert_closure_gates` in `quick_actions.py` but never defined as a custom field, causing an unconditional block on any ticket with `part_required=1`.
+- `lavanya_service/hooks.py` — Added `part_fitted_confirmed` to the fixture export list so it persists across migrations.
+- `lavanya_service/tests/e2e_followup_scenario.py` — Rewrote `test_14_closure_rule` to match the v2.1 shared gate contract:
+  - 14a: close_ticket blocks without satisfaction (negative) — PASS
+  - 14b: close_ticket blocks with part_required=1, part_fitted_confirmed=0 (negative) — PASS
+  - 14c: close_ticket succeeds after part gate satisfied (positive) — PASS
+  - 14d: customer_confirmed blocks with part_required=1, part_fitted_confirmed=0 (negative) — PASS
+  - 14e: customer_confirmed succeeds after part gate satisfied (positive) — PASS
+
+### Previous state
+- `part_fitted_confirmed` was referenced in `_assert_closure_gates` (quick_actions.py:301) but never defined as a custom field
+- Any ticket with `part_required=1` could never be closed (unconditional block)
+- Legacy test_14 assumed customer_confirmed could bypass the part gate (invalid under v2.1)
+- `bench migrate` did not create the column because it was not in the field definitions
+
+### Current state
+- `part_fitted_confirmed` is a proper Check field on HD Ticket (default 0)
+- Closure gate correctly blocks when part_required=1 AND part_fitted_confirmed=0
+- Closure gate correctly allows when part_fitted_confirmed=1
+- Both close_ticket AND customer_confirmed go through the same shared gate
+- All 143 e2e tests pass: TOTAL: 143 | PASS: 143 | FAIL: 0
+
+### Why changed
+- P0 operational defect: closure gate referenced a non-existent field
+- Legacy test validated old behavior that bypassed physical gates
+- v2.1 doctrine: closure is only permitted when all sub-gates are satisfied
+
+### What was obtained
+- `part_fitted_confirmed` field created and migrated to database
+- test_14 rewritten with 5 assertions (2 negative, 3 positive)
+- 143/143 e2e tests pass
+- No production closure logic weakened
+
+### Compatibility notes
+- `bench --site lavanya-dev.localhost migrate` ran successfully
+- Existing close_ticket and customer_confirmed functions unchanged
+- `_assert_closure_gates` unchanged — was already correct, just missing the field definition
+- No migration steps needed beyond bench migrate (already done)
+
+---
+
+## 2026-06-21 13:30 — S1-GATE-HARDEN-R1: customer_confirmed bypass fix + confirmation gate + verification gate refinement
+
+### What changed
+- `lavanya_service/workflow/quick_actions.py`:
+  - Added `_CUSTOMER_CONFIRM_RESOLVABLE_STAGES` constant: `{None, "", "customer_confirmation_pending", "customer_satisfied"}` — stages where customer_confirmed is the correct resolution path.
+  - `customer_confirmed()`: Added `previous_stage` check before overwriting `followup_stage`. Now blocks if stage is in `_CLOSURE_VERIFICATION_STATES` but not in `_CUSTOMER_CONFIRM_RESOLVABLE_STAGES`. Prevents bypassing unresolved technician/appointment/service states.
+  - `_assert_closure_gates()`: Added `customer_confirmation_received` check — ticket cannot close without customer confirmation. Also refined verification gate to allow `customer_confirmation_pending` when `customer_confirmation_received="Yes"`.
+  - `close_ticket()`: Moved `doc.customer_confirmation_received = customer_confirmation_received` before `_assert_closure_gates()` call so the gate sees the correct value.
+- `lavanya_service/tests/e2e_followup_scenario.py` — Rewrote `test_14_closure_rule` with 10 assertions:
+  - 14a: close_ticket blocks without satisfaction (negative)
+  - 14b: close_ticket blocks with part pending (negative)
+  - 14c: close_ticket succeeds with all gates satisfied (positive)
+  - 14d: Status = Closed after close_ticket
+  - 14e: customer_confirmed blocks unresolved technician_call_pending (negative)
+  - 14f: customer_confirmed blocks unresolved appointment_missed (negative)
+  - 14g: customer_confirmed blocks unresolved no_technician_update (negative)
+  - 14h: customer_confirmed blocks with part pending (negative)
+  - 14i: customer_confirmed succeeds when only customer confirmation is pending (positive)
+  - 14j: Status = Closed after customer_confirmed
+
+### Previous state
+- `customer_confirmed()` overwrote `followup_stage` to `"customer_satisfied"` BEFORE the gate check, erasing unresolved verification states
+- No `customer_confirmation_received` check in the shared gate
+- Verification gate blocked `customer_confirmation_pending` even when customer had confirmed
+- `close_ticket()` set `customer_confirmation_received` on the doc AFTER the gate check
+
+### Current state
+- `customer_confirmed()` checks previous stage before overwriting — blocks if in unresolved service loop
+- `_assert_closure_gates()` requires `customer_confirmation_received="Yes"` for all closure paths
+- Verification gate allows `customer_confirmation_pending` only when `customer_confirmation_received="Yes"`
+- Both paths set doc fields BEFORE the gate check
+
+### Why changed
+- v2.1 control invariant: customer_confirmed must not bypass unresolved service/technician states
+- Shared gate must be complete: physical + verification + satisfaction + confirmation gates
+- No side-door around verification loops
+
+### What was obtained
+- 146/146 e2e tests pass: TOTAL: 146 | PASS: 146 | FAIL: 0
+- No bypass exists for unresolved technician/appointment/no-update states
+- Both close_ticket and customer_confirmed enforce the same 4 gates
+- Production code hardened, not weakened
+
+### Compatibility notes
+- `_CLOSURE_VERIFICATION_STATES` unchanged
+- `_CUSTOMER_CONFIRM_RESOLVABLE_STAGES` is new constant — only affects customer_confirmed
+- close_ticket behavior unchanged (already required customer_confirmation_received="Yes")
+- No migration steps needed
+
+## 2026-06-21 12:00 — UI-ENGINE-R1: Outcome-Capture Console with config-driven OUTCOME_MAP
+
+### What changed
+- `frontend/src/config/outcome-map.js` — NEW: Config-driven OUTCOME_MAP with `STAGE_ACTIONS` (12 followup_stage values mapped to primary/secondary/danger actions), `STATUS_ACTIONS` (5 ticket statuses), `ACTION_REGISTRY` (25+ action definitions with labels, icons, colors, endpoints, required fields), `resolveActions()`, `getPrimaryAction()`, `canCloseTicket()`.
+- `frontend/src/components/ActionScreen.vue` — NEW: Engine-driven outcome capture screen with ticket summary, primary action display, outcome-specific buttons (success/partial/failed/parked), successor actions display, loading/success states, slide-up animation.
+- `frontend/src/components/TicketDetail.vue` — Updated imports to include OUTCOME_MAP config. Updated `nextActions` computed to use `resolveEngineActions()` from config instead of hardcoded logic. Updated `closureGuard` to use `engineCanClose()` from config.
+- `frontend/src/pages/TodayWork.vue` — Added ActionScreen import. Added `selectedActionTicket` state. Added `enrichedGroups` computed that enriches each ticket with `engineActions`, `primaryAction`, `primaryActionLabel`, `primaryActionIcon`, `primaryActionColor`. Updated template to show action buttons next to each ticket. Added scoped CSS for action buttons and ticket row layout.
+
+### Previous state
+- TicketDetail.vue had hardcoded `nextActions` logic that didn't follow the config-driven pattern
+- TodayWork.vue showed tickets without showing what action the engine recommends for each ticket
+- No ActionScreen component existed — outcome capture required navigating to TicketDetail and finding the right button
+- No config-driven OUTCOME_MAP existed — action definitions were scattered across multiple files
+
+### Current state
+- Config-driven OUTCOME_MAP provides single source of truth for all action definitions
+- Each ticket in TodayWork queue shows its engine-determined primary action with a prominent button
+- ActionScreen provides action-specific outcome capture with verb-specific buttons
+- Successor actions are displayed after submission
+- All action definitions are centralized in one config file
+- Build passes with 68 modules transformed
+
+### Why changed
+- UI-ENGINE-R1 spec requires "The engine decides. The UI confesses" pattern
+- Need config-driven approach to maintain consistency across 25+ action types
+- Outcome buttons replace manual form filling for better UX
+- Centralized action definitions make it easier to add new actions without modifying multiple files
+
+### What was obtained
+- Config-driven OUTCOME_MAP with 25+ action definitions
+- ActionScreen component with outcome-specific buttons
+- TodayWork shows engine-determined actions for each ticket
+- TicketDetail uses config for next actions and closure guard
+- Build passes: `node node_modules/vite/bin/vite.js build` — PASS, 68 modules, 6.37s
+- No breaking changes to existing functionality
+
+### Compatibility notes
+- No backend changes — all frontend only
+- Existing TicketDetail functionality preserved
+- Existing TodayWork metric grid and filters preserved
+- No schema changes required
+- No migration steps needed
+
+---
+
 ## Changelog entry format
 
 ```markdown

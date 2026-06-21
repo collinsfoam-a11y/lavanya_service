@@ -153,10 +153,36 @@ def create_followup_fields():
                 "read_only": 1,
             },
             {
+                # §5 bounded non-response: when no_update_count breaches the
+                # configured max, the ticket parks here and leaves Today's Work
+                # until the customer responds (resume_followup re-enters the loop).
+                "fieldname": "parked_pending_customer",
+                "label": "Parked - Pending Customer Response",
+                "fieldtype": "Check",
+                "insert_after": "no_update_count",
+                "default": "0",
+                "read_only": 1,
+                "in_standard_filter": 1,
+            },
+            {
+                "fieldname": "parked_at",
+                "label": "Parked At",
+                "fieldtype": "Datetime",
+                "insert_after": "parked_pending_customer",
+                "read_only": 1,
+            },
+            {
+                "fieldname": "parked_reason",
+                "label": "Parked Reason",
+                "fieldtype": "Small Text",
+                "insert_after": "parked_at",
+                "read_only": 1,
+            },
+            {
                 "fieldname": "lavanya_part_section",
                 "label": "Part Tracking",
                 "fieldtype": "Section Break",
-                "insert_after": "no_update_count",
+                "insert_after": "parked_reason",
                 "collapsible": 1,
             },
             {
@@ -179,9 +205,16 @@ def create_followup_fields():
                 "insert_after": "part_name",
             },
             {
+                "fieldname": "part_fitted_confirmed",
+                "label": "Part Fitted Confirmed",
+                "fieldtype": "Check",
+                "insert_after": "part_expected_date",
+                "default": "0",
+            },
+            {
                 "fieldname": "part_col",
                 "fieldtype": "Column Break",
-                "insert_after": "part_expected_date",
+                "insert_after": "part_fitted_confirmed",
             },
             {
                 "fieldname": "part_delay_reason",
