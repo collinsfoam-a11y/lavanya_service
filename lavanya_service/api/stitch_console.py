@@ -339,7 +339,12 @@ def create_ticket(
         from lavanya_service.api.operational_masters import sync_customer_product_from_ticket
         sync_customer_product_from_ticket(doc.name)
     except Exception:
-        pass
+        frappe.log_error(
+            title="Lavanya customer product sync failed",
+            message=frappe.get_traceback(),
+            reference_doctype="HD Ticket",
+            reference_name=doc.name,
+        )
 
     return {"ok": True, "ticket": doc.name, "message": f"Ticket {doc.name} created"}
 

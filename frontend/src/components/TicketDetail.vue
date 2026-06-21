@@ -201,7 +201,10 @@
               <span class="material-symbols-outlined text-secondary">repeat</span>
               Marked as repeat complaint<template v-if="ticket.repeat.previous_ticket"> · linked to <span class="font-semibold text-primary">{{ ticket.repeat.previous_ticket }}</span></template>
             </div>
-            <button @click="clearRepeat" class="px-3 h-8 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low shrink-0">Clear</button>
+            <div class="flex items-center gap-2 shrink-0">
+              <button @click="openAction('escalate_case')" class="px-3 h-8 rounded-lg bg-warning text-on-warning font-label-md text-label-md hover:opacity-90">Escalate</button>
+              <button @click="clearRepeat" class="px-3 h-8 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low">Clear</button>
+            </div>
           </div>
           <div v-else-if="repeatCandidates.length" class="rounded-xl p-4"
                style="border:1px solid rgba(148,55,0,0.4); background:rgba(148,55,0,0.07)">
@@ -574,6 +577,87 @@
               <div><span class="block text-label-md text-outline">Custody Status</span> {{ ticket.receipt?.custody_status || '—' }}</div>
               <div><span class="block text-label-md text-outline">Last Movement</span> {{ ticket.receipt?.last_movement?.substring(0,10) || '—' }}</div>
               <div><span class="block text-label-md text-outline">Ready for Pickup</span> {{ ticket.receipt?.ready_for_pickup ? 'Yes' : 'No' }}</div>
+              <!-- H5C: custody closure guard -->
+              <div v-if="ticket.receipt?.number" class="col-span-2 mt-2 pt-2 border-t border-outline-variant">
+                <span class="block text-label-md text-outline mb-1">Custody Closure Guard</span>
+                <span class="font-body-md" :class="custodyGuard.allowed ? 'text-success' : 'text-warning'">{{ custodyGuard.reason }}</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- H5C: Technician Assignment -->
+          <section id="sec-technician" v-if="ticket.technicians?.length || ticket.stage?.service_charge_type">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Technician Assignment</h3>
+            <div v-if="ticket.technicians?.length" class="rounded-xl border border-outline-variant bg-surface-container p-4 mb-3">
+              <div class="font-label-md text-label-md text-on-surface-variant mb-2">Matching technicians ({{ ticket.technicians.length }})</div>
+              <div class="flex flex-col gap-2">
+                <div v-for="tech in ticket.technicians.slice(0,5)" :key="tech.name" class="flex items-center justify-between gap-3 p-3 rounded-lg bg-surface-container-lowest border border-outline-variant">
+                  <div class="flex-1 min-w-0">
+                    <div class="font-body-md font-semibold text-on-surface truncate">{{ tech.technician_name }}</div>
+                    <div class="font-label-md text-label-md text-on-surface-variant">
+                      {{ tech.phone || 'No phone' }}
+                      <template v-if="tech.skills"> · {{ tech.skills }}</template>
+                      <template v-if="tech.area"> · {{ tech.area }}</template>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span v-if="tech.rating" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: 'color-mix(in srgb, var(--lav-success) 12%, transparent)', color: 'var(--lav-success)' }">⭐ {{ tech.rating }}</span>
+                    <button type="button" @click="assignTechnician(tech)" class="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:opacity-90">Assign</button>
+                    <a v-if="tech.phone" :href="'tel:' + tech.phone" class="px-3 py-1.5 rounded-lg border border-outline-variant text-primary font-label-md text-label-md hover:bg-surface-container-low">Call</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="rounded-xl bg-surface-container p-4 text-on-surface-variant font-body-md">
+              No matching technicians found for {{ ticket.product?.type || 'this product type' }}. Assign manually or check area coverage.
+            </div>
+          </section>
+
+          <!-- H5C: Appointment Flow -->
+          <section id="sec-appointment">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center gap-2">
+              <span class="material-symbols-outlined" style="font-size:22px">event</span>
+              Appointment
+            </h3>
+            <div v-if="ticket.appointment" class="rounded-xl border border-outline-variant bg-surface-container p-4 mb-3">
+              <div class="grid grid-cols-2 gap-3 font-body-md text-on-surface-variant">
+                <div>
+                  <span class="block text-label-md text-outline">Date/Time</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.appointment.appointment_datetime?.substring(0,16) || '—' }}</span>
+                </div>
+                <div>
+                  <span class="block text-label-md text-outline">Technician</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.appointment.technician || '—' }}</span>
+                </div>
+                <div v-if="ticket.appointment.status">
+                  <span class="block text-label-md text-outline">Status</span>
+                  <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="appointmentStatusChip(ticket.appointment.status)">{{ ticket.appointment.status }}</span>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-outline-variant">
+                <button @click="openAction('schedule_appointment')" class="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:opacity-90">Schedule</button>
+                <button @click="openAction('schedule_appointment')" class="px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low">Reschedule</button>
+                <span class="text-label-md text-on-surface-variant self-center">· Visit actions in quick panel →</span>
+              </div>
+            </div>
+            <div v-else class="rounded-xl bg-surface-container p-4 text-on-surface-variant font-body-md flex items-center justify-between">
+              <span>No appointment scheduled.</span>
+              <button @click="openAction('schedule_appointment')" class="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90">Schedule Appointment</button>
+            </div>
+          </section>
+
+          <!-- H5C: Proof / Attachment Categories -->
+          <section id="sec-proof" class="rounded-xl border border-outline-variant bg-surface-container-lowest p-4">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Proof Categories</h3>
+            <p class="font-body-md text-on-surface-variant mb-3">Required proof documents by service context. Upload not yet available — reference for staff verification.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div v-for="cat in proofCategories" :key="cat.label" class="flex items-center gap-2 p-2 rounded-lg bg-surface-container">
+                <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">{{ cat.icon }}</span>
+                <div>
+                  <div class="font-label-md text-on-surface">{{ cat.label }}</div>
+                  <div class="font-label-md text-label-md text-on-surface-variant">{{ cat.context }}</div>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -974,18 +1058,68 @@ const closureGuard = computed(() => {
   return { allowed: false, reason: 'Customer confirmation pending.' }
 })
 
+// H5C: custody closure guard — prevents closure if product is not returned/collected
+const custodyGuard = computed(() => {
+  const r = ticket.value?.receipt || {}
+  if (!r.number) return { allowed: true, reason: 'No product in custody.' }
+  const status = r.custody_status || ''
+  if (!status || status === 'Ready for Customer Pickup') return { allowed: true, reason: `${status || 'Ready for pickup'}. Can close after handover.` }
+  if (status.includes('Sent') || status.includes('Returned from SC')) return { allowed: false, reason: `Product at ${status}. Complete custody chain before closure.` }
+  return { allowed: true, reason: `${status}.` }
+})
+
+// H5C: appointment status chip
+function appointmentStatusChip(status) {
+  const map = {
+    Scheduled: 'var(--lav-primary)',
+    Confirmed: 'var(--lav-success)',
+    Rescheduled: 'var(--lav-warning)',
+    Visited: 'var(--lav-success)',
+    Missed: 'var(--lav-danger)',
+    Cancelled: 'var(--lav-muted)',
+  }
+  const color = map[status] || 'var(--lav-muted)'
+  return { background: _bg(color), color }
+}
+
+// H5C: assign technician from master data
+function assignTechnician(tech) {
+  showToast(`Technician ${tech.technician_name} selected. Open Schedule Appointment to set a date.`)
+  // Technician assignment is set via the schedule_appointment action modal
+  openAction('schedule_appointment')
+}
+
+// H5C: proof categories (read-only reference for staff)
+const proofCategories = [
+  { label: 'Invoice Copy', icon: 'receipt_long', context: 'All service types' },
+  { label: 'Warranty Card', icon: 'verified', context: 'Warranty claims' },
+  { label: 'Product / Serial Photo', icon: 'photo_camera', context: 'All service types' },
+  { label: 'Brand Ticket Screenshot', icon: 'screenshot', context: 'Brand warranty' },
+  { label: 'Service Center Job Sheet', icon: 'assignment', context: 'Product at store' },
+  { label: 'Technician Visit Proof', icon: 'handyman', context: 'Technician visits' },
+  { label: 'Customer Approval Proof', icon: 'how_to_reg', context: 'Estimates / paid service' },
+  { label: 'Payment Receipt', icon: 'payments', context: 'Paid / local service' },
+  { label: 'Closure Confirmation', icon: 'task_alt', context: 'All closed tickets' },
+  { label: 'Returned Product Photo', icon: 'inventory_2', context: 'Return / replacement' },
+  { label: 'Showroom Receipt', icon: 'store', context: 'Product at store' },
+  { label: 'WhatsApp Screenshot Import', icon: 'chat', context: 'Customer communication' },
+]
+
 const SECTIONS = [
   { id: 'sec-stage', label: 'Stage' },
   { id: 'sec-reminder', label: 'Reminder' },
   { id: 'sec-ai-advisory', label: 'AI Advisory' },
   { id: 'sec-communication', label: 'Comms' },
-  { id: 'sec-followup-tracking', label: 'Follow-up Tracking' },
+  { id: 'sec-followup-tracking', label: 'Tracking' },
   { id: 'sec-customer', label: 'Customer' },
   { id: 'sec-product', label: 'Product' },
   { id: 'sec-customer-products', label: 'History' },
   { id: 'sec-brand-info', label: 'Brand' },
   { id: 'sec-workflow', label: 'Workflow' },
   { id: 'sec-receipt', label: 'Custody' },
+  { id: 'sec-technician', label: 'Technician' },
+  { id: 'sec-appointment', label: 'Appointment' },
+  { id: 'sec-proof', label: 'Proof' },
   { id: 'sec-followup', label: 'Follow-ups' },
   { id: 'sec-activity', label: 'Activity' },
   { id: 'sec-actions', label: 'Actions' },
