@@ -12,15 +12,22 @@ RESULTS = []
 
 GROUP_KEYS = [
 	"overdue_follow_up",
+	"no_technician_update",
+	"escalated_cases",
+	"customer_not_informed",
+	"technician_call_due",
+	"technician_visit_due",
 	"due_today",
 	"registration_recommended",
 	"registration_pending",
 	"waiting_on_customer",
 	"waiting_on_part",
 	"ready_for_pickup",
+	"customer_satisfaction_pending",
 	"product_receipt_missing",
 	"closure_pending",
 	"new_complaints",
+	"upcoming_work",
 ]
 
 SAFE_TICKET_FIELDS = {
@@ -42,6 +49,47 @@ SAFE_TICKET_FIELDS = {
 	"response_by",
 	"resolution_by",
 	"first_responded_on",
+	"service_flow_type",
+	"current_service_stage",
+	"next_action",
+	"next_action_owner",
+	"next_action_role",
+	"stage_due_at",
+	"pre_overdue_alert_at",
+	"overdue_status",
+	"escalation_level",
+	"customer_informed",
+	"customer_promised_update_at",
+	"customer_promise_status",
+	# Reminder-engine resolver output (Step 3) — additive, non-sensitive.
+	"reminder_rule_applied",
+	"computed_next_followup_at",
+	"computed_due_soon_at",
+	"computed_stage_due_at",
+	"computed_escalation_level",
+	"customer_update_due",
+	# AI advisory (Step 6).
+	"ai_review_status",
+	# Follow-up tracking (Phase 1N-6B).
+	"service_path",
+	"followup_stage",
+	"service_charge_type",
+	"customer_satisfaction_status",
+	"part_required",
+	"part_name",
+	"part_expected_date",
+	"part_delay_reason",
+	"customer_informed_about_part_delay",
+	"last_service_center_followup",
+	"last_followup_summary",
+	"last_followup_at",
+	"no_update_count",
+	"customer_informed_status",
+	"estimated_amount",
+	"customer_approved_amount",
+	"technician_payable",
+	"commission_amount",
+	"payment_status",
 }
 
 FOLLOW_UP_STATUSES = {
@@ -88,11 +136,14 @@ def _count(doctype):
 
 def _make_user(role):
 	email = "today-work-" + role.lower().replace(" ", "-") + "@example.com"
+	if frappe.db.exists("User", email):
+		return email
 	user = frappe.new_doc("User")
 	user.email = email
 	user.first_name = "Today Work"
 	user.enabled = 1
 	user.user_type = "System User"
+	user.flags.no_welcome_mail = True
 	user.append("roles", {"role": role})
 	user.insert(ignore_permissions=True)
 	return email
@@ -144,6 +195,9 @@ def _insert_ticket(subject, status="New", ticket_type="Customer Complaint - Site
 
 
 def _ensure_brand_backed_rule():
+	existing = frappe.db.get_value("Free Service Rule", {"brand": "LG", "product_type": "AC", "service_type": "AC Free Service", "brand_backed": 1}, "name")
+	if existing:
+		return existing
 	doc = frappe.new_doc("Free Service Rule")
 	doc.brand = "LG"
 	doc.product_type = "AC"
@@ -368,8 +422,8 @@ def _run_all(get_today_work, baseline):
 	_assert("TW-014", "new ticket appears in new_complaints", new_ticket.name in _names(data, "new_complaints"))
 	_assert(
 		"TW-014b",
-		"active ticket with Helpdesk-native 'Open' status surfaces in new_complaints (was invisible on Today's Work)",
-		open_ticket.name in _names(data, "new_complaints"),
+		"active ticket with Helpdesk-native 'Open' status surfaces in customer_not_informed (empty customer_informed_status)",
+		open_ticket.name in _names(data, "customer_not_informed"),
 	)
 	_assert(
 		"TW-014c",

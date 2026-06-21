@@ -90,6 +90,7 @@ def run():
 			search_similar_brand,
 			search_similar_category,
 			search_similar_item,
+			baseline,
 		)
 	finally:
 		frappe.set_user("Administrator")
@@ -115,6 +116,7 @@ def _run_all(
 	search_similar_brand,
 	search_similar_category,
 	search_similar_item,
+	baseline,
 ):
 	brand_results = search_similar_brand("prestge")
 	_assert(
@@ -203,7 +205,7 @@ def _run_all(
 	_test_ticket_save_with_product_fields(category_name, item_name)
 	_test_front_desk_and_coordinator_can_use_fields(category_name, item_name)
 	_test_viewer_still_blocked()
-	_test_no_notification_side_effects()
+	_test_no_notification_side_effects(baseline)
 
 
 def _test_ticket_save_with_product_fields(category_name, item_name):
@@ -271,14 +273,20 @@ def _test_viewer_still_blocked():
 	)
 
 
-def _test_no_notification_side_effects():
+def _test_no_notification_side_effects(baseline):
+	current = {
+		"Email Queue": frappe.db.count("Email Queue")
+		if frappe.db.exists("DocType", "Email Queue")
+		else 0,
+		"Notification Log": frappe.db.count("Notification Log")
+		if frappe.db.exists("DocType", "Notification Log")
+		else 0,
+		"Communication": frappe.db.count("Communication"),
+	}
+	diffs = {k: current[k] - baseline.get(k, 0) for k in current}
 	_assert(
 		"IM-012",
 		"no Communication / Email Queue / Notification Log side effects",
-		frappe.db.count("Email Queue") == 0 and frappe.db.count("Notification Log") == 0,
-		{
-			"Communication": frappe.db.count("Communication"),
-			"Email Queue": frappe.db.count("Email Queue"),
-			"Notification Log": frappe.db.count("Notification Log"),
-		},
+		diffs.get("Email Queue", 0) == 0 and diffs.get("Notification Log", 0) == 0,
+		{"baseline": baseline, "current": current, "diffs": diffs},
 	)

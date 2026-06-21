@@ -91,8 +91,54 @@ required_apps = ["helpdesk"]
 # enforced after every install/migrate. Master records (brands, etc.) are seeded
 # here by code rather than via record fixtures, which failed on fresh installs
 # (controller resolution before the custom DocType was visible).
-after_install = "lavanya_service.setup.install.after_install"
-after_migrate = "lavanya_service.setup.install.after_migrate"
+after_install = [
+	"lavanya_service.setup.install.after_install",
+	"lavanya_service.setup.appointment.create_appointment_doctype",
+	"lavanya_service.setup.service_stages.create_service_stage_fields",
+	"lavanya_service.setup.reminder_rule.create_reminder_rule_doctype",
+	"lavanya_service.setup.ai_fields.create_ai_advisory_fields",
+	"lavanya_service.setup.followup_fields.create_followup_fields",
+	"lavanya_service.setup.supplier_sla.create_supplier_sla_doctype",
+	"lavanya_service.setup.supplier_payment_block.create_supplier_payment_block_doctype",
+	"lavanya_service.setup.replacement_record.create_replacement_record_doctype",
+	"lavanya_service.setup.return_record.create_return_service_record_doctype",
+	"lavanya_service.setup.store_record.create_store_service_record_doctype",
+	"lavanya_service.setup.demo_record.create_demo_installation_record_doctype",
+	"lavanya_service.setup.stock_record.create_stock_complaint_record_doctype",
+	"lavanya_service.setup.new_ticket_fields.create_fields",
+	"lavanya_service.setup.supplier_perf_log.create_supplier_perf_log_doctype",
+	"lavanya_service.setup.area_perf_log.create_area_perf_log_doctype",
+	"lavanya_service.setup.comm_log.create_comm_log_doctype",
+	"lavanya_service.setup.prule.create_penalty_rule_doctype",
+	"lavanya_service.setup.prule.create_penalty_computation_doctype",
+	"lavanya_service.setup.notifications.create_notification_doctypes",
+	"lavanya_service.setup.erpnext_settings.create_erp_settings",
+	"lavanya_service.setup.ui_settings.create_lavanya_settings",
+]
+after_migrate = [
+	"lavanya_service.setup.install.after_migrate",
+	"lavanya_service.setup.appointment.create_appointment_doctype",
+	"lavanya_service.setup.service_stages.create_service_stage_fields",
+	"lavanya_service.setup.reminder_rule.create_reminder_rule_doctype",
+	"lavanya_service.setup.ai_fields.create_ai_advisory_fields",
+	"lavanya_service.setup.followup_fields.create_followup_fields",
+	"lavanya_service.setup.supplier_sla.create_supplier_sla_doctype",
+	"lavanya_service.setup.supplier_payment_block.create_supplier_payment_block_doctype",
+	"lavanya_service.setup.replacement_record.create_replacement_record_doctype",
+	"lavanya_service.setup.return_record.create_return_service_record_doctype",
+	"lavanya_service.setup.store_record.create_store_service_record_doctype",
+	"lavanya_service.setup.demo_record.create_demo_installation_record_doctype",
+	"lavanya_service.setup.stock_record.create_stock_complaint_record_doctype",
+	"lavanya_service.setup.new_ticket_fields.create_fields",
+	"lavanya_service.setup.supplier_perf_log.create_supplier_perf_log_doctype",
+	"lavanya_service.setup.area_perf_log.create_area_perf_log_doctype",
+	"lavanya_service.setup.comm_log.create_comm_log_doctype",
+	"lavanya_service.setup.prule.create_penalty_rule_doctype",
+	"lavanya_service.setup.prule.create_penalty_computation_doctype",
+	"lavanya_service.setup.notifications.create_notification_doctypes",
+	"lavanya_service.setup.erpnext_settings.create_erp_settings",
+	"lavanya_service.setup.ui_settings.create_lavanya_settings",
+]
 
 # Uninstallation
 # ------------
@@ -300,6 +346,31 @@ fixtures = [
 				[
 					"lavanya_customer_section",
 					"complaint_source",
+					"followup_stage",
+					"service_path",
+					"service_charge_type",
+					"customer_satisfaction_status",
+					"customer_informed_status",
+					"part_required",
+					"part_name",
+					"part_expected_date",
+					"part_delay_reason",
+					"customer_informed_about_part_delay",
+					"last_service_center_followup",
+					"last_followup_summary",
+					"last_followup_at",
+					"no_update_count",
+					"estimated_amount",
+					"customer_approved_amount",
+					"technician_payable",
+					"commission_amount",
+					"payment_status",
+					"lavanya_followup_tracking_section",
+					"followup_tracking_col",
+					"lavanya_part_section",
+					"part_col",
+					"lavanya_finance_section",
+					"finance_col",
 					"customer_name",
 					"phone_1",
 					"phone_2",
@@ -323,7 +394,7 @@ fixtures = [
 					"old_erp_reference",
 					"purchase_date",
 					"warranty_status",
-					"lavanya_brand_service_section",
+					"brand_service_section",
 					"manufacturer_registration_required",
 					"manufacturer_registered",
 					"brand_ticket_number",
@@ -345,6 +416,17 @@ fixtures = [
 					"customer_confirmation_received",
 					"closed_by",
 					"closure_date",
+					"store_service_reference",
+					"replacement_reference",
+					"return_reference",
+					"demo_installation_reference",
+					"stock_complaint_reference",
+					"store_service_location",
+					"area",
+					"product_received_via",
+					"payment_block_eligible",
+					"lavanya_expansion_section",
+					"expansion_col",
 				],
 			],
 		],
@@ -416,16 +498,34 @@ fixtures = [
 
 
 # Lavanya Service validation hooks
+# NOTE: HD Ticket before_validate and validate are NOT registered here because
+# the override class (LavanyaHDTicket in overrides/hd_ticket.py) already calls
+# normalize_ticket_phone_numbers and validate_ticket directly. Registering them
+# here too would execute them twice on every save.
 doc_events = {
-	"HD Ticket": {
-		"before_validate": "lavanya_service.validations.hd_ticket.normalize_ticket_phone_numbers",
-		"validate": "lavanya_service.validations.hd_ticket.validate_ticket",
-	},
 	"Lavanya Customer Profile": {
 		"before_validate": "lavanya_service.api.customer_intake.normalize_customer_profile_phone_numbers",
 	},
 	"Service Product Receipt": {
 		"validate": "lavanya_service.validations.service_receipt.validate_service_product_receipt",
+	},
+	"Replacement Record": {
+		"after_insert": "lavanya_service.workflow.stage_advancers.advance_on_record_created",
+	},
+	"Return Service Record": {
+		"after_insert": "lavanya_service.workflow.stage_advancers.advance_on_record_created",
+	},
+	"Store Service Record": {
+		"after_insert": "lavanya_service.workflow.stage_advancers.advance_on_record_created",
+	},
+	"Demo Installation Record": {
+		"after_insert": "lavanya_service.workflow.stage_advancers.advance_on_record_created",
+	},
+	"Stock Complaint Record": {
+		"after_insert": "lavanya_service.workflow.stage_advancers.advance_on_record_created",
+	},
+	"WhatsApp Draft Outbound": {
+		"validate": "lavanya_service.api.whatsapp_inbox._block_live_send",
 	},
 }
 
@@ -547,6 +647,16 @@ fixtures.extend(
 						"Free Service Rule",
 						"Service Product Receipt",
 						"Custody Log Entry",
+						"Supplier SLA Definition",
+						"Supplier Payment Block",
+						"Replacement Record",
+						"Return Service Record",
+						"Store Service Record",
+						"Demo Installation Record",
+						"Stock Complaint Record",
+						"Supplier Performance Log",
+						"Area Performance Log",
+						"Customer Communication Log",
 					],
 				],
 				["permlevel", "in", [0, 1, 2]],
@@ -558,9 +668,19 @@ fixtures.extend(
 
 # Lavanya Service scheduler events
 scheduler_events = {
+	"hourly": [
+		# Reminder engine Step 4: persist computed reminder state (stage_due,
+		# pre-overdue, overdue_status, escalation_level, promise breach) for active
+		# tickets. Idempotent + batched + non-destructive (no messages, no closures).
+		"lavanya_service.tasks.reminder_refresh.refresh_active_ticket_reminders",
+	],
 	"daily": [
 		"lavanya_service.reminders.notification_output.run_daily_reminder_notifications_dry_safe",
 		"lavanya_service.reminders.notification_output.run_escalation_notifications_dry_safe",
+		"lavanya_service.tasks.payment_block.check_payment_block_triggers",
+		"lavanya_service.tasks.performance_log.log_supplier_performance",
+		"lavanya_service.tasks.performance_log.log_area_performance",
+		"lavanya_service.tasks.pcomp.run_daily_penalty_computation_dry_safe",
 	],
 }
 # Lavanya Service print format fixtures

@@ -21,6 +21,31 @@ const routes = [
     name: 'Reports',
     component: () => import('@/pages/Reports.vue'),
   },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: () => import('@/pages/Settings.vue'),
+  },
+  {
+    path: '/field',
+    name: 'FieldMode',
+    component: () => import('@/pages/FieldMode.vue'),
+  },
+  {
+    path: '/whatsapp',
+    name: 'WhatsAppInbox',
+    component: () => import('@/pages/WhatsAppInbox.vue'),
+  },
+  {
+    path: '/customer-360',
+    name: 'Customer360',
+    component: () => import('@/pages/Customer360.vue'),
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/pages/NotFound.vue'),
+  },
 ]
 
 let router = createRouter({

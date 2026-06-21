@@ -174,7 +174,7 @@ def reopen_ticket(ticket_name, reopen_reason=None):
 	
 	# Append reason to narration
 	timestamp = frappe.utils.format_datetime(now_datetime(), "medium")
-	reopen_text = f"\\n\\n--- Reopened on {timestamp} ---\\nReason: {reopen_reason}"
+	reopen_text = f"\n\n--- Reopened on {timestamp} ---\nReason: {reopen_reason}"
 	doc.work_narration = (doc.work_narration or "") + reopen_text
 
 	_save_ticket(doc)

@@ -1,5 +1,114 @@
 import frappe
 
+
+def _stage_overdue_status(ticket):
+    from lavanya_service.stage_rules import compute_overdue_status
+
+    return compute_overdue_status(
+        ticket.get("stage_due_at"), ticket.get("pre_overdue_alert_at"), ticket.get("next_follow_up_date")
+    )
+
+
+def _stage_escalation_level(ticket):
+    from lavanya_service.reminder_engine import derive_escalation_level
+
+    return derive_escalation_level(ticket)
+
+
+def _stage_promise_status(ticket):
+    from lavanya_service.stage_rules import compute_promise_status
+
+    return compute_promise_status(
+        ticket.get("customer_promised_update_at"), ticket.get("customer_promise_status")
+    )
+
+
+def _ai_advisory_view(ticket):
+    """Read-only AI advisory for the drawer (Step 6). Blank-safe — stored ai_*
+    fields plus the live candidate flag; never raises, never writes."""
+    try:
+        from lavanya_service.ai_advisory import is_ai_review_candidate, STATUS_NOT_REQUIRED
+
+        candidate, reasons = is_ai_review_candidate(ticket)
+        return {
+            "review_status": ticket.get("ai_review_status") or STATUS_NOT_REQUIRED,
+            "suggested_next_action": ticket.get("ai_suggested_next_action"),
+            "suggested_customer_message": ticket.get("ai_suggested_customer_message"),
+            "risk_reason": ticket.get("ai_risk_reason"),
+            "manager_summary": ticket.get("ai_manager_summary"),
+            "advisory_source": ticket.get("ai_advisory_source"),
+            "last_reviewed_at": ticket.get("ai_last_reviewed_at"),
+            "reviewed_by": ticket.get("ai_reviewed_by"),
+            "is_candidate": candidate,
+            "reasons": reasons,
+        }
+    except Exception:
+        frappe.log_error(title="lavanya ai_advisory_view (drawer)", message=frappe.get_traceback())
+        return {}
+
+
+def _reminder_intelligence(ticket):
+    """Read-only Reminder Engine state for the drawer (Step 5). Blank-safe —
+    never raises, so a resolver issue can't break the ticket detail."""
+    try:
+        from lavanya_service.reminder_engine import refresh_ticket_reminder_state
+
+        state = refresh_ticket_reminder_state(ticket, save=False)
+        manual = ticket.get("next_follow_up_date")
+        return {
+            "reminder_rule_applied": state.get("reminder_rule_applied"),
+            "next_follow_up_date": manual,  # manual / staff-facing
+            "computed_next_followup_at": state.get("computed_next_followup_at"),
+            "computed_due_soon_at": state.get("computed_due_soon_at"),
+            "computed_stage_due_at": state.get("computed_stage_due_at"),
+            "overdue_status": state.get("overdue_status"),
+            "escalation_level": state.get("computed_escalation_level"),
+            "customer_promise_status": state.get("customer_promise_status"),
+            "customer_promised_update_at": ticket.get("customer_promised_update_at"),
+            "promise_breach_reason": ticket.get("promise_breach_reason"),
+            "customer_update_due": state.get("customer_update_due"),
+            "manual_followup": bool(manual),
+        }
+    except Exception:
+        frappe.log_error(title="lavanya reminder_intelligence (drawer)", message=frappe.get_traceback())
+        return {}
+
+
+@frappe.whitelist(methods=["POST"])
+def set_customer_promise(ticket_name, promised_at=None, status=None):
+    """Record a customer-promised update time (status -> Pending), or mark it Kept /
+    Clear. The reminder engine flips Pending -> Breached once the time passes.
+    Write-permission scoped; logs a [Customer Informed] comment (Comment stays the
+    canonical activity log)."""
+    if frappe.session.user == "Guest":
+        frappe.throw("Not permitted", frappe.PermissionError)
+    if not frappe.db.exists("HD Ticket", ticket_name):
+        frappe.throw("Ticket not found.")
+    if not frappe.has_permission("HD Ticket", "write", doc=ticket_name):
+        frappe.throw("Not permitted", frappe.PermissionError)
+
+    doc = frappe.get_doc("HD Ticket", ticket_name)
+    if status == "Kept":
+        doc.customer_promise_status = "Kept"
+        note = "[Customer Informed] Promised update kept"
+    elif status == "Clear":
+        doc.customer_promised_update_at = None
+        doc.customer_promise_status = "None"
+        note = "[Customer Informed] Promise cleared"
+    else:
+        dt = (promised_at or "").replace("T", " ").strip()
+        if not dt:
+            frappe.throw("Promised update date & time is required.")
+        doc.customer_promised_update_at = dt
+        doc.customer_promise_status = "Pending"
+        note = f"[Customer Informed] Promised an update by {dt}"
+
+    doc.flags.ignore_lavanya_field_guard = True
+    doc.save(ignore_permissions=True)
+    doc.add_comment("Comment", note)
+    return {"ok": True, "ticket": ticket_name, "promise_status": doc.customer_promise_status}
+
+
 # Ticket fields safe to surface in the SPA list view.
 _LIST_FIELDS = [
     "name",
@@ -19,10 +128,24 @@ _LIST_FIELDS = [
     "response_by",
     "resolution_by",
     "first_responded_on",
+    # Stage/Escalation fields for UI badges
+    "is_repeated_complaint",
+    "stage_due_at",
+    "pre_overdue_alert_at",
+    "customer_promised_update_at",
+    "customer_promise_status",
+    "overdue_status",
+    "escalation_level",
+    "warranty_route",
+    "customer_priority",
+    "customer_informed_at",
+    "ticket_type",
+    "service_flow_type",
+    "current_service_stage",
 ]
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["GET"])
 def get_ticket_list(search=None, status=None, start=0, page_length=30):
     """Paginated, permission-scoped HD Ticket list for the SPA Tickets page.
 
@@ -60,6 +183,31 @@ def get_ticket_list(search=None, status=None, start=0, page_length=30):
         page_length=page_length,
     )
 
+    from lavanya_service.stage_rules import compute_overdue_status, compute_promise_status
+    from lavanya_service.reminder_engine import derive_escalation_level
+    try:
+        from lavanya_service.reminder_engine import refresh_ticket_reminder_state, get_active_rules
+        rules = get_active_rules()
+    except Exception:
+        rules = []
+
+    for row in tickets:
+        row["customer_promise_status"] = compute_promise_status(
+            row.get("customer_promised_update_at"), row.get("customer_promise_status")
+        )
+        row["overdue_status"] = compute_overdue_status(
+            row.get("stage_due_at"),
+            row.get("pre_overdue_alert_at"),
+            row.get("next_follow_up_date"),
+        )
+        row["escalation_level"] = derive_escalation_level(row)
+        
+        try:
+            state = refresh_ticket_reminder_state(row, save=False, rules=rules)
+            row["customer_update_due"] = state.get("customer_update_due")
+        except Exception:
+            pass
+
     has_more = len(tickets) == page_length
     return {"tickets": tickets, "start": start, "page_length": page_length, "has_more": has_more}
 
@@ -72,7 +220,8 @@ _ACTIVITY_TYPES = ("Info", "Workflow", "Edit", "Label", "Assigned", "Assignment 
 @frappe.whitelist()
 def get_new_ticket_options():
     """Option lists for the staff New Ticket screen (brands / product types /
-    ticket types). Reuses the QR intake's safe lists."""
+    ticket types). Reuses the QR intake's safe lists. Adds brand metadata
+    (toll-free, SLA, supported products) from operational masters."""
     if frappe.session.user == "Guest":
         frappe.throw("Not permitted", frappe.PermissionError)
     from lavanya_service.api.qr_intake import get_qr_intake_options
@@ -80,6 +229,25 @@ def get_new_ticket_options():
     opts = get_qr_intake_options()
     opts["complaint_sources"] = ["Staff Entered", "Phone Call", "WhatsApp", "Direct Visit", "Email"]
     opts["warranty_statuses"] = ["Unknown", "In Warranty", "Out of Warranty", "Extended Warranty", "Brand Denied"]
+
+    # Enrich brand list with metadata from Brand Service Master
+    brand_meta = []
+    for brand_name in opts.get("brands", []):
+        try:
+            if frappe.db.exists("Brand Service Master", brand_name):
+                brand_doc = frappe.get_doc("Brand Service Master", brand_name)
+                brand_meta.append({
+                    "name": brand_name,
+                    "toll_free": brand_doc.get("toll_free_number"),
+                    "default_sla_hours": brand_doc.get("default_registration_sla_hours"),
+                    "registration_channel": brand_doc.get("registration_channel"),
+                    "free_service_supported": bool(brand_doc.get("free_service_supported")),
+                    "notes": brand_doc.get("notes"),
+                })
+        except Exception:
+            pass  # skip brands with missing master data
+    opts["brand_metadata"] = brand_meta
+
     return opts
 
 
@@ -166,6 +334,18 @@ def create_ticket(
         doc.pincode = str(pincode).strip()
     doc.insert()
 
+    # H5B: auto-sync customer product profile (non-blocking)
+    try:
+        from lavanya_service.api.operational_masters import sync_customer_product_from_ticket
+        sync_customer_product_from_ticket(doc.name)
+    except Exception:
+        frappe.log_error(
+            title="Lavanya customer product sync failed",
+            message=frappe.get_traceback(),
+            reference_doctype="HD Ticket",
+            reference_name=doc.name,
+        )
+
     return {"ok": True, "ticket": doc.name, "message": f"Ticket {doc.name} created"}
 
 
@@ -236,6 +416,95 @@ def add_ticket_note(ticket_id, note):
     }
 
 
+@frappe.whitelist(methods=["POST"])
+def schedule_appointment(ticket_name, appointment_datetime, technician=None, notes=None):
+    """Schedule a site-visit appointment for a ticket (date+time+technician).
+    Stored in the Lavanya Service Appointment doctype — no HD Ticket schema change."""
+    from lavanya_service.api.operational_masters import create_service_appointment
+
+    return create_service_appointment(
+        ticket_name,
+        appointment_datetime,
+        technician=technician,
+        notes=notes,
+    )
+
+
+def _linked_service_records(ticket_id):
+    """H5E: fetch linked service records for a ticket (read-only). Returns dict
+    keyed by record type. Silently skips missing DocTypes."""
+    records = {}
+    record_types = {
+        "replacement": ("Replacement Record", ["name", "brand", "old_serial_no", "new_serial_no", "status", "old_unit_collected_at", "new_unit_dispatched_at"]),
+        "return_service": ("Return Service Record", ["name", "refund_status", "return_reason", "return_requested_at", "brand_notified_at"]),
+        "stock_complaint": ("Stock Complaint Record", ["name", "supplier", "issue_identified_at", "supplier_notified_at", "credit_note_received_at"]),
+        "store_service": ("Store Service Record", ["name", "product_handed_over_at", "diagnosis", "brand_sc_notified_at", "customer_collected_at"]),
+        "demo_installation": ("Demo Installation Record", ["name", "technician", "scheduled_at", "demo_conducted_at", "installation_completed_at"]),
+        "communication_log": ("Customer Communication Log", ["name", "communication_date", "communication_type", "direction", "agent", "summary"]),
+    }
+    for key, (doctype, fields) in record_types.items():
+        try:
+            if not frappe.db.exists("DocType", doctype):
+                continue
+            rows = frappe.get_all(doctype, filters={"ticket": ticket_id}, fields=fields, order_by="modified desc", limit=5)
+            records[key] = rows
+        except Exception:
+            records[key] = []
+    return records
+
+
+def _crm_relationship_payload(ticket):
+	"""H6B: read-only CRM relationship context for a ticket.
+	Never creates CRM records. Never triggers WhatsApp/ERP/accounting."""
+	try:
+		from lavanya_service.integrations.crm.adapter import get_crm_relationship
+
+		payload = get_crm_relationship(
+			customer_mobile=ticket.get("phone_1"),
+			customer_name=ticket.get("customer_name"),
+		)
+
+		# Service risk: ticket has critical quality, escalation, or is overdue
+		quality = ticket.get("followup_stage") or ""
+		escalation = ticket.get("escalation_level") or ""
+		overdue = ticket.get("overdue_status") or ""
+		satisfaction = ticket.get("customer_satisfaction_status") or ""
+		repeat = ticket.get("is_repeated_complaint") == "Yes"
+
+		if escalation and escalation not in ("None", None):
+			payload["service_risk"] = True
+		elif overdue in ("Overdue", "Breached"):
+			payload["service_risk"] = True
+		elif satisfaction == "Not Satisfied":
+			payload["service_risk"] = True
+		elif repeat:
+			payload["service_risk"] = True
+
+		# Service-to-sales opportunity: warranty expired, repeat defect, high-cost repair
+		warranty = ticket.get("warranty_status") or ""
+		service_path = ticket.get("service_path") or ""
+		charge_type = ticket.get("service_charge_type") or ""
+		estimated = ticket.get("estimated_amount") or 0
+
+		if warranty in ("Out of Warranty", "Brand Denied", "Expired"):
+			payload["service_to_sales_opportunity"] = True
+		elif repeat:
+			payload["service_to_sales_opportunity"] = True
+		elif service_path in ("replacement_brand", "return_service"):
+			payload["service_to_sales_opportunity"] = True
+		elif charge_type == "Paid" and float(estimated or 0) > 0:
+			payload["service_to_sales_opportunity"] = True
+
+		return payload
+	except Exception:
+		return {
+			"available": False,
+			"enabled": False,
+			"mode": "Disabled",
+			"warnings": ["CRM lookup failed safely."],
+		}
+
+
 @frappe.whitelist()
 def get_ticket_detail(ticket_id):
     if frappe.session.user == "Guest":
@@ -270,6 +539,41 @@ def get_ticket_detail(ticket_id):
         last_movement = receipts[0].modified
         ready_for_pickup = (custody_status == "Ready for Customer Pickup")
 
+    # H5B: customer product history from operational masters
+    customer_products = []
+    try:
+        from lavanya_service.api.operational_masters import get_customer_product_history
+        if phone_1:
+            history = get_customer_product_history(phone_1)
+            customer_products = history.get("products", [])
+    except Exception:
+        pass
+
+    # H5B: brand metadata from Brand Service Master
+    brand_info = {}
+    try:
+        brand_name = ticket.get("brand")
+        if brand_name and frappe.db.exists("Brand Service Master", brand_name):
+            brand_doc = frappe.get_doc("Brand Service Master", brand_name)
+            brand_info = {
+                "name": brand_doc.name,
+                "toll_free": brand_doc.get("toll_free_number") or "",
+                "default_sla_hours": brand_doc.get("default_registration_sla_hours") or 4,
+                "portal_url": brand_doc.get("portal_url") or "",
+                "registration_channel": brand_doc.get("registration_channel") or "",
+                "free_service_supported": bool(brand_doc.get("free_service_supported")),
+            }
+    except Exception:
+        pass
+
+    # H5B: local technician lookup for the ticket's product type
+    technicians = []
+    try:
+        from lavanya_service.api.operational_masters import list_local_technicians
+        technicians = list_local_technicians(product_type=ticket.get("product_type"), area=ticket.get("pincode"))
+    except Exception:
+        pass
+
     # Safe payload
     return {
         "name": ticket.name,
@@ -291,6 +595,11 @@ def get_ticket_detail(ticket_id):
             "invoice_number": ticket.get("invoice_no") or ticket.get("invoice_number"),
             "purchase_date": ticket.get("purchase_date")
         },
+        "customer_products": customer_products,
+        "brand_info": brand_info,
+        "technicians": technicians,
+        "linked_records": _linked_service_records(ticket_id),
+        "crm_relationship": _crm_relationship_payload(ticket),
         "workflow": {
             "status": ticket.status,
             "pending_reason": ticket.get("pending_reason"),
@@ -317,6 +626,52 @@ def get_ticket_detail(ticket_id):
             "is_repeat": ticket.get("is_repeated_complaint") == "Yes",
             "previous_ticket": ticket.get("previous_ticket_link"),
         },
+        "appointment": (lambda a: a[0] if a else None)(
+            frappe.get_all(
+                "Lavanya Service Appointment",
+                filters={"ticket": ticket_id, "status": "Scheduled"},
+                fields=["name", "appointment_datetime", "technician"],
+                order_by="appointment_datetime asc",
+                limit=1,
+            )
+        ),
+        "stage": {
+            "service_flow_type": ticket.get("service_flow_type"),
+            "current_service_stage": ticket.get("current_service_stage"),
+            "next_action": ticket.get("next_action"),
+            "next_action_owner": ticket.get("next_action_owner"),
+            "next_action_role": ticket.get("next_action_role"),
+            "next_follow_up_date": ticket.get("next_follow_up_date"),
+            "stage_due_at": ticket.get("stage_due_at"),
+            "pre_overdue_alert_at": ticket.get("pre_overdue_alert_at"),
+            "overdue_status": _stage_overdue_status(ticket),
+            "escalation_level": _stage_escalation_level(ticket),
+            "customer_informed": ticket.get("customer_informed"),
+            "customer_promised_update_at": ticket.get("customer_promised_update_at"),
+            "customer_promise_status": _stage_promise_status(ticket),
+            # Follow-up tracking (Phase 1N-6B)
+            "service_path": ticket.get("service_path"),
+            "followup_stage": ticket.get("followup_stage"),
+            "service_charge_type": ticket.get("service_charge_type"),
+            "customer_satisfaction_status": ticket.get("customer_satisfaction_status"),
+            "customer_informed_status": ticket.get("customer_informed_status"),
+            "last_followup_summary": ticket.get("last_followup_summary"),
+            "last_followup_at": ticket.get("last_followup_at"),
+            "no_update_count": ticket.get("no_update_count"),
+            "part_required": ticket.get("part_required"),
+            "part_name": ticket.get("part_name"),
+            "part_expected_date": ticket.get("part_expected_date"),
+            "part_delay_reason": ticket.get("part_delay_reason"),
+            "customer_informed_about_part_delay": ticket.get("customer_informed_about_part_delay"),
+            "estimated_amount": ticket.get("estimated_amount"),
+            "customer_approved_amount": ticket.get("customer_approved_amount"),
+            "technician_payable": ticket.get("technician_payable"),
+            "commission_amount": ticket.get("commission_amount"),
+            "payment_status": ticket.get("payment_status"),
+            "last_service_center_followup": ticket.get("last_service_center_followup"),
+        },
+        "reminder": _reminder_intelligence(ticket),
+        "ai": _ai_advisory_view(ticket),
         "assigned_to": ticket._assign if ticket._assign else None,
         "creation": ticket.creation
     }

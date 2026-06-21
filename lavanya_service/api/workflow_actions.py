@@ -102,6 +102,162 @@ def create_product_receipt(
 		serial_no=serial_no
 	)
 
+@frappe.whitelist(methods=["POST"])
+def verify_technician_called(ticket_name, technician_name=None, notes=None):
+	return quick_actions.verify_technician_called(
+		ticket_name, technician_name=technician_name, notes=notes
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def verify_technician_visit(ticket_name, technician_name=None, visit_result=None, notes=None):
+	return quick_actions.verify_technician_visit(
+		ticket_name, technician_name=technician_name, visit_result=visit_result, notes=notes
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def record_sc_followup(ticket_name, follow_up_result=None, next_follow_up_date=None, customer_informed_status=None):
+	return quick_actions.record_sc_followup(
+		ticket_name, follow_up_result=follow_up_result, next_follow_up_date=next_follow_up_date,
+		customer_informed_status=customer_informed_status
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def inform_customer(ticket_name, message=None, channel=None):
+	return quick_actions.inform_customer(
+		ticket_name, message=message, channel=channel
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def mark_no_update(ticket_name, notes=None):
+	return quick_actions.mark_no_update(ticket_name, notes=notes)
+
+
+@frappe.whitelist(methods=["POST"])
+def escalate_case(ticket_name, reason=None):
+	return quick_actions.escalate_case(ticket_name, reason=reason)
+
+
+@frappe.whitelist(methods=["POST"])
+def record_satisfaction(ticket_name, satisfaction_status=None, notes=None):
+	return quick_actions.record_satisfaction(
+		ticket_name, satisfaction_status=satisfaction_status, notes=notes
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def record_customer_approval(ticket_name, approved_amount=None, payment_status=None, notes=None):
+    return quick_actions.record_customer_approval(
+        ticket_name, approved_amount=approved_amount, payment_status=payment_status, notes=notes
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def notify_brand_sc_for_pickup(ticket_name, brand_sc=None, notes=None):
+    return quick_actions.notify_brand_sc_for_pickup(
+        ticket_name, brand_sc=brand_sc, notes=notes
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def record_diagnosis_received(ticket_name, diagnosis=None, notes=None):
+    return quick_actions.record_diagnosis_received(
+        ticket_name, diagnosis=diagnosis, notes=notes
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def notify_customer_for_collection(ticket_name, notes=None):
+    return quick_actions.notify_customer_for_collection(
+        ticket_name, notes=notes
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def hand_over_product(ticket_name, notes=None):
+    return quick_actions.hand_over_product(
+        ticket_name, notes=notes
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def collect_old_unit(ticket_name, serial_no=None, notes=None):
+    return quick_actions.collect_old_unit(
+        ticket_name, serial_no=serial_no, notes=notes
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def dispatch_new_unit(ticket_name, new_serial_no=None, notes=None):
+    return quick_actions.dispatch_new_unit(
+        ticket_name, new_serial_no=new_serial_no, notes=notes
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def return_old_unit_to_brand(ticket_name, notes=None):
+    return quick_actions.return_old_unit_to_brand(
+        ticket_name, notes=notes
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def record_brand_reimbursement(ticket_name, amount=None, notes=None):
+    return quick_actions.record_brand_reimbursement(
+        ticket_name, amount=amount, notes=notes
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def verify_return_reason(ticket_name, reason=None, notes=None):
+    return quick_actions.verify_return_reason(
+        ticket_name, reason=reason, notes=notes
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def notify_brand_for_return(ticket_name, notes=None):
+    return quick_actions.notify_brand_for_return(
+        ticket_name, notes=notes
+    )
+
+
+@frappe.whitelist(methods=["POST"])
+def block_supplier_payment(block_name, reason=None):
+	_MANAGER_ROLES = {"System Manager", "Lavanya Manager", "Lavanya Service Coordinator"}
+	if not set(frappe.get_roles(frappe.session.user)).intersection(_MANAGER_ROLES):
+		frappe.throw("Not permitted.", frappe.PermissionError)
+	block = frappe.get_doc("Supplier Payment Block", block_name)
+	if block.block_status != "Pending Review":
+		frappe.throw("Block must be in 'Pending Review' status to activate.")
+	block.block_status = "Active"
+	block.blocked_at = frappe.utils.now_datetime()
+	block.blocked_by = frappe.session.user
+	if reason:
+		block.block_reason = reason
+	block.save(ignore_permissions=True)
+	return {"status": "ok", "block_name": block_name}
+
+
+@frappe.whitelist(methods=["POST"])
+def release_supplier_block(block_name, reason=None):
+	_MANAGER_ROLES = {"System Manager", "Lavanya Manager", "Lavanya Service Coordinator"}
+	if not set(frappe.get_roles(frappe.session.user)).intersection(_MANAGER_ROLES):
+		frappe.throw("Not permitted.", frappe.PermissionError)
+	block = frappe.get_doc("Supplier Payment Block", block_name)
+	if block.block_status != "Active":
+		frappe.throw("Block must be 'Active' to release.")
+	block.block_status = "Released"
+	block.released_at = frappe.utils.now_datetime()
+	if reason:
+		block.release_reason = reason
+	block.save(ignore_permissions=True)
+	return {"status": "ok", "block_name": block_name}
+
+
 @frappe.whitelist()
 def get_current_user_roles():
     roles = frappe.get_roles(frappe.session.user)

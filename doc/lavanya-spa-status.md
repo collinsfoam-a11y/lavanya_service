@@ -10,7 +10,7 @@ Console" design realized on the frappe-ui theme). Covers **what's done**, **what
 pending**, **how to build each pending item**, and **how to verify** — including a
 reproducible authenticated-screenshot harness.
 
-Branch: `feature/phase-2-frappe-ui-scaffold`
+Branch: `safety/h5-worktree-classification` (merge target: `feature/phase-2-frappe-ui-scaffold`)
 Site (dev): `lavanya-dev.localhost` (container `devcontainer-example-frappe-1`, webserver port `8001`, published to host)
 
 ---
@@ -49,6 +49,23 @@ All on the frappe-ui theme base. Newest first.
 
 | Commit | What | Verified |
 |---|---|---|
+| _(uncommitted, H5)_ | **H5 — Operational Masters + Service Data Foundation**: added customer-owned product and warranty-history DocTypes, controlled proof categories, master-data extensions for brands/service centers/technicians, richer appointment links/status transitions, customer product history APIs, and master suggestion APIs. Existing appointment endpoint now delegates to the H5 API while preserving free-text technician compatibility. | `py_compile` PASS; `lavanya_service.tests.h5_operational_masters.run` 13/13; `theme_settings.run` 29/29; `stitch_console_spa.run` PASS; `p2_tests.run` 18/18; `today_work.run` 23/24 with TW-015 pre-existing; SPA build PASS. |
+| _(uncommitted, H4)_ | **H4 — Final UI/UX polish + interaction regression layer**: added shared `LavTicketCard`, action-first Ticket Detail top stack, explicit closure guard language, Tickets saved filters + mobile cards, Field Mode recent work + sticky safe quick actions, Reports safety-state cards, Settings dirty-state/sticky save bar, AppShell compact mobile nav, and H4 docs. | `node node_modules/vite/bin/vite.js build` PASS; `lavanya_service.tests.theme_settings.run` 29/29; `lavanya_service.tests.stitch_console_spa.run` PASS on sequential rerun; `lavanya_service.tests.p2_tests.run` 18/18; `lavanya_service.tests.today_work.run` 23/24 (TW-015 pre-existing). |
+| `5c00fa9` | **H3B — Tickets/Reports Modernisation + Mobile Field Mode**: H2/H3 foundation plus H3 reusable ticket components (`LavWorkflowTimeline`, `LavCustomerJourneyCard`, `LavFollowupQualityBadge`, `followup-quality.js`), integration into `TicketDetail.vue`, shared-component modernization of `TodayWork.vue`, `Tickets.vue`, `Reports.vue` (8 tabs), manager-only editable `Settings.vue` with save/reset, `save_lavanya_service_settings`/`reset_lavanya_service_settings`/`can_manage_lavanya_settings` APIs, `FieldMode.vue` mobile counter page, theme/settings tests extended to 23 checks. | `node node_modules/vite/bin/vite.js build` PASS; `lavanya_service.tests.theme_settings.run` 23/23; `lavanya_service.tests.stitch_console_spa.run` PASS; `lavanya_service.tests.p2_tests.run` 18/18; `lavanya_service.tests.today_work.run` 23/24 (TW-015 group-order mismatch pre-existing) |
+| _(committed, P2.4 review)_ | **P2.4 ERPNext safe integration scaffold**: reviewed the parallel-agent commit (`35c387c`); verified disabled-by-default settings, read-only preview APIs, no ERPNext imports, no write-side document creation, and 14/14 scaffold tests passing. Fixed changelog and SPA status gaps. | `lavanya_service.tests.p2_erp_scaffold_tests.run` 14 pass / 0 fail; `node node_modules/vite/bin/vite.js build` pass |
+| _(committed, P2.2 closure)_ | **P2.2 notification templates + dry-run queue**: audited existing notification implementation, fixed screenshot naming to `01-` … `08-`, hardened `p2_notification_tests.py` cleanup (`_purge_stale()` + disabled welcome email for test agent), removed dead `assert_no_live_send()` in `api/notifications.py`. Verified 15 templates, dry-run queue, preview safety, approval/cancel/skip workflows, no live send, no credentials, no ERP/accounting. P2.2 closed. | `bench --site lavanya-dev.localhost migrate`; `lavanya_service.tests.p2_notification_tests.run` 10 pass / 0 fail; `lavanya_service.tests.p2_tests.run` 18 pass / 0 fail; `node node_modules/vite/bin/vite.js build` pass |
+| _(committed, P2.1 closure)_ | **P2.1 supplier penalty backend/docs verification**: advisory penalty DocTypes/APIs/scheduler documented; `p2_tests.py` extended to cover summary/list/detail APIs, approval narration, waiver reason/zeroing, rejection reason/status; P2.1 rules/report/defects docs corrected to state no ERP posting, no accounting entry, no WhatsApp/SMS. Frontend detail/narration modals implemented in `Reports.vue` using `LavModal`; final screenshot set captured. P2.1 closed. | `bench --site lavanya-dev.localhost migrate`; `lavanya_service.tests.p2_tests.run` 18 pass / 0 fail; `node node_modules/vite/bin/vite.js build` pass |
+| _(uncommitted, 2026-06-19 pass 1)_ | **UI/UX polish + code dedup**: page title → "Lavanya Service Console"; 404 catch-all route (`NotFound.vue`); global error boundary; shared `@/utils` module (14 duplicated helpers consolidated); Escape key closes TicketDetail; Vue `<Transition>` drawer animation; customer lookup NewTicket messages; fix unterminated string bug in `TicketDetail.vue`. | Vite build |
+| _(uncommitted, pass 2)_ | **UI/UX (8 items)**: autofocus (search, NewTicket); global `:focus-visible` ring; Escape on TicketDetail; confirm-clear on NewTicket; hover-only Open buttons; Ctrl+Enter submit note; `prefers-reduced-motion`; logout confirmation. | Vite build |
+| _(uncommitted, pass 3)_ | **UI/UX (~15 items)**: skeleton shimmer loading (TodayWork + Tickets); collapsible filters (TodayWork); toast system (`utils/toast.js` + AppShell container, wired to actions/notes/creation/errors); danger-action confirm; empty-state CTA (Tickets); filtered-count on TodayWork; option-select loading overlay (NewTicket); infinite scroll via IntersectionObserver (Tickets); debounced auto-search; keyboard-a11y metrics. | Vite build |
+| _(uncommitted, pass 4)_ | **Column sorting**: Tickets table now has sortable columns (Ticket#, Customer, Status, Product, SLA, Follow-up) with asc/desc toggle indicators. **Keyboard nav shortcuts**: global `g`+`h`/`g`+`t`/`g`+`n`/`g`+`r` for page navigation + `?` toggle help overlay. **Sticky section nav in TicketDetail**: horizontal nav bar (Stage / Reminder / Customer / Product / Workflow / Custody / Follow-ups / Activity / Actions) with smooth-scroll anchors. | Vite build; browser screenshots all 5 routes OK |
+| _(latest)_ | **Reminder Engine Step 5 — Reminder Intelligence UI** (read-only): Today's Work gains a 5-card intelligence strip (Promise Breach / Escalated / Overdue / Due Soon / Customer Update Due — click to filter, toggle off to clear); expanded filter bar (+ Brand / Product / Next Action / "Update due"); urgency-first ordering within each bucket (Promise Breach → Owner → Manager → Overdue → Due Soon); per-row Escalation (Manager/Owner) + "Update due" chips (uses richer `computed_escalation_level` with Sprint-2 fallback). Drawer gets a compact **Reminder Intelligence** section (rule applied, due status, escalation, promise + breach reason, next/computed follow-up with `manual` badge, due-soon/stage-due, update-due) — blank-safe. `get_ticket_detail` now returns a `reminder` dict (`_reminder_intelligence`, wrapped/blank-safe). No AI/messages/business modules. | `stitch_console_spa` (+reminder-dict assertion) / today_work(24) / reminder_engine(21) / reminder_refresh(14) / stage_layer green; SPA rebuilt; **browser-verified** (5 intel cards, Overdue filter, drawer RI section, no JS errors) |
+| _(prev)_ | **Reminder Engine Step 4 — Hourly Scheduler Refresh + Batching** (`tasks/reminder_refresh.py`): persists the Step-3 computed state so Today's Work / reports / dashboards don't recompute live. `refresh_active_ticket_reminders(batch_size=50, max_tickets=500, dry_run=False, now=None)` wired to `scheduler_events.hourly` (merged, not replacing the existing `daily`). Active filter excludes Closed/Resolved/Cancelled/Spam/Archived; `get_active_ticket_names(limit, offset)`; batched with commit-per-batch; per-ticket failures logged (`frappe.log_error`) without aborting. Persists `stage_due_at`/`pre_overdue_alert_at` (only when computed — never wipes), `overdue_status`, `escalation_level`, `customer_promise_status`. **Idempotent**: storage no-ops identical writes, manual `next_follow_up_date` never touched, and a `[Customer Promise Breach]` Comment + `promise_breach_reason` written **once** on the Pending→Breached transition (transition-guard + existing-comment guard). No AI / messages / closures. | `tests/reminder_refresh.py` 14/14 (active-only, closed-ignored, idempotent-refetch, manual-preserve, stage-fields-persist, Pending→Breached, breach-comment-once incl. stale-row, dry-run-no-write, max cap); full sweep green; **live: 2 real runs idempotent** (run1 changed 16, run2 changed 0, 0 breaches/errors); hourly hook registered |
+| _(prev)_ | **Reminder Engine Step 3 — Rule Resolution Engine** (`reminder_engine.py`): rule-first, **compute-only, non-destructive** brain. `resolve_reminder_rule` (specificity-scored: brand 20 / stage 20 / product 15 / ticket-type 15 / flow 10 / warranty-route 10 / pending-reason 10 / priority 10; ranked priority→specificity→modified) + `calculate_next_followup` (manual `next_follow_up_date` preserved unless `force`) / `calculate_due_soon_at` / `calculate_stage_due_at` (None when no stage SLA → old tickets fall back to `next_follow_up_date`) / `derive_escalation_level` (overdue-age + repeat/promise-breach/product-at-store/spare bumps) / `derive_customer_update_due` / `refresh_ticket_reminder_state` (save=False default; never overwrites manual follow-up). Read-only `get_reminder_state` API. Today's Work payload gains additive `reminder_rule_applied`/`computed_*`/`customer_update_due` (in-memory, cached rules; classification unchanged). Safe hardcoded fallback when no rule. No AI, no messages, no closures, no writes by default. | `tests/reminder_engine.py` 21/21 (priority, specificity, fallback, disabled, manual-preserve, due-soon<stage-due, escalation-by-age, promise bump, update-due, old-ticket fallback); stage_layer/today_work(24)/stitch_console_spa green; live `get_reminder_state(0014)` + Today's Work payload verified |
+| _(prev)_ | **Reminder Engine Step 2 — Customer-promise tracking**: `customer_promised_update_at` / `customer_promise_status` / `promise_breach_reason` fields (programmatic); `stage_rules.compute_promise_status` (Pending→Breached once the promised time passes unless Kept); `set_customer_promise` write-scoped API (logs a `[Customer Informed]` Comment — no new activity table); promise surfaced in the drawer Service Stage section + "Set Customer Promise" quick action; Today's Work gains a promise filter + per-row "Promise breach" chip; `get_customer_promise_breach_report` + `promise_breach` report-catalog entry. Live compute overrides stored status everywhere. | `compute_promise_status` 4 cases (past+Pending→Breached, past+Kept→Kept, future→Pending, blank→None) + breach report run; `stage_layer`/`today_work` (24)/`stitch_console_spa` sweep green; SPA rebuilt |
+| `cf24432` | **Reminder Engine Step 1 — plan + skeleton**: approved `docs/reminder_engine_implementation_plan.md` (rule-first, AI-advisory-only) + `Lavanya Reminder Rule` config DocType created programmatically (22 fields, resolution-priority design). No engine wired yet — config foundation only. | DocType inserts; hooks wired; no behavior change |
+| `c3d5d88` | **Delta Sprint 2**: surface stage fields in the drawer (read "Service Stage" section, blank-safe); Today's Work flow/stage/due/escalation filter bar + per-row Due-status chip; Due-Soon from `stage_due_at`/`pre_overdue_alert_at` with **fallback** to `next_follow_up_date` for old tickets; escalation mapped to `escalation_level` (filtering only — existing escalation report/notify untouched, no new activity table). | `tests/stage_layer.py` + sweep green; browser screenshots |
+| _(prev)_ | **Delta Sprint 1** (per `docs/spa_alignment_delta_implementation_plan.md`): stage layer on top of the SPA — `service_flow_type` / `current_service_stage` / `next_action` (+ stage/SLA/escalation/customer-informed fields) created **programmatically** (not via the shared fixture), `stage_rules.py` source-of-truth, default-stage assignment on new tickets, "Stage Missing" cleanup report. Status / Today's Work / Comment-activity unchanged. | fields created; ticket_type→flow maps; defaults populate; test sweep green |
 | `c516fcd` | **Complete ticket lifecycle**: custody moves (Send to SC / Returned from SC / Delivered), Reopen, repeat-complaint detect+link banner, and New Ticket customer auto-fill by mobile — all reusing existing backends. | full custody chain create→delivered runs as uat.coordinator; SPA tests pass |
 | _(prev)_ | **In-console New Ticket screen** (`/new-ticket`) replacing the external link; `create_ticket` + `get_new_ticket_options` (staff actor, reuses QR intake validation). | create_ticket works as uat.frontdesk (0026); screen renders |
 | `9161ede` | **Critical fix**: `/frontend` served the literal `{{ csrf_token }}` placeholder → every POST 400'd for non-Administrator users (Admin bypasses CSRF, masking it). Controller now injects `frappe.sessions.get_csrf_token()`. | verified as uat.coordinator: real token, action returns 200; source-guard test added |
@@ -95,12 +112,38 @@ Stitch designs exist for 19 screens; 3 + the Ticket drawer are built. Remaining
 | P8 | Open a PR for the branch | Process | — |
 | P9 | Playwright smoke test for `/frontend` routes (assert render + data load) — the API tests landed in `3398545`, this UI half is still open | Test | reuse §5d session harness |
 | P10 | CI: build the SPA + run the test modules on PR | Process | — |
+| P11 | Helpdesk 1.26.1 scratch upgrade and native capability acceptance matrix | Platform | No custom backend until a native gap is proven |
+| P12 | Production P0 regression suite: receipt visibility and permission boundaries | Test/fix | Existing APIs and DocTypes |
+
+### H2/H3/H4 remaining work
+| # | Item | Type | Backend needed? |
+|---|---|---|---|
+| H2/H3-1 | Apply shared components to Penalty/Notification tabs in Reports (DONE) | Refactor | No |
+| H2-5 | Mobile field mode page (DONE) | New page | Reuse existing endpoints |
+| H2-7 | Theme + layout screenshot set under `doc/screenshots/h2_ui_wiring/themes/` | Docs | No |
+| H3-2 | Capture H3 screenshots (workflow timeline, journey card, quality badge, editable settings, Tickets/Reports modernization, Field Mode) | Docs | No |
+| H4-1 | Capture H4 screenshot set under `doc/screenshots/h4_uiux_upgrade/` | Docs | No |
+| H4-2 | Manual visual review for Light/Dark/Blue/Green/High Contrast/Compact Counter Mode | QA | No |
+| P2 | Manager / Coordinator dashboards as SPA pages | New pages | Exists: `api/manager_dashboard.py`, `coordinator_dashboard.py` |
+| P3 | Role work-centers (Agent "My Work", Front Desk "Work Center") | New pages | Reuse `today_work.get_today_work` (role-aware) |
+| P4 | Front Desk: New Ticket / Create Receipt as SPA | New pages | `workflow_actions.create_product_receipt` exists |
+| P5 | Product Custody Detail / Ready-for-Pickup views | New pages | `product_receipt_actions.py` |
+| P6 | Role-aware Quick Action buttons (hide actions the user can't run) | Enhancement | `workflow_actions.get_current_user_roles` |
+| P7 | Today's Work: table vs. bucket toggle (Stitch shows a sortable table w/ owner column) | Enhancement | add owner/`_assign` to `today_work` payload |
+| P8 | Open a PR for the branch | Process | — |
+| P9 | Playwright smoke test for `/frontend` routes (assert render + data load) | Test | reuse §5d session harness |
+| P10 | CI: build the SPA + run the test modules on PR | Process | — |
+| P11 | Helpdesk 1.26.1 scratch upgrade and native capability acceptance matrix | Platform | No custom backend until a native gap is proven |
+| P12 | Production P0 regression suite: receipt visibility and permission boundaries | Test/fix | Existing APIs and DocTypes |
 
 ### Known open items / cleanup
 - Dev-test data on `lavanya-dev`: ticket **0021** left "In Progress", a note on **0014** (from smoke tests) — delete via Desk if desired.
 - Scratch screenshot tooling at `D:\lav_shots` (outside repo) — safe to delete.
 - Built assets under `public/frontend/assets/` are **untracked**; only the serve-page HTML is committed (build regenerates assets on deploy). Decide whether to track them for zero-build deploys.
-- `lav-*` semantic classes still hardcode token hex; intentional (kept), but could move to `@apply` if desired.
+- `lav-*` semantic classes now use CSS custom properties (`var(--lav-*)`) so they respond to the runtime theme engine.
+- `Front Desk` / `My Work` / `Manager Dashboard` SPA pages still pending (P2–P4). 404 page, error boundary, shared utils, Escape key, Transition animation, autofocus, focus-visible, confirm-clear, multi-pass UI/UX batch now done (+lots of goodness). Duplicated helpers (+120 lines) consolidated to `src/utils/index.js`; toast system at `src/utils/toast.js`.
+- Customer lookup on NewTicket now distinguishes "not found" (amber) from "network error" (red) instead of silent failure.
+- **Skeleton placeholders** are basic blocks; could be refined per-shape (metric vs row vs text). **Toast** uses raw DOM; consider frappe-ui's built-in toast if available. **Column sorting** on Tickets table not yet implemented.
 
 ---
 
@@ -214,3 +257,52 @@ This method caught the empty-Tickets bug (`cc849fa`) that build/serve checks mis
 6. Commit **only own files** (never `git add -A`; a parallel agent also writes here —
    avoid `setup/`, `api/coordinator_dashboard.py`, `api/manager_dashboard.py`,
    `fixtures/client_script.json`, `page/*dashboard/`, `utils/add_client_script.py`).
+
+---
+
+## 7. H5A–H5F Current State (2026-06-21)
+
+### H5 stack summary
+
+| Phase | Commit | Description |
+|---|---|---|
+| H5A | `6f54d2e` | Theme tokens → CSS custom properties, duplicate handler removed, Field Mode fixes |
+| H5B | `f066728` | Operational masters wired into New Ticket and Ticket Detail |
+| H5C | `394f320` | Technician assignments, appointment flow, custody guard, proof categories |
+| H5D | `87ec6dd` | Restored 10 service record DocTypes + 2 advisory scheduler tasks |
+| H5E | `37f91a4` | Linked service record cards in Ticket Detail UI |
+
+### SPA pages (complete)
+
+- `/` — Today's Work (15 metric groups, 6-tier filters, reminder intel chips)
+- `/tickets` — Tickets list (search, sort, 8 saved filters, mobile cards, infinite scroll)
+- `/new-ticket` — New Ticket (customer lookup, brand metadata, previous product quick-select)
+- `/reports` — Reports Center (8 tabs: Overview, Brand Delay, Supplier Control, Follow-up Quality, Penalty, Notifications, Aging, Reports Catalog)
+- `/settings` — Settings (theme flags, UI flags, safety locks, manager/read-only mode, dirty-state save)
+- `/field` — Field Mode (phone-first search, critical work grid, recent tickets, safe quick actions)
+
+### Component library (complete)
+
+18 components: LavCard, LavSectionHeader, LavBadge, LavChip, LavStatCard, LavActionBar, LavEmptyState, LavLoadingState, LavSafetyLockPanel, LavThemeToggle, LavWorkflowTimeline, LavCustomerJourneyCard, LavFollowupQualityBadge, LavTicketCard, LavConfirm, LavModal, SlaBadge, AppShell
+
+### Theme system (complete)
+
+6 themes: lavanya-light, lavanya-dark, lavanya-blue, lavanya-green, high-contrast, compact-counter
+Zero `COLORS.*` in Vue components — all migrated to CSS custom properties.
+
+### Safety state (confirmed)
+
+- 0 native confirm/alert/prompt in frontend
+- 0 live WhatsApp/SMS send paths
+- 0 ERP posting paths active
+- 0 penalty application paths active
+- 0 automatic closure paths
+- Closure guard active with customer confirmation requirement
+- Manager-only settings enforced
+
+### Known gaps
+
+- TW-015 group-order mismatch (pre-existing, documented)
+- Appointment Confirm/Miss/Visited backend handlers not yet built
+- File upload for proofs not yet implemented
+- SPA build requires Windows host `node_modules`

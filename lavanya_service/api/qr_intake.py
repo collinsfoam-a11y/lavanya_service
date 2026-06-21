@@ -35,6 +35,7 @@ SAFE_TICKET_TYPES = [
     "Customer Complaint - Site",
     "Customer Product at Store",
     "Installation / Demo",
+    "Replacement / DOA",
 ]
 
 DEFAULT_TICKET_TYPE = "Customer Complaint - Site"

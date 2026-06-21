@@ -105,7 +105,12 @@ Actions** on the right.
 
 ### What's on the left
 
-- **Header** — ticket number, status, priority, and the SLA badge.
+- **Header** — ticket number, status, priority, the SLA badge, and a **Message on
+  WhatsApp** button (opens WhatsApp with the customer's number and a ready-made
+  message for the ticket's current stage — you just press send; no setup needed).
+- **Follow-up history** — when service-centre follow-ups have been logged, a
+  **Follow-up history** section lists each attempt with its outcome and shows the
+  total count, so repeated "customer not reachable" attempts are obvious.
 - **Customer / Product / Workflow / Product Custody** — the key details at a glance.
 - **Activity** — the ticket's history, newest first:
   - 🔵 **Notes** you and colleagues add.
@@ -125,6 +130,7 @@ you'll get a clear message naming who can.
 | **Need Invoice** | Asks the customer for the invoice; moves to *Waiting on Customer*. | Manager, Coordinator, Agent |
 | **Follow Up Service Center** | Logs a service-centre follow-up; sets the next state from the result. | Manager, Coordinator, Agent |
 | **Waiting for Part** | Marks the ticket held for a part/approval. | Manager, Coordinator, Agent |
+| **Schedule Appointment** | Books a site visit — date & time + technician + notes. The upcoming appointment then shows in the ticket's Workflow details. | Any staff with ticket access |
 | **Create Product Receipt** | Records a product taken into store custody (for *Customer Product at Store* tickets). | Manager, Coordinator, Front Desk |
 | **Mark Ready for Pickup** | Marks the repaired product ready for the customer. | Manager, Coordinator, Front Desk |
 | **Customer Confirmed** | Records customer confirmation and closes the ticket. | Manager, Coordinator |

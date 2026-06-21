@@ -1,9 +1,46 @@
 import frappe
 import os
 
+CREATED_TICKETS = []
+
+
+def _cleanup():
+    frappe.set_user("Administrator")
+    for name in CREATED_TICKETS:
+        try:
+            frappe.delete_doc("HD Ticket", name, force=True, ignore_permissions=True)
+        except Exception:
+            pass
+    CREATED_TICKETS.clear()
+
+
 def run():
     print("Running Frappe UI Console Phase 2-B Tests...")
+    try:
+        _run_tests()
+    finally:
+        _cleanup()
+    print("✅ Frappe UI Console Phase 2-B tests passed")
 
+
+def _ensure_ticket():
+    tickets = frappe.get_all("HD Ticket", limit=1)
+    if tickets:
+        return tickets[0].name
+    frappe.set_user("Administrator")
+    cust = frappe.get_all("HD Customer", limit=1, pluck="name")
+    t = frappe.new_doc("HD Ticket")
+    t.subject = "Auto-created test ticket for frappe_ui_console"
+    t.ticket_type = "Customer Complaint - Site"
+    t.raised_by = "test@example.com"
+    if cust:
+        t.customer = cust[0]
+    t.insert(ignore_permissions=True)
+    CREATED_TICKETS.append(t.name)
+    return t.name
+
+
+def _run_tests():
     app_path = frappe.get_app_path("lavanya_service")
     frontend_path = os.path.join(os.path.dirname(app_path), "frontend")
     
@@ -21,7 +58,7 @@ def run():
         css_content = f.read()
     assert ".lav-shell" in css_content and ".lav-sidebar" in css_content, "Stable layout classes missing"
 
-    # 4. Today’s Work screen source exists
+    # 4. Today's Work screen source exists
     today_work = os.path.join(frontend_path, "src", "pages", "TodayWork.vue")
     assert os.path.exists(today_work), "TodayWork.vue missing"
 
@@ -70,29 +107,23 @@ def run():
     assert "insert(" not in detail_content, "Write API calls found in TicketDetail"
     assert "save(" not in detail_content, "Write API calls found in TicketDetail"
 
-    # 7. Role visibility map is implied by the backend checks from other files, but we can check if it exists conceptually or by testing the API directly
-    
     # 8. API Tests
     api_path = "lavanya_service.api.stitch_console.get_ticket_detail"
-    
-    # Need a ticket to test with
-    tickets = frappe.get_all("HD Ticket", limit=1)
-    if tickets:
-        ticket_id = tickets[0].name
+    ticket_id = _ensure_ticket()
         
-        # 12. get_ticket_detail rejects Guest
-        frappe.set_user("Guest")
-        try:
-            frappe.call(api_path, ticket_id=ticket_id)
-            assert False, "Guest could read ticket detail"
-        except frappe.PermissionError:
-            pass
-            
-        # Manager role test
+    # 12. get_ticket_detail rejects Guest
+    frappe.set_user("Guest")
+    try:
+        frappe.call(api_path, ticket_id=ticket_id)
+        assert False, "Guest could read ticket detail"
+    except frappe.PermissionError:
+        pass
+        
+    # Manager role test
+    if frappe.db.exists("User", "uat.manager@lavanya.local"):
         frappe.set_user("uat.manager@lavanya.local")
         try:
             res = frappe.call(api_path, ticket_id=ticket_id)
-            # 11. Returns only allowed safe fields
             assert "name" in res, "Missing name field"
             assert "customer" in res, "Missing customer field"
             assert "product" in res, "Missing product field"
@@ -100,17 +131,18 @@ def run():
             assert "receipt" in res, "Missing receipt field"
             assert "assigned_to" in res, "Missing assigned_to field"
         except frappe.PermissionError:
-            pass # Maybe this ticket isn't readable by manager, skip if so
-            
-        # 13. Handles missing ticket safely
-        try:
-            frappe.call(api_path, ticket_id="INVALID_TICKET_12345")
-            assert False, "Should fail on missing ticket"
-        except frappe.DoesNotExistError:
             pass
+    else:
+        print("  ⚠️ uat.manager@lavanya.local not found; skipping manager role API test")
+        
+    # 13. Handles missing ticket safely
+    try:
+        frappe.call(api_path, ticket_id="INVALID_TICKET_12345")
+        assert False, "Should fail on missing ticket"
+    except frappe.DoesNotExistError:
+        pass
 
-        # Reset user
-        frappe.set_user("Administrator")
+    frappe.set_user("Administrator")
 
     # 9. No forbidden fixtures
     fixtures_dir = os.path.join(os.path.dirname(app_path), "fixtures")
@@ -134,5 +166,3 @@ def run():
     for fix in forbidden:
         fix_path = os.path.join(fixtures_dir, fix)
         assert not os.path.exists(fix_path), f"Forbidden fixture {fix} exists"
-
-    print("✅ Frappe UI Console Phase 2-B tests passed")

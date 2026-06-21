@@ -9,7 +9,7 @@
     <!-- Sidebar -->
     <aside class="lav-sidebar">
       <div class="px-gutter mb-8 flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-primary text-on-primary flex items-center justify-center shrink-0">
+        <div class="w-10 h-10 rounded-lg bg-primary text-on-primary flex items-center justify-center shrink-0" aria-hidden="true">
           <span class="material-symbols-outlined fill">storefront</span>
         </div>
         <div class="leading-tight">
@@ -27,8 +27,9 @@
           :href="item.external ? item.to : undefined"
           :target="item.external ? '_blank' : undefined"
           class="flex items-center gap-3 px-3 py-2 rounded-lg font-label-md text-body-md transition-colors
-                 border-l-4 border-transparent text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
-          :class="isActive(item) ? '!border-primary bg-surface-container-low !text-primary font-bold' : ''"
+                 border-l-4 border-transparent text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary"
+          :class="isActive(item) ? '!border-primary bg-surface-container-low !text-primary font-bold shadow-sm' : ''"
+          :title="item.label"
         >
           <span class="material-symbols-outlined" :class="isActive(item) ? 'fill' : ''">{{ item.icon }}</span>
           <span class="truncate">{{ item.label }}</span>
@@ -36,23 +37,27 @@
       </nav>
 
       <div class="px-2 mt-2">
-        <a
-          :href="logoutUrl"
-          class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
+        <button
+          @click="confirmLogout"
+          class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
+          aria-label="Logout"
         >
-          <span class="material-symbols-outlined">logout</span>
+          <span class="material-symbols-outlined" aria-hidden="true">logout</span>
           <span class="font-label-md text-body-md">Logout</span>
-        </a>
+        </button>
       </div>
     </aside>
 
     <!-- Main -->
     <main class="lav-main">
       <header class="lav-header">
-        <h2 class="font-headline-md text-headline-md font-bold text-primary md:hidden">Lavanya</h2>
-        <div class="hidden md:block font-body-md text-on-surface-variant">{{ headerTitle }}</div>
+        <div class="min-w-0">
+          <h2 class="font-headline-md text-headline-md font-bold text-primary truncate">{{ headerTitle }}</h2>
+          <p class="hidden sm:block font-label-md text-label-md text-on-surface-variant truncate">{{ headerSubtitle }}</p>
+        </div>
         <div class="flex items-center gap-3">
           <form
+            role="search"
             class="hidden sm:flex items-center gap-2 h-9 px-3 rounded-lg border border-outline-variant bg-surface-container-lowest focus-within:border-primary transition-colors"
             style="min-width: 240px"
             @submit.prevent="goSearch"
@@ -66,8 +71,10 @@
               aria-label="Search tickets"
             />
           </form>
-          <div class="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center shrink-0">
-            <span class="material-symbols-outlined">person</span>
+          <LavThemeToggle />
+          <div class="hidden sm:flex items-center gap-2 rounded-full bg-surface-container-low border border-outline-variant pl-2 pr-3 h-9 text-on-surface-variant">
+            <span class="material-symbols-outlined" aria-hidden="true">person</span>
+            <span class="font-label-md text-label-md">Staff</span>
           </div>
         </div>
       </header>
@@ -77,16 +84,33 @@
       </div>
 
       <!-- Mobile bottom nav -->
-      <nav class="lav-mobile-nav">
+      <!-- Toast container -->
+      <div class="fixed top-4 right-4 z-[60] flex flex-col gap-2 pointer-events-none">
+        <div
+          v-for="t in toasts"
+          :key="t.id"
+          class="pointer-events-auto px-4 py-3 rounded-lg shadow-lg text-body-md font-body-md text-on-primary max-w-sm animate-in slide-in-from-right-2 fade-in duration-200"
+          :class="t.kind === 'error' ? 'bg-error' : 'bg-primary'"
+          @click="dismiss(t.id)"
+          role="alert"
+        >
+          {{ t.message }}
+        </div>
+      </div>
+
+      <LavConfirm />
+
+      <nav class="lav-mobile-nav" aria-label="Mobile navigation">
         <router-link
-          v-for="item in navItems.filter((i) => !i.external)"
+          v-for="item in mobileNavItems"
           :key="'m-' + item.label"
           :to="item.to"
-          class="flex flex-col items-center gap-0.5 px-2 py-1 text-on-surface-variant"
-          :class="isActive(item) ? '!text-primary' : ''"
+          class="flex flex-col items-center gap-0.5 px-2 py-1 text-on-surface-variant rounded-lg min-w-[56px]"
+          :class="isActive(item) ? '!text-primary bg-surface-container-low font-bold' : ''"
+          :aria-label="item.label"
         >
-          <span class="material-symbols-outlined" :class="isActive(item) ? 'fill' : ''">{{ item.icon }}</span>
-          <span class="font-label-md text-label-md">{{ item.label }}</span>
+          <span class="material-symbols-outlined" :class="isActive(item) ? 'fill' : ''" aria-hidden="true">{{ item.icon }}</span>
+          <span class="font-label-md text-label-md">{{ item.mobileLabel || item.label }}</span>
         </router-link>
       </nav>
     </main>
@@ -96,9 +120,15 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useToast } from '@/utils/toast'
+import { useConfirm } from '@/utils/confirm'
+import LavConfirm from '@/components/LavConfirm.vue'
+import LavThemeToggle from '@/components/LavThemeToggle.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { toasts, dismiss, show: showToast } = useToast()
+const { confirm } = useConfirm()
 const q = ref('')
 
 function goSearch() {
@@ -106,18 +136,37 @@ function goSearch() {
   router.push({ path: '/tickets', query: term ? { search: term } : {} })
 }
 
+// Keyboard shortcuts are handled centrally in App.vue (g+h, g+t, g+n, g+r, g+s, ?, Esc).
+// AppShell does not register its own document-level keydown listener.
+
 const navItems = [
-  { label: 'Today’s Work', icon: 'dashboard', to: '/' },
-  { label: 'Tickets', icon: 'confirmation_number', to: '/tickets' },
-  { label: 'Reports', icon: 'assessment', to: '/reports' },
-  { label: 'New Ticket', icon: 'add_box', to: '/new-ticket' },
+  { label: 'Today\'s Work', mobileLabel: 'Work', icon: 'dashboard', to: '/', subtitle: 'Critical, important, and normal follow-ups' },
+  { label: 'Tickets', mobileLabel: 'Tickets', icon: 'confirmation_number', to: '/tickets', subtitle: 'Search, filters, and ticket detail drawer' },
+  { label: 'Reports', mobileLabel: 'Reports', icon: 'assessment', to: '/reports', subtitle: 'Manager reports and safety previews' },
+  { label: 'Field Mode', mobileLabel: 'Field', icon: 'phone_iphone', to: '/field', subtitle: 'Counter-friendly phone lookup and quick work' },
+  { label: 'WhatsApp', mobileLabel: 'Chat', icon: 'chat', to: '/whatsapp', subtitle: 'Read-only inbox and draft outbound queue' },
+  { label: 'Customer 360', mobileLabel: 'Customer', icon: 'person_search', to: '/customer-360', subtitle: 'Customer profile, products, tickets, and CRM context' },
+  { label: 'New Ticket', mobileLabel: 'New', icon: 'add_box', to: '/new-ticket', subtitle: 'Register a customer complaint' },
+  { label: 'Settings', mobileLabel: 'Settings', icon: 'settings', to: '/settings', subtitle: 'Theme, safety locks, and feature flags' },
 ]
 
-const logoutUrl = '/api/method/logout'
+const mobileNavItems = computed(() => navItems.filter((i) => ['/', '/tickets', '/field', '/settings'].includes(i.to)))
+
+async function confirmLogout() {
+  const ok = await confirm('Are you sure you want to log out?', 'Logout')
+  if (ok) {
+    window.location.href = '/api/method/logout'
+  }
+}
 
 const headerTitle = computed(() => {
   const active = navItems.find((i) => !i.external && i.to === route.path)
   return active ? active.label : 'Service Console'
+})
+
+const headerSubtitle = computed(() => {
+  const active = navItems.find((i) => !i.external && i.to === route.path)
+  return active?.subtitle || 'Lavanya service follow-up command system'
 })
 
 const today = new Date().toLocaleDateString(undefined, {

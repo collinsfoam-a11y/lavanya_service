@@ -153,7 +153,47 @@ depends on them; do not guess:
 8. The earlier pasted "Business Requirement" / phasewise spec is **not stored in this
    repo**. If a requirement traces only to that chat, capture it here (with the
    source) before acting on it — otherwise it's an assumption.
+9. **ERPNext adoption and customer sync** — ERPNext is not installed in the current
+   bench. Confirm whether it will be installed, the source-of-truth field mapping,
+   duplicate matching keys, merge precedence, and permission propagation before
+   enabling two-way Customer / HD Customer synchronization.
+10. **Ticket naming pattern** — confirm whether the production identifier must encode
+    brand, store, year, or all three. Branch/store is not currently modelled, and the
+    exact uniqueness and rename policy is unresolved.
+11. **Frappe v16 migration timing** — confirm whether v16 is a pre-launch requirement
+    or a separate post-stabilization project. The current verified baseline is Frappe
+    15.110.0.
 
 > When you resolve an open question, **move it into the relevant section above with
 > its source**, and note it in the status doc. Keep this file the source of truth so
 > the next agent never has to assume.
+
+## 11. Phase 2 requirements supplied by the user on 2026-06-19
+
+Source: the user-provided **"Lavanya Service Development Agent Prompt (Phase 2)"**
+in the Codex thread dated 2026-06-19.
+
+The following are accepted product requirements:
+
+- Keep all Lavanya business logic in custom apps and never modify Frappe,
+  Helpdesk, or ERPNext core files.
+- Retain the Vue 3 / Frappe UI operator console because the standard Helpdesk UI
+  does not fit the front-desk workflow.
+- Prefer native Helpdesk capabilities when they satisfy the requirement; extend
+  them only for documented Lavanya gaps.
+- Provide administrator access to portal-first settings and ticket export.
+- Support bulk reply, saved replies, attachments, signatures, and selectable
+  outgoing mail accounts.
+- Provide role-appropriate dashboards for workload, pending work, response and
+  resolution time, SLA violations, and customer ratings.
+- Preserve reliable email threading using Message-ID, In-Reply-To, and References.
+- Surface knowledge-base engagement and production-quality loading/empty states.
+- Support dark mode consistently across native Helpdesk and the Lavanya SPA.
+- Add backend unit/integration coverage and Playwright browser coverage.
+- Deliver incrementally: security/data correctness first, native Helpdesk adoption
+  next, then dashboard/workflow polish and advanced metrics.
+
+Platform assumptions from the prompt are not automatically requirements. The
+current implementation plan therefore targets the verified Frappe v15 baseline,
+tests Helpdesk 1.26.1 on scratch/staging, keeps ERPNext synchronization conditional,
+and treats Frappe v16 as a separate migration decision.

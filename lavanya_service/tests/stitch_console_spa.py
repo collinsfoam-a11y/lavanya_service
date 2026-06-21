@@ -15,6 +15,7 @@ import os
 import frappe
 
 LIST_API = "lavanya_service.api.stitch_console.get_ticket_list"
+DETAIL_API = "lavanya_service.api.stitch_console.get_ticket_detail"
 ACTIVITY_API = "lavanya_service.api.stitch_console.get_ticket_activity"
 NOTE_API = "lavanya_service.api.stitch_console.add_ticket_note"
 CATALOG_API = "lavanya_service.api.manager_reports.get_report_catalog"
@@ -217,9 +218,30 @@ def _test_create_ticket():
     frappe.delete_doc("HD Ticket", name, force=True, ignore_permissions=True)
 
 
+def _test_ticket_detail_reminder():
+    """get_ticket_detail exposes a blank-safe Reminder Intelligence dict (Step 5)."""
+    print("  get_ticket_detail reminder…")
+    frappe.set_user("Administrator")
+    name = (frappe.get_all("HD Ticket", filters={"status": ["not in", ["Closed", "Cancelled"]]}, pluck="name", limit=1) or [None])[0]
+    if not name:
+        return
+    res = frappe.call(DETAIL_API, ticket_id=name)
+    assert isinstance(res, dict) and "reminder" in res, "get_ticket_detail missing 'reminder'"
+    rem = res["reminder"]
+    assert isinstance(rem, dict), "reminder should be a dict"
+    # Blank-safe: every advertised key is present (may be None), never raises.
+    for key in ("reminder_rule_applied", "overdue_status", "escalation_level",
+                "customer_promise_status", "customer_update_due", "manual_followup",
+                "computed_stage_due_at", "computed_due_soon_at"):
+        assert key in rem, f"reminder missing key {key}"
+    # stage dict must still be present (no regression).
+    assert "stage" in res, "get_ticket_detail missing 'stage'"
+
+
 def run():
     print("Running Stitch Console SPA endpoint tests…")
     _test_get_ticket_list()
+    _test_ticket_detail_reminder()
     _test_create_ticket()
     _test_activity_and_notes()
     _test_reports_catalog_and_drilldown()

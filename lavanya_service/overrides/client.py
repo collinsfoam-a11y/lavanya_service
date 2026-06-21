@@ -54,6 +54,17 @@ CLOSURE_CONTROL_FIELDS = {
 	"closure_date",
 }
 
+AI_ADVISORY_FIELDS = {
+	"ai_review_status",
+	"ai_suggested_next_action",
+	"ai_risk_reason",
+	"ai_manager_summary",
+	"ai_suggested_customer_message",
+	"ai_advisory_source",
+	"ai_last_reviewed_at",
+	"ai_reviewed_by",
+}
+
 SERVICE_WRITE_ROLES = {
 	"Lavanya Manager",
 	"Lavanya Helpdesk Agent",
@@ -106,6 +117,9 @@ def _current_roles():
 def _field_allowed(fieldname, roles):
 	if roles.intersection({"Administrator", "System Manager"}):
 		return True
+
+	if fieldname in AI_ADVISORY_FIELDS:
+		return True  # read-only advisory fields visible to all roles
 
 	if roles.intersection(FULL_FIELD_ROLES):
 		return fieldname in INTAKE_FIELDS | SERVICE_COORDINATION_FIELDS | CLOSURE_CONTROL_FIELDS

@@ -6,17 +6,18 @@
 -->
 <template>
   <AppShell>
-    <div class="mb-gutter flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h2 class="font-headline-lg text-headline-lg text-on-surface">Tickets</h2>
-        <p class="font-body-md text-on-surface-variant">Service complaints &amp; their current state</p>
-      </div>
-      <router-link
-        to="/new-ticket"
-        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary font-label-md text-body-md"
-      >
-        <span class="material-symbols-outlined">add</span> New Ticket
-      </router-link>
+    <div class="mb-gutter">
+      <LavSectionHeader title="Tickets" icon="confirmation_number">
+        <template #actions>
+          <router-link
+            to="/new-ticket"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary font-label-md text-body-md"
+          >
+            <span class="material-symbols-outlined">add</span> New Ticket
+          </router-link>
+        </template>
+      </LavSectionHeader>
+      <p class="font-body-md text-on-surface-variant -mt-2">Service complaints &amp; their current state</p>
     </div>
 
     <!-- Search -->
@@ -27,82 +28,147 @@
         type="search"
         placeholder="Search ticket #, subject, customer or phone…"
         class="lav-search__input"
-        @keyup.enter="reload"
       />
-      <button v-if="search" class="lav-search__clear" @click="search = ''; reload()">
-        <span class="material-symbols-outlined">close</span>
+      <button v-if="search" class="lav-search__clear" @click="search = ''; reload()" aria-label="Clear search">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
       </button>
     </div>
 
     <!-- Status filter chips -->
     <div class="lav-chips mb-gutter">
-      <button
+      <LavChip
         v-for="s in STATUSES"
         :key="s"
-        class="lav-chip"
-        :class="status === s ? 'lav-chip--active' : ''"
+        :active="status === s"
         @click="status = s; reload()"
-      >
-        {{ s }}
-      </button>
+      >{{ s }}</LavChip>
+    </div>
+
+    <div class="mb-gutter">
+      <div class="font-label-md text-label-md text-on-surface-variant mb-2">Saved filters</div>
+      <div class="lav-chips">
+        <LavChip
+          v-for="f in SAVED_FILTERS"
+          :key="f.key"
+          :active="quickFilter === f.key"
+          @click="quickFilter = quickFilter === f.key ? '' : f.key"
+        >{{ f.label }}</LavChip>
+      </div>
     </div>
 
     <!-- States -->
-    <div v-if="loading && tickets.length === 0" class="text-on-surface-variant font-body-md py-12 text-center">
-      Loading tickets…
-    </div>
-    <div v-else-if="error" class="text-error font-body-md py-12 text-center">
-      Could not load tickets. Check your access or contact the manager.
-    </div>
-    <div v-else-if="tickets.length === 0" class="py-16 text-center">
-      <div class="text-5xl mb-2">🔍</div>
-      <div class="text-on-surface-variant font-body-lg">No tickets match this view.</div>
-    </div>
+    <LavLoadingState v-if="loading && tickets.length === 0" :lines="8" />
+    <LavEmptyState
+      v-else-if="error"
+      icon="error"
+      title="Could not load tickets"
+      message="Check your access or contact the manager."
+      tone="error"
+    />
+    <LavEmptyState
+      v-else-if="displayedTickets.length === 0"
+      icon="search_off"
+      title="No tickets match this view"
+      message="Try clearing filters or searching by phone/ticket number."
+    >
+      <div class="mt-4 flex justify-center gap-3">
+        <button v-if="search || status !== 'All' || quickFilter" @click="search = ''; status = 'All'; quickFilter = ''; reload()" class="px-4 h-10 rounded-lg border border-outline-variant text-primary font-label-md hover:bg-surface-container-low">
+          Clear filters
+        </button>
+        <router-link to="/new-ticket" class="px-4 h-10 rounded-lg bg-primary text-on-primary font-label-md inline-flex items-center gap-1.5">
+          <span class="material-symbols-outlined" style="font-size:18px">add</span> New Ticket
+        </router-link>
+      </div>
+    </LavEmptyState>
 
     <!-- List -->
-    <div v-else class="lav-queue">
-      <ul>
-        <li
-          v-for="t in tickets"
-          :key="t.name"
-          class="lav-work-card cursor-pointer hover:bg-surface-container-low"
-          @click="selectedTicket = t.name"
-        >
-          <div class="flex-[2_1_220px] min-w-[200px]">
-            <span class="font-body-md font-semibold text-primary hover:underline">
-              {{ t.name }} · {{ t.subject || '(no subject)' }}
-            </span>
-            <div class="font-label-md text-label-md text-on-surface-variant mt-0.5">
-              {{ t.customer_name }}<template v-if="t.phone_1"> · {{ t.phone_1 }}</template>
-              <template v-if="product(t)"> · {{ product(t) }}</template>
-            </div>
-          </div>
-          <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="chip(t.status)">
-            {{ t.status }}
-          </span>
-          <SlaBadge :agreement-status="t.agreement_status" :response-by="t.response_by" :resolution-by="t.resolution_by" />
-          <div class="flex-1 min-w-[130px] font-label-md text-label-md text-on-surface-variant">
-            {{ t.pending_reason || '' }}
-          </div>
-          <div class="font-label-md text-label-md" :style="followStyle(t.next_follow_up_date)">
-            {{ followText(t.next_follow_up_date) }}
-          </div>
-          <button class="px-3 py-1 rounded border border-outline-variant text-primary font-label-md hover:bg-surface-container-low">
-            Open
-          </button>
-        </li>
-      </ul>
-    </div>
+    <template v-else>
+      <div class="md:hidden flex flex-col gap-3">
+        <LavTicketCard v-for="t in sortedTickets" :key="t.name" :ticket="t" @open="selectedTicket = $event" />
+      </div>
 
-    <!-- Load more -->
-    <div v-if="hasMore && !error" class="text-center py-6">
-      <button
-        class="px-5 py-2 rounded-lg border border-outline-variant text-primary font-label-md text-body-md hover:bg-surface-container-low"
-        :disabled="loading"
-        @click="loadMore"
-      >
-        {{ loading ? 'Loading…' : 'Load more' }}
-      </button>
+      <LavCard padding="none" class="lav-queue overflow-x-auto hidden md:block">
+        <table class="w-full" style="border-collapse:collapse">
+        <thead>
+          <tr class="text-left font-label-md text-label-md text-on-surface-variant border-b border-outline-variant">
+            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('name')" :aria-label="'Sort by ticket number' + (sortKey==='name' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='name' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
+              Ticket# <template v-if="sortKey==='name'"><span aria-hidden="true">{{ sortDir==='asc' ? '▲' : '▼' }}</span></template>
+            </th>
+            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('customer')" :aria-label="'Sort by customer' + (sortKey==='customer' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='customer' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
+              Customer <template v-if="sortKey==='customer'"><span aria-hidden="true">{{ sortDir==='asc' ? '▲' : '▼' }}</span></template>
+            </th>
+            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('status')" :aria-label="'Sort by status' + (sortKey==='status' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='status' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
+              Status <template v-if="sortKey==='status'"><span aria-hidden="true">{{ sortDir==='asc' ? '▲' : '▼' }}</span></template>
+            </th>
+            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('product')" :aria-label="'Sort by product' + (sortKey==='product' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='product' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
+              Product <template v-if="sortKey==='product'"><span aria-hidden="true">{{ sortDir==='asc' ? '▲' : '▼' }}</span></template>
+            </th>
+            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('overdue')" :aria-label="'Sort by SLA' + (sortKey==='overdue' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='overdue' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
+              SLA <template v-if="sortKey==='overdue'"><span aria-hidden="true">{{ sortDir==='asc' ? '▲' : '▼' }}</span></template>
+            </th>
+            <th class="px-4 py-3 cursor-pointer select-none hover:text-on-surface" @click="toggleSort('followup')" :aria-label="'Sort by follow-up date' + (sortKey==='followup' ? ', currently ' + sortDir : ', not sorted')" role="columnheader" :aria-sort="sortKey==='followup' ? (sortDir==='asc' ? 'ascending' : 'descending') : 'none'">
+              Follow-up <template v-if="sortKey==='followup'"><span aria-hidden="true">{{ sortDir==='asc' ? '▲' : '▼' }}</span></template>
+            </th>
+            <th class="px-4 py-3">Next Action</th>
+            <th class="px-4 py-3">Quality</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="t in sortedTickets"
+            :key="t.name"
+            class="group cursor-pointer hover:bg-surface-container-low border-b border-outline-variant/40"
+            @click="selectedTicket = t.name"
+            tabindex="0"
+            @keydown.enter="selectedTicket = t.name"
+          >
+            <td class="px-4 py-3">
+              <span class="font-body-md font-semibold text-primary">{{ t.name }}</span>
+              <div class="font-label-md text-label-md text-on-surface-variant">{{ t.subject || '(no subject)' }}</div>
+            </td>
+            <td class="px-4 py-3 font-body-md text-on-surface">
+              {{ t.customer_name }}
+              <div class="font-label-md text-label-md text-on-surface-variant">{{ t.phone_1 || '' }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md whitespace-nowrap" :style="chip(t.status)">{{ t.status }}</span>
+              <span v-if="t.customer_promise_status === 'Breached'" class="ml-1 px-2 py-0.5 rounded-full font-label-md text-label-md" :style="promiseChip('Breached')">Promise breach</span>
+            </td>
+            <td class="px-4 py-3 font-body-md text-on-surface">
+              <template v-if="product(t)">{{ product(t) }}</template>
+              <span v-if="t.overdue_status && t.overdue_status !== 'Not Due'" class="ml-1 px-2 py-0.5 rounded-full font-label-md text-label-md" :style="dueChip(t.overdue_status)">{{ t.overdue_status }}</span>
+              <div v-if="t.pending_reason" class="font-label-md text-label-md text-on-surface-variant">{{ t.pending_reason }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <SlaBadge :agreement-status="t.agreement_status" :response-by="t.response_by" :resolution-by="t.resolution_by" />
+              <span v-if="escLevel(t) && escLevel(t) !== 'None'" class="ml-1 px-2 py-0.5 rounded-full font-label-md text-label-md" :style="escChip(escLevel(t))">{{ escLevel(t) }}</span>
+            </td>
+            <td class="px-4 py-3 font-label-md text-label-md" :style="followStyle(t.next_follow_up_date)">
+              {{ followText(t.next_follow_up_date) }}
+              <span v-if="t.customer_update_due" class="ml-1 px-2 py-0.5 rounded-full font-label-md text-label-md" :style="promiseChip('Pending')">Update due</span>
+            </td>
+            <td class="px-4 py-3 font-body-md text-on-surface max-w-[180px]">
+              <div class="font-semibold truncate">{{ t.next_action || t.current_service_stage || 'Review ticket' }}</div>
+              <div class="font-label-md text-label-md text-on-surface-variant truncate">{{ t.customer_informed_status || t.customer_informed || 'Customer info pending' }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="qualityChip(qualityBadge(t))">{{ qualityBadge(t) }}</span>
+            </td>
+            <td class="px-4 py-3">
+              <button class="px-3 py-1 rounded border border-outline-variant text-primary font-label-md hover:bg-surface-container-low md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity" :aria-label="'Open ticket ' + t.name">
+                Open
+              </button>
+            </td>
+          </tr>
+        </tbody>
+        </table>
+      </LavCard>
+    </template>
+
+    <!-- Infinite scroll sentinel -->
+    <div v-if="hasMore && !error" ref="sentinel" class="text-center py-6">
+      <span v-if="loading" class="text-on-surface-variant font-body-md">Loading tickets…</span>
     </div>
 
     <!-- Ticket Detail Drawer -->
@@ -111,12 +177,19 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { call } from '@/api'
 import AppShell from '@/components/AppShell.vue'
 import TicketDetail from '@/components/TicketDetail.vue'
 import SlaBadge from '@/components/SlaBadge.vue'
+import LavSectionHeader from '@/components/LavSectionHeader.vue'
+import LavCard from '@/components/LavCard.vue'
+import LavChip from '@/components/LavChip.vue'
+import LavEmptyState from '@/components/LavEmptyState.vue'
+import LavLoadingState from '@/components/LavLoadingState.vue'
+import LavTicketCard from '@/components/LavTicketCard.vue'
+import { chip, dueChip, escChip, promiseChip, product, followText, followStyle, qualityBadge, qualityChip } from '@/utils'
 
 const route = useRoute()
 
@@ -141,16 +214,90 @@ const error = ref(false)
 const hasMore = ref(false)
 const search = ref(route.query.search || '')
 const status = ref('All')
+const quickFilter = ref('')
 const selectedTicket = ref(null)
+const sentinel = ref(null)
+const sortKey = ref('name')
+const sortDir = ref('desc')
 
-// Keep the list in sync when the header search (or any link) changes ?search=.
+const SAVED_FILTERS = [
+  { key: 'overdue', label: 'Overdue' },
+  { key: 'customer_not_informed', label: 'Customer Not Informed' },
+  { key: 'part_pending', label: 'Part Pending' },
+  { key: 'technician_call_pending', label: 'Tech Call Pending' },
+  { key: 'technician_visit_pending', label: 'Tech Visit Pending' },
+  { key: 'closure_pending', label: 'Closure Pending' },
+  { key: 'escalated', label: 'Escalated' },
+  { key: 'reopened', label: 'Reopened' },
+]
+
+const displayedTickets = computed(() => tickets.value.filter(matchesQuickFilter))
+
+const sortedTickets = computed(() => {
+  const arr = [...displayedTickets.value]
+  const k = sortKey.value
+  const dir = sortDir.value === 'asc' ? 1 : -1
+  arr.sort((a, b) => {
+    let va, vb
+    if (k === 'customer') { va = (a.customer_name || '').toLowerCase(); vb = (b.customer_name || '').toLowerCase() }
+    else if (k === 'status') { va = (a.status || ''); vb = (b.status || '') }
+    else if (k === 'product') { va = (product(a) || '').toLowerCase(); vb = (product(b) || '').toLowerCase() }
+    else if (k === 'overdue') { va = overdueWeight(a); vb = overdueWeight(b) }
+    else if (k === 'followup') { va = a.next_follow_up_date || ''; vb = b.next_follow_up_date || '' }
+    else { va = (a.name || ''); vb = (b.name || '') }
+    if (va < vb) return -1 * dir
+    if (va > vb) return 1 * dir
+    return 0
+  })
+  return arr
+})
+
+function matchesQuickFilter(t) {
+  if (!quickFilter.value) return true
+  const stage = `${t.current_service_stage || ''} ${t.followup_stage || ''} ${t.next_action || ''}`.toLowerCase()
+  const escalation = t.computed_escalation_level || t.escalation_level || 'None'
+  if (quickFilter.value === 'overdue') return t.overdue_status === 'Overdue'
+  if (quickFilter.value === 'customer_not_informed') return t.customer_update_due || ['Pending', '', null, undefined].includes(t.customer_informed_status || t.customer_informed)
+  if (quickFilter.value === 'part_pending') return stage.includes('part') || (t.pending_reason || '').toLowerCase().includes('part')
+  if (quickFilter.value === 'technician_call_pending') return stage.includes('technician') && stage.includes('call')
+  if (quickFilter.value === 'technician_visit_pending') return stage.includes('technician') && stage.includes('visit')
+  if (quickFilter.value === 'closure_pending') return stage.includes('closure') || stage.includes('customer confirmation')
+  if (quickFilter.value === 'escalated') return escalation && escalation !== 'None'
+  if (quickFilter.value === 'reopened') return (t.status || '').toLowerCase().includes('reopen')
+  return true
+}
+
+function toggleSort(key) {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortDir.value = 'asc'
+  }
+}
+
+function overdueWeight(t) {
+  const s = (t.overdue_status || '').toLowerCase()
+  if (s.includes('breach') || s === 'overdue') return 3
+  if (s.includes('due')) return 2
+  return 1
+}
+let observer = null
+
+// Debounced auto-search — fires 300ms after the user stops typing.
+let searchTimer
+watch(search, (val) => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => reload(), 300)
+})
+
+// Sync from header search (?search= query param).
 watch(
   () => route.query.search,
   (term) => {
     const next = term || ''
     if (next !== search.value) {
       search.value = next
-      reload()
     }
   },
 )
@@ -177,54 +324,28 @@ async function fetchPage(start) {
 }
 
 function reload() {
+  hasMore.value = true
   fetchPage(0)
 }
 
 function loadMore() {
-  fetchPage(tickets.value.length)
+  if (!loading.value && hasMore.value) fetchPage(tickets.value.length)
 }
+
+onMounted(() => {
+  observer = new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting) loadMore()
+  }, { rootMargin: '200px' })
+  nextTick(() => {
+    if (sentinel.value) observer.observe(sentinel.value)
+  })
+})
+onUnmounted(() => {
+  if (observer) observer.disconnect()
+})
 
 reload()
-
-// ── Stitch row helpers (shared with Today's Work) ──────────────────────────
-const STATUS_HUE = {
-  New: '#004ac6',
-  'Registration Pending': '#2563eb',
-  'Brand Registered': '#0053db',
-  'In Progress': '#004ac6',
-  'Waiting on Customer': '#943700',
-  'Waiting on Part / Approval': '#943700',
-  'Ready for Pickup': '#1a7f37',
-  Resolved: '#1a7f37',
-  Closed: '#434655',
-  Cancelled: '#ba1a1a',
-}
-function hexToRgba(hex, a) {
-  const h = hex.replace('#', '')
-  return `rgba(${parseInt(h.slice(0, 2), 16)}, ${parseInt(h.slice(2, 4), 16)}, ${parseInt(h.slice(4, 6), 16)}, ${a})`
-}
-function chip(s) {
-  const hue = STATUS_HUE[s] || '#434655'
-  return { color: hue, background: hexToRgba(hue, 0.12) }
-}
-function product(t) {
-  return [t.brand, t.product_item].filter(Boolean).join(' / ')
-}
-function followText(value) {
-  if (!value) return ''
-  const d = new Date(String(value).slice(0, 10))
-  const today = new Date(new Date().toISOString().slice(0, 10))
-  const disp = d.toLocaleDateString()
-  if (d < today) return 'Overdue: ' + disp
-  if (d.getTime() === today.getTime()) return 'Due today: ' + disp
-  return disp
-}
-function followStyle(value) {
-  if (!value) return { color: '#737686' }
-  const d = new Date(String(value).slice(0, 10))
-  const today = new Date(new Date().toISOString().slice(0, 10))
-  if (d < today) return { color: '#ba1a1a', fontWeight: '700' }
-  if (d.getTime() === today.getTime()) return { color: '#943700', fontWeight: '700' }
-  return {}
+function escLevel(t) {
+  return t.computed_escalation_level || t.escalation_level || 'None'
 }
 </script>

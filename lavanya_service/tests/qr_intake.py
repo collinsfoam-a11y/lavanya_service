@@ -59,6 +59,14 @@ def run():
     print(json.dumps({"total": total, "failed": failed}))
 
 
+def _last_ticket():
+    """Return the most recently CREATED HD Ticket (by creation timestamp)."""
+    names = frappe.get_all("HD Ticket", order_by="creation desc", limit=1, pluck="name")
+    if names:
+        return frappe.get_doc("HD Ticket", names[0])
+    return None
+
+
 def _test_all(baseline_counts, baseline_tickets, baseline_profiles):
     from lavanya_service.api.qr_intake import (
         submit_qr_complaint,
@@ -68,7 +76,13 @@ def _test_all(baseline_counts, baseline_tickets, baseline_profiles):
         _clean_text,
         SAFE_TICKET_TYPES,
         get_qr_intake_options,
+        QR_RAISED_BY,
     )
+
+    # Track the most recent QR-created ticket name for assertions.
+    # Used instead of frappe.get_last_doc() which sorts by modified and can
+    # return the wrong ticket if prior records were updated.
+    last_ticket_name = None
 
     # ------------------------------------------------------------------
     # QR-001: API is importable and callable
@@ -94,20 +108,23 @@ def _test_all(baseline_counts, baseline_tickets, baseline_profiles):
             tickets_after == baseline_tickets + 1,
             f"before={baseline_tickets}, after={tickets_after}")
 
+    latest_ticket = _last_ticket()
+    if latest_ticket:
+        last_ticket_name = latest_ticket.name
+
     # ------------------------------------------------------------------
     # QR-003: Ticket has complaint_source = Customer QR Form
     # ------------------------------------------------------------------
-    latest_ticket = frappe.get_last_doc('HD Ticket')
     _record("QR-003 - complaint_source is Customer QR Form",
-            latest_ticket.complaint_source == "Customer QR Form",
-            f"actual={latest_ticket.complaint_source}")
+            latest_ticket and latest_ticket.complaint_source == "Customer QR Form",
+            f"actual={latest_ticket.complaint_source if latest_ticket else 'None'}")
 
     # ------------------------------------------------------------------
     # QR-004: Ticket has status New, priority Medium
     # ------------------------------------------------------------------
     _record("QR-004 - status=New, priority=Medium",
-            latest_ticket.status == "New" and latest_ticket.priority == "Medium",
-            f"status={latest_ticket.status}, priority={latest_ticket.priority}")
+            latest_ticket is not None and latest_ticket.status == "New" and latest_ticket.priority == "Medium",
+            f"status={latest_ticket.status if latest_ticket else 'None'}, priority={latest_ticket.priority if latest_ticket else 'None'}")
 
     # ------------------------------------------------------------------
     # QR-005: Customer profile sync works for valid mobile
@@ -161,10 +178,14 @@ def _test_all(baseline_counts, baseline_tickets, baseline_profiles):
         brand="Samsung",
         ticket_type="Internal Admin Override",
     )
-    unsafe_ticket = frappe.get_last_doc('HD Ticket')
+    unsafe_ticket = _last_ticket()
     _record("QR-008 - Unsafe ticket_type silently reset to safe default",
-            unsafe_ticket.ticket_type == "Customer Complaint - Site",
-            f"actual_type={unsafe_ticket.ticket_type}")
+            unsafe_ticket is not None and unsafe_ticket.ticket_type == "Customer Complaint - Site",
+            f"actual_type={unsafe_ticket.ticket_type if unsafe_ticket else 'None'}")
+
+    # Track the latest QR ticket after QR-008 so QR-022 references current data
+    if unsafe_ticket:
+        last_ticket_name = unsafe_ticket.name
 
     # ------------------------------------------------------------------
     # QR-009: Missing required fields blocked
@@ -209,7 +230,6 @@ def _test_all(baseline_counts, baseline_tickets, baseline_profiles):
     # ------------------------------------------------------------------
     # QR-012: Rate limit by mobile works
     # ------------------------------------------------------------------
-    # Clear rate limit cache for test mobile
     _reset_rate_limit("mobile", "9876500004")
 
     rate_blocked = False
@@ -233,7 +253,6 @@ def _test_all(baseline_counts, baseline_tickets, baseline_profiles):
     # ------------------------------------------------------------------
     # QR-013: Rate limit by IP works
     # ------------------------------------------------------------------
-    # We test the _check_rate_limit function directly for IP
     _reset_rate_limit("ip", "127.0.0.99")
 
     ip_rate_ok = False
@@ -247,13 +266,13 @@ def _test_all(baseline_counts, baseline_tickets, baseline_profiles):
     # ------------------------------------------------------------------
     # QR-014: Public response does not expose internal details
     # ------------------------------------------------------------------
+    # Use result from QR-002 (the latest successful create that returned a ref)
     safe_keys = {"ok", "message", "reference"}
     exposed_keys = set(result.keys()) - safe_keys
     _record("QR-014 - Public response has only safe keys",
             len(exposed_keys) == 0,
             f"keys={set(result.keys())}")
 
-    # does not expose ticket name
     ref_value = result.get("reference", "")
     no_internal = not ref_value.startswith("HD-TKT") and "0020" not in ref_value
     _record("QR-014b - Reference does not expose internal ticket name",
@@ -261,17 +280,24 @@ def _test_all(baseline_counts, baseline_tickets, baseline_profiles):
             f"reference={ref_value}")
 
     # ------------------------------------------------------------------
-    # QR-015: Today's Work includes created QR ticket
+    # QR-015: Today's Work API functional after QR intake
     # ------------------------------------------------------------------
     tw_ok = False
     try:
         from lavanya_service.api.today_work import get_today_work
         tw = get_today_work()
-        # The QR-created ticket should be in 'new_complaints' or similar bucket
-        tw_ok = isinstance(tw, dict)
+        # Verify Today's Work returned a dict with at least one group containing
+        # tickets — not just any dict (guards against empty-dict false positive).
+        tw_ok = isinstance(tw, dict) and any(
+            isinstance(groups, dict) and any(
+                isinstance(tickets_list, list) and len(tickets_list) > 0
+                for tickets_list in groups.values()
+            )
+            for groups in tw.values()
+        )
     except Exception as e:
         print(f"  TW error: {e}")
-    _record("QR-015 - Today's Work API functional after QR intake", tw_ok)
+    _record("QR-015 - Today's Work includes ticket data after QR intake", tw_ok)
 
     # ------------------------------------------------------------------
     # QR-016: Safe ticket type selection works
@@ -284,10 +310,10 @@ def _test_all(baseline_counts, baseline_tickets, baseline_profiles):
         brand="LG",
         ticket_type="Installation / Demo",
     )
-    safe_type_ticket = frappe.get_last_doc('HD Ticket')
+    safe_type_ticket = _last_ticket()
     _record("QR-016 - Safe ticket_type selection works",
-            safe_type_ticket.ticket_type == "Installation / Demo",
-            f"type={safe_type_ticket.ticket_type}")
+            safe_type_ticket is not None and safe_type_ticket.ticket_type == "Installation / Demo",
+            f"type={safe_type_ticket.ticket_type if safe_type_ticket else 'None'}")
 
     # ------------------------------------------------------------------
     # QR-017: No outbound side effects
@@ -298,7 +324,6 @@ def _test_all(baseline_counts, baseline_tickets, baseline_profiles):
             current_counts[dt] = frappe.db.count(dt)
 
     diffs = {dt: current_counts.get(dt, 0) - baseline_counts.get(dt, 0) for dt in baseline_counts}
-    # Email Queue and Notification Log must be zero
     email_clean = diffs.get('Email Queue', 0) == 0
     notif_clean = diffs.get('Notification Log', 0) == 0
     _record("QR-017 - No Email Queue or Notification Log side effects",
@@ -372,8 +397,7 @@ def _test_all(baseline_counts, baseline_tickets, baseline_profiles):
     # ------------------------------------------------------------------
     # QR-022: QR ticket uses single controlled raised_by (audit A4)
     # ------------------------------------------------------------------
-    from lavanya_service.api.qr_intake import QR_RAISED_BY
-    qr_ticket = frappe.get_doc('HD Ticket', latest_ticket.name)
+    qr_ticket = frappe.get_doc('HD Ticket', last_ticket_name) if last_ticket_name else None
     _record("QR-022 - QR ticket uses controlled raised_by placeholder",
-            qr_ticket.raised_by == QR_RAISED_BY,
-            f"raised_by={qr_ticket.raised_by}")
+            qr_ticket is not None and qr_ticket.raised_by == QR_RAISED_BY,
+            f"raised_by={qr_ticket.raised_by if qr_ticket else 'None'}")
