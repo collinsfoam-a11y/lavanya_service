@@ -10,7 +10,7 @@ Console" design realized on the frappe-ui theme). Covers **what's done**, **what
 pending**, **how to build each pending item**, and **how to verify** — including a
 reproducible authenticated-screenshot harness.
 
-Branch: `feature/phase-2-frappe-ui-scaffold`
+Branch: `safety/h5-worktree-classification` (merge target: `feature/phase-2-frappe-ui-scaffold`)
 Site (dev): `lavanya-dev.localhost` (container `devcontainer-example-frappe-1`, webserver port `8001`, published to host)
 
 ---
@@ -49,6 +49,7 @@ All on the frappe-ui theme base. Newest first.
 
 | Commit | What | Verified |
 |---|---|---|
+| _(uncommitted, H5)_ | **H5 — Operational Masters + Service Data Foundation**: added customer-owned product and warranty-history DocTypes, controlled proof categories, master-data extensions for brands/service centers/technicians, richer appointment links/status transitions, customer product history APIs, and master suggestion APIs. Existing appointment endpoint now delegates to the H5 API while preserving free-text technician compatibility. | `py_compile` PASS; `lavanya_service.tests.h5_operational_masters.run` 13/13; `theme_settings.run` 29/29; `stitch_console_spa.run` PASS; `p2_tests.run` 18/18; `today_work.run` 23/24 with TW-015 pre-existing; SPA build PASS. |
 | _(uncommitted, H4)_ | **H4 — Final UI/UX polish + interaction regression layer**: added shared `LavTicketCard`, action-first Ticket Detail top stack, explicit closure guard language, Tickets saved filters + mobile cards, Field Mode recent work + sticky safe quick actions, Reports safety-state cards, Settings dirty-state/sticky save bar, AppShell compact mobile nav, and H4 docs. | `node node_modules/vite/bin/vite.js build` PASS; `lavanya_service.tests.theme_settings.run` 29/29; `lavanya_service.tests.stitch_console_spa.run` PASS on sequential rerun; `lavanya_service.tests.p2_tests.run` 18/18; `lavanya_service.tests.today_work.run` 23/24 (TW-015 pre-existing). |
 | `5c00fa9` | **H3B — Tickets/Reports Modernisation + Mobile Field Mode**: H2/H3 foundation plus H3 reusable ticket components (`LavWorkflowTimeline`, `LavCustomerJourneyCard`, `LavFollowupQualityBadge`, `followup-quality.js`), integration into `TicketDetail.vue`, shared-component modernization of `TodayWork.vue`, `Tickets.vue`, `Reports.vue` (8 tabs), manager-only editable `Settings.vue` with save/reset, `save_lavanya_service_settings`/`reset_lavanya_service_settings`/`can_manage_lavanya_settings` APIs, `FieldMode.vue` mobile counter page, theme/settings tests extended to 23 checks. | `node node_modules/vite/bin/vite.js build` PASS; `lavanya_service.tests.theme_settings.run` 23/23; `lavanya_service.tests.stitch_console_spa.run` PASS; `lavanya_service.tests.p2_tests.run` 18/18; `lavanya_service.tests.today_work.run` 23/24 (TW-015 group-order mismatch pre-existing) |
 | _(committed, P2.4 review)_ | **P2.4 ERPNext safe integration scaffold**: reviewed the parallel-agent commit (`35c387c`); verified disabled-by-default settings, read-only preview APIs, no ERPNext imports, no write-side document creation, and 14/14 scaffold tests passing. Fixed changelog and SPA status gaps. | `lavanya_service.tests.p2_erp_scaffold_tests.run` 14 pass / 0 fail; `node node_modules/vite/bin/vite.js build` pass |
@@ -256,3 +257,52 @@ This method caught the empty-Tickets bug (`cc849fa`) that build/serve checks mis
 6. Commit **only own files** (never `git add -A`; a parallel agent also writes here —
    avoid `setup/`, `api/coordinator_dashboard.py`, `api/manager_dashboard.py`,
    `fixtures/client_script.json`, `page/*dashboard/`, `utils/add_client_script.py`).
+
+---
+
+## 7. H5A–H5F Current State (2026-06-21)
+
+### H5 stack summary
+
+| Phase | Commit | Description |
+|---|---|---|
+| H5A | `6f54d2e` | Theme tokens → CSS custom properties, duplicate handler removed, Field Mode fixes |
+| H5B | `f066728` | Operational masters wired into New Ticket and Ticket Detail |
+| H5C | `394f320` | Technician assignments, appointment flow, custody guard, proof categories |
+| H5D | `87ec6dd` | Restored 10 service record DocTypes + 2 advisory scheduler tasks |
+| H5E | `37f91a4` | Linked service record cards in Ticket Detail UI |
+
+### SPA pages (complete)
+
+- `/` — Today's Work (15 metric groups, 6-tier filters, reminder intel chips)
+- `/tickets` — Tickets list (search, sort, 8 saved filters, mobile cards, infinite scroll)
+- `/new-ticket` — New Ticket (customer lookup, brand metadata, previous product quick-select)
+- `/reports` — Reports Center (8 tabs: Overview, Brand Delay, Supplier Control, Follow-up Quality, Penalty, Notifications, Aging, Reports Catalog)
+- `/settings` — Settings (theme flags, UI flags, safety locks, manager/read-only mode, dirty-state save)
+- `/field` — Field Mode (phone-first search, critical work grid, recent tickets, safe quick actions)
+
+### Component library (complete)
+
+18 components: LavCard, LavSectionHeader, LavBadge, LavChip, LavStatCard, LavActionBar, LavEmptyState, LavLoadingState, LavSafetyLockPanel, LavThemeToggle, LavWorkflowTimeline, LavCustomerJourneyCard, LavFollowupQualityBadge, LavTicketCard, LavConfirm, LavModal, SlaBadge, AppShell
+
+### Theme system (complete)
+
+6 themes: lavanya-light, lavanya-dark, lavanya-blue, lavanya-green, high-contrast, compact-counter
+Zero `COLORS.*` in Vue components — all migrated to CSS custom properties.
+
+### Safety state (confirmed)
+
+- 0 native confirm/alert/prompt in frontend
+- 0 live WhatsApp/SMS send paths
+- 0 ERP posting paths active
+- 0 penalty application paths active
+- 0 automatic closure paths
+- Closure guard active with customer confirmation requirement
+- Manager-only settings enforced
+
+### Known gaps
+
+- TW-015 group-order mismatch (pre-existing, documented)
+- Appointment Confirm/Miss/Visited backend handlers not yet built
+- File upload for proofs not yet implemented
+- SPA build requires Windows host `node_modules`

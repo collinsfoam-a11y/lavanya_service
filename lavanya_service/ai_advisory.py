@@ -33,6 +33,10 @@ _AI_FIELDS = (
 )
 
 _PRODUCT_AT_STORE_FLOW = "Customer Product at Store"
+_REPLACEMENT_FLOW = "Replacement / Exchange"
+_RETURN_STAGES = {"Return Requested", "Return Reason Verified", "Brand Notified for Return", "Customer Refund Processed"}
+_REIMBURSEMENT_STAGES = {"Brand Reimbursement Pending", "Reimbursement Received"}
+_STORE_SERVICE_DIAGNOSIS_STAGES = {"Brand SC Diagnosis Pending", "Brand SC Notified"}
 _TECH_STAGES = {"Technician Visit Pending", "Technician Visited - Issue Pending"}
 _NO_RESPONSE_STAGES = {"Service Center Follow-up", "Provider Follow-up", "Handed to Service Center"}
 
@@ -60,6 +64,12 @@ def is_ai_review_candidate(ticket, now=None):
 		reasons.append("repeat_complaint")
 	if flow == _PRODUCT_AT_STORE_FLOW and overdue:
 		reasons.append("product_at_store_ageing")
+	if flow == _PRODUCT_AT_STORE_FLOW and stage in _STORE_SERVICE_DIAGNOSIS_STAGES and overdue:
+		reasons.append("store_service_ageing")
+	if flow == _REPLACEMENT_FLOW and stage in _REIMBURSEMENT_STAGES and overdue:
+		reasons.append("reimbursement_pending")
+	if stage in _RETURN_STAGES and overdue:
+		reasons.append("return_pending")
 	if stage == "Spare Pending" and overdue:
 		reasons.append("spare_pending")
 	if stage in _TECH_STAGES and overdue:
@@ -163,6 +173,24 @@ _TEMPLATES = {
 		"risk_reason": "Extended warranty denied or delayed — needs careful customer handling.",
 		"manager_summary": "Extended-warranty claim denied/delayed; manager to confirm options before informing the customer.",
 		"customer_message": "We're reviewing the warranty position on your product and will explain the available options to you shortly.",
+	},
+	"store_service_ageing": lambda t: {
+		"next_action": "Follow up with the service centre on the diagnosis status and update the customer.",
+		"risk_reason": "Product at store awaiting diagnosis beyond expected time.",
+		"manager_summary": "Store service diagnosis pending — chase the service centre for an update.",
+		"customer_message": "We're following up with our service centre on your product's diagnostic status and will update you shortly.",
+	},
+	"reimbursement_pending": lambda t: {
+		"next_action": "Follow up with the brand on the pending reimbursement and escalate if delayed.",
+		"risk_reason": "Brand reimbursement overdue — may affect replacement closure.",
+		"manager_summary": "Brand reimbursement pending beyond SLA; escalate to brand manager if needed.",
+		"customer_message": "We're following up with the brand on the reimbursement for your replacement and will keep you posted.",
+	},
+	"return_pending": lambda t: {
+		"next_action": "Check return processing status and update the customer on the expected refund timeline.",
+		"risk_reason": "Return processing delayed — customer expecting refund.",
+		"manager_summary": "Return process overdue; confirm brand decision or refund status.",
+		"customer_message": "Your return request is being processed. We're confirming the expected refund timeline and will update you soon.",
 	},
 	"overdue_brand_registered": lambda t: {
 		"next_action": "Call the service centre and confirm the technician visit / brand ticket progress.",
@@ -366,7 +394,7 @@ def _followup_flow_steps(doc):
 	has_informed = bool(doc.get("customer_informed_status"))
 	has_approval = bool(doc.get("customer_approved_amount"))
 	is_closed = status in ("Closed", "Cancelled", "Resolved")
-	part_required = doc.get("part_required") == 1 or doc.get("part_required") == "Yes"
+	part_required = doc.get("part_required") in (1, "1", "Yes", True)
 	part_done = bool(doc.get("part_name")) and not doc.get("part_delay_reason")
 	escalation = doc.get("escalation_level") or ""
 

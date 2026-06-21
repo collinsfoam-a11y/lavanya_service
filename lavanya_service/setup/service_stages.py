@@ -11,6 +11,9 @@ from lavanya_service import stage_rules as sr
 
 
 def _opts(values):
+	# H1 Fix 1: This function generates the full stage option list.
+	# The options are sourced from stage_rules.CURRENT_SERVICE_STAGES (52 stages)
+	# and must always reflect the complete list to prevent field option regression.
 	# Leading blank line so the Select does NOT auto-default to its first option —
 	# new tickets start empty and let stage_rules.assign_defaults derive the value.
 	return "\n" + "\n".join(values)

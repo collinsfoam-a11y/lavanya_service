@@ -26,14 +26,14 @@
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-headline-md text-headline-md text-on-surface">Last {{ overview.days }} days</h3>
             <div class="flex items-center gap-4 font-label-md text-label-md text-on-surface-variant">
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full" :style="{ background: COLORS.primary }"></span> Created {{ overview.totals?.created ?? 0 }}</span>
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full" :style="{ background: COLORS.success }"></span> Resolved {{ overview.totals?.resolved ?? 0 }}</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full" :style="{ background: 'var(--lav-primary)' }"></span> Created {{ overview.totals?.created ?? 0 }}</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full" :style="{ background: 'var(--lav-success)' }"></span> Resolved {{ overview.totals?.resolved ?? 0 }}</span>
             </div>
           </div>
           <div v-if="trend" class="bg-surface-container-lowest rounded-lg overflow-hidden">
             <svg :viewBox="`0 0 ${trend.W} ${trend.H}`" class="w-full" style="height: 130px" preserveAspectRatio="none">
-              <path :d="trend.created" fill="none" :stroke="COLORS.primary" stroke-width="2" vector-effect="non-scaling-stroke" />
-              <path :d="trend.resolved" fill="none" :stroke="COLORS.success" stroke-width="2" vector-effect="non-scaling-stroke" />
+              <path :d="trend.created" fill="none" stroke="var(--lav-primary)" stroke-width="2" vector-effect="non-scaling-stroke" />
+              <path :d="trend.resolved" fill="none" stroke="var(--lav-success)" stroke-width="2" vector-effect="non-scaling-stroke" />
             </svg>
           </div>
           <div v-if="trend" class="flex justify-between font-label-md text-label-md text-on-surface-variant mt-1">
@@ -51,7 +51,7 @@
             :label="card.label"
             :value="card.count"
             :icon="card.icon"
-            :accent="card.color === 'error' ? COLORS.error : card.color === 'warning' ? COLORS.warning : card.color === 'secondary' ? COLORS.secondary : COLORS.primary"
+            :accent="card.color === 'error' ? 'var(--lav-danger)' : card.color === 'warning' ? 'var(--lav-warning)' : card.color === 'secondary' ? 'var(--lav-secondary)' : 'var(--lav-primary)'"
             :hover="true"
             role="button" :tabindex="0"
             :aria-label="card.label + ': ' + card.count"
@@ -80,7 +80,7 @@
           <div v-for="b in overview.by_closure_type" :key="b.label" class="flex items-center gap-2 mb-1.5">
             <span class="font-label-md text-label-md text-on-surface-variant w-36 truncate" :title="b.label">{{ b.label }}</span>
             <div class="flex-1 h-3 bg-surface-container rounded-full overflow-hidden">
-              <div class="h-full rounded-full" :style="{ background: COLORS.success, width: barPct(b.count, overview.by_closure_type) }"></div>
+              <div class="h-full rounded-full" :style="{ background: 'var(--lav-success)', width: barPct(b.count, overview.by_closure_type) }"></div>
             </div>
             <span class="font-label-md text-label-md w-7 text-right text-on-surface">{{ b.count }}</span>
           </div>
@@ -183,12 +183,12 @@
       </div>
       <LavLoadingState v-if="loadingFQ" :lines="6" />
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <LavStatCard label="Tickets without follow-up" :value="fqData.no_followup || 0" icon="sms_failed" :accent="fqData.no_followup > 0 ? COLORS.error : COLORS.outline" :hover="false" />
-        <LavStatCard label="Customer not informed" :value="fqData.customer_not_informed || 0" icon="campaign" :accent="fqData.customer_not_informed > 0 ? COLORS.warning : COLORS.outline" :hover="false" />
-        <LavStatCard label="Promise breached" :value="fqData.promise_breach || 0" icon="gpp_bad" :accent="fqData.promise_breach > 0 ? COLORS.error : COLORS.outline" :hover="false" />
-        <LavStatCard label="No technician update" :value="fqData.no_technician_update || 0" icon="cell_tower" :accent="fqData.no_technician_update > 0 ? COLORS.warning : COLORS.outline" :hover="false" />
-        <LavStatCard label="Closed with satisfaction" :value="fqData.closed_with_satisfaction || 0" icon="sentiment_satisfied" :accent="COLORS.success" :hover="false" />
-        <LavStatCard label="Satisfaction rate" :value="(fqData.satisfaction_pct || 0) + '%'" icon="thumb_up" :accent="COLORS.secondary" :hover="false" />
+        <LavStatCard label="Tickets without follow-up" :value="fqData.no_followup || 0" icon="sms_failed" :accent="fqData.no_followup > 0 ? 'var(--lav-danger)' : 'var(--lav-border)'" :hover="false" />
+        <LavStatCard label="Customer not informed" :value="fqData.customer_not_informed || 0" icon="campaign" :accent="fqData.customer_not_informed > 0 ? 'var(--lav-warning)' : 'var(--lav-border)'" :hover="false" />
+        <LavStatCard label="Promise breached" :value="fqData.promise_breach || 0" icon="gpp_bad" :accent="fqData.promise_breach > 0 ? 'var(--lav-danger)' : 'var(--lav-border)'" :hover="false" />
+        <LavStatCard label="No technician update" :value="fqData.no_technician_update || 0" icon="cell_tower" :accent="fqData.no_technician_update > 0 ? 'var(--lav-warning)' : 'var(--lav-border)'" :hover="false" />
+        <LavStatCard label="Closed with satisfaction" :value="fqData.closed_with_satisfaction || 0" icon="sentiment_satisfied" :accent="'var(--lav-success)'" :hover="false" />
+        <LavStatCard label="Satisfaction rate" :value="(fqData.satisfaction_pct || 0) + '%'" icon="thumb_up" :accent="'var(--lav-secondary)'" :hover="false" />
       </div>
     </template>
 
@@ -211,12 +211,12 @@
 
       <!-- Summary Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6" v-if="penaltySummary">
-        <LavStatCard label="Computed Total" :value="formatCurrency(penaltySummary.total_computed)" icon="payments" :accent="COLORS.error" :hover="false" />
-        <LavStatCard label="Manager Review" :value="penaltySummary.manager_review_count || 0" icon="rate_review" :accent="COLORS.warning" :hover="false" />
-        <LavStatCard label="Approved" :value="formatCurrency(penaltySummary.approved_amount)" icon="check_circle" :accent="COLORS.success" :hover="false" />
-        <LavStatCard label="Waived" :value="formatCurrency(penaltySummary.waived_amount)" icon="block" :accent="COLORS.secondary" :hover="false" />
-        <LavStatCard label="Highest Supplier" :value="penaltySummary.highest_supplier || '—'" icon="leaderboard" :accent="COLORS.error" :hover="false" />
-        <LavStatCard label="Oldest Breach" :value="(penaltySummary.oldest_breach_days || 0) + 'd'" icon="history" :accent="COLORS.warning" :hover="false" />
+        <LavStatCard label="Computed Total" :value="formatCurrency(penaltySummary.total_computed)" icon="payments" :accent="'var(--lav-danger)'" :hover="false" />
+        <LavStatCard label="Manager Review" :value="penaltySummary.manager_review_count || 0" icon="rate_review" :accent="'var(--lav-warning)'" :hover="false" />
+        <LavStatCard label="Approved" :value="formatCurrency(penaltySummary.approved_amount)" icon="check_circle" :accent="'var(--lav-success)'" :hover="false" />
+        <LavStatCard label="Waived" :value="formatCurrency(penaltySummary.waived_amount)" icon="block" :accent="'var(--lav-secondary)'" :hover="false" />
+        <LavStatCard label="Highest Supplier" :value="penaltySummary.highest_supplier || '—'" icon="leaderboard" :accent="'var(--lav-danger)'" :hover="false" />
+        <LavStatCard label="Oldest Breach" :value="(penaltySummary.oldest_breach_days || 0) + 'd'" icon="history" :accent="'var(--lav-warning)'" :hover="false" />
       </div>
 
       <!-- Penalty Table -->
@@ -342,7 +342,7 @@
             class="flex items-center gap-2 mb-1.5">
             <span class="font-label-md text-label-md text-on-surface-variant w-20">{{ b.label }}</span>
             <div class="flex-1 h-3 bg-surface-container rounded-full overflow-hidden">
-              <div class="h-full rounded-full" :style="{ background: b.label === '15+ days' ? COLORS.error : b.label.includes('8-15') ? COLORS.warning : COLORS.primary, width: agingBarPct(b.count, cat.key) }"></div>
+              <div class="h-full rounded-full" :style="{ background: b.label === '15+ days' ? 'var(--lav-danger)' : b.label.includes('8-15') ? 'var(--lav-warning)' : 'var(--lav-primary)', width: agingBarPct(b.count, cat.key) }"></div>
             </div>
             <span class="font-label-md text-label-md w-7 text-right text-on-surface">{{ b.count }}</span>
           </div>
@@ -503,7 +503,7 @@ import LavCard from '@/components/LavCard.vue'
 import LavStatCard from '@/components/LavStatCard.vue'
 import LavEmptyState from '@/components/LavEmptyState.vue'
 import LavLoadingState from '@/components/LavLoadingState.vue'
-import { COLORS, hexToRgba } from '@/utils'
+// Colors now use CSS custom properties (e.g. 'var(--lav-primary)') for theme responsiveness
 import { useConfirm } from '@/utils/confirm'
 import { useToast } from '@/utils/toast'
 
@@ -847,15 +847,15 @@ function formatCurrency(amount) {
 
 function penaltyStatusChip(status) {
   const map = {
-    'Computed': COLORS.success,
-    'Manager Review': COLORS.warning,
-    'Approved': COLORS.success,
-    'Waived': COLORS.tertiary,
-    'Rejected': COLORS.error,
-    'Applied': COLORS.info,
+    'Computed': 'var(--lav-success)',
+    'Manager Review': 'var(--lav-warning)',
+    'Approved': 'var(--lav-success)',
+    'Waived': 'var(--lav-tertiary)',
+    'Rejected': 'var(--lav-danger)',
+    'Applied': 'var(--lav-info)',
   }
-  const hue = map[status] || COLORS.neutral
-  return { background: hexToRgba(hue, 0.12), color: hue }
+  const hue = map[status] || 'var(--lav-muted)'
+  return { background: `color-mix(in srgb, ${hue} 13%, transparent)`, color: hue }
 }
 
 // ── Notifications ──
@@ -865,12 +865,12 @@ const loadingNotifications = ref(false)
 const notificationCards = computed(() => {
   const count = (status) => notificationQueue.value.filter(r => r.status === status).length
   return [
-    { label: 'Queued', count: count('Queued'), color: COLORS.primary },
-    { label: 'Approval Pending', count: count('Approval Pending'), color: COLORS.warning },
-    { label: 'Approved', count: count('Approved'), color: COLORS.success },
-    { label: 'Skipped', count: count('Skipped'), color: COLORS.outline },
-    { label: 'Failed', count: count('Failed'), color: COLORS.error },
-    { label: 'Dry Run', count: notificationQueue.value.filter(r => r.dry_run).length, color: COLORS.secondary },
+    { label: 'Queued', count: count('Queued'), color: 'var(--lav-primary)' },
+    { label: 'Approval Pending', count: count('Approval Pending'), color: 'var(--lav-warning)' },
+    { label: 'Approved', count: count('Approved'), color: 'var(--lav-success)' },
+    { label: 'Skipped', count: count('Skipped'), color: 'var(--lav-border)' },
+    { label: 'Failed', count: count('Failed'), color: 'var(--lav-danger)' },
+    { label: 'Dry Run', count: notificationQueue.value.filter(r => r.dry_run).length, color: 'var(--lav-secondary)' },
   ]
 })
 
@@ -888,16 +888,16 @@ async function loadNotifications() {
 
 function notificationStatusChip(status) {
   const map = {
-    Queued: COLORS.primary,
-    'Approval Pending': COLORS.warning,
-    Approved: COLORS.success,
-    Skipped: COLORS.outline,
-    Sent: COLORS.success,
-    Failed: COLORS.error,
-    Cancelled: COLORS.outline,
+    Queued: 'var(--lav-primary)',
+    'Approval Pending': 'var(--lav-warning)',
+    Approved: 'var(--lav-success)',
+    Skipped: 'var(--lav-border)',
+    Sent: 'var(--lav-success)',
+    Failed: 'var(--lav-danger)',
+    Cancelled: 'var(--lav-border)',
   }
-  const color = map[status] || COLORS.outline
-  return { background: `${color}22`, color }
+  const color = map[status] || 'var(--lav-border)'
+  return { background: `color-mix(in srgb, ${color} 13%, transparent)`, color }
 }
 
 async function approveNotification(name) {

@@ -62,14 +62,14 @@
 
     <!-- Critical work snapshot -->
     <div class="mb-gutter">
-      <LavSectionHeader title="Critical Work" icon="priority_high" :badge="criticalTotal" :accent="COLORS.error" />
+      <LavSectionHeader title="Critical Work" icon="priority_high" :badge="criticalTotal" :accent="'var(--lav-danger)'" />
       <LavLoadingState v-if="loadingWork" layout="card-list" />
       <template v-else>
         <div class="grid grid-cols-2 gap-3">
-          <LavStatCard label="Overdue" :value="counts.overdue" icon="warning" :accent="COLORS.error" @click="goTodayWork" />
-          <LavStatCard label="Due Today" :value="counts.due_today" icon="event" :accent="COLORS.warning" @click="goTodayWork" />
-          <LavStatCard label="Ready Pickup" :value="counts.ready_for_pickup" icon="inventory_2" :accent="COLORS.success" @click="goTodayWork" />
-          <LavStatCard label="New" :value="counts.new" icon="fiber_new" :accent="COLORS.primary" @click="goTodayWork" />
+          <LavStatCard label="Overdue" :value="counts.overdue" icon="warning" :accent="'var(--lav-danger)'" @click="goTodayWork" />
+          <LavStatCard label="Due Today" :value="counts.due_today" icon="event" :accent="'var(--lav-warning)'" @click="goTodayWork" />
+          <LavStatCard label="Ready Pickup" :value="counts.ready_for_pickup" icon="inventory_2" :accent="'var(--lav-success)'" @click="goTodayWork" />
+          <LavStatCard label="New" :value="counts.new" icon="fiber_new" :accent="'var(--lav-primary)'" @click="goTodayWork" />
         </div>
       </template>
     </div>
@@ -88,20 +88,20 @@
           <span class="material-symbols-outlined" aria-hidden="true">add_box</span>
           New Ticket
         </button>
-        <button type="button" class="field-action" @click="focusSearch">
+        <button type="button" class="field-action" @click="goTodayWork">
           <span class="material-symbols-outlined" aria-hidden="true">phone_in_talk</span>
           Call Customer
         </button>
-        <button type="button" class="field-action" @click="focusSearch">
+        <button type="button" class="field-action" @click="goTodayWork">
           <span class="material-symbols-outlined" aria-hidden="true">fact_check</span>
           Verify Visit
         </button>
-        <button type="button" class="field-action" @click="focusSearch">
+        <button type="button" class="field-action" @click="openFirstResult">
           <span class="material-symbols-outlined" aria-hidden="true">chat</span>
           WhatsApp Draft
         </button>
       </div>
-      <p class="mt-2 font-label-md text-label-md text-on-surface-variant text-center">Safe mode: live WhatsApp/SMS sending remains disabled.</p>
+      <p class="mt-2 font-label-md text-label-md text-on-surface-variant text-center">Safe mode: live WhatsApp/SMS/ERP/payment actions are disabled. Use ticket drawer for dry-run actions only.</p>
     </LavCard>
 
     <TicketDetail :ticketId="selectedTicket" @close="selectedTicket = null" @refresh="loadWork" />
@@ -120,7 +120,7 @@ import LavStatCard from '@/components/LavStatCard.vue'
 import LavEmptyState from '@/components/LavEmptyState.vue'
 import LavLoadingState from '@/components/LavLoadingState.vue'
 import LavTicketCard from '@/components/LavTicketCard.vue'
-import { COLORS } from '@/utils'
+// Colors now use CSS custom properties (e.g. 'var(--lav-danger)') for theme responsiveness
 
 const router = useRouter()
 const search = ref('')
@@ -167,6 +167,14 @@ function focusSearch() {
 
 function goNewTicket() {
   router.push('/new-ticket')
+}
+
+function openFirstResult() {
+  if (results.value.length > 0) {
+    selectedTicket.value = results.value[0].name
+    return
+  }
+  focusSearch()
 }
 
 function goTodayWork() {

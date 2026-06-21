@@ -263,7 +263,7 @@ FIELDS = [
         "in_standard_filter": 1,
     },
     {
-        "fieldname": "lavanya_brand_service_section",
+        "fieldname": "brand_service_section",
         "depends_on": "eval: doc.brand_registration_recommended || doc.status === 'Registration Pending' || doc.brand_ticket_number || doc.registration_date",
         "label": "Lavanya Brand Service Coordination",
         "fieldtype": "Section Break",
@@ -274,7 +274,7 @@ FIELDS = [
         "label": "Manufacturer Registration Required",
         "fieldtype": "Select",
         "options": "Yes\nNo\nNot Applicable",
-        "insert_after": "lavanya_brand_service_section",
+        "insert_after": "brand_service_section",
         "default": "Yes",
     },
     {

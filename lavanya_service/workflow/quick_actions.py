@@ -21,6 +21,13 @@ All other business validations (status, required fields, closure rules) still ru
 during the elevated save.
 """
 
+# H1 Fix 4: customer_informed_status is the canonical operational field for
+# "has the customer been informed?" It is a Select with values like
+# "Informed by Call", "Informed by WhatsApp", etc. The older customer_informed
+# (Yes/No/Not Required) field is kept for backward compatibility but all new
+# writes should set customer_informed_status as the source of truth.
+# Metadata fields: customer_informed_channel, customer_informed_at, customer_informed_by.
+
 import frappe
 from frappe import _
 from frappe.utils import now_datetime, today
@@ -67,6 +74,34 @@ APPROVAL_PENDING_REASON = "Estimate Approval Pending"
 # Select option used to record an outstanding invoice within the limited
 # Registration Pending Reason option list.
 INVOICE_REGISTRATION_REASON = "Invoice Missing"
+
+# (service_flow_type, linked_doctype, check_field, acceptable_values_or_None)
+# None for acceptable_values means the field must be non-null/non-empty.
+_CLOSURE_FLOW_RECORDS = {
+	"Replacement / Exchange": ("Replacement Record", "status", ["Completed"]),
+	"Refund Case": ("Return Service Record", "refund_status", ["Processed", "Not Applicable"]),
+	"Stock Complaint": ("Stock Complaint Record", "credit_note_received_at", None),
+	"Customer Product at Store": ("Store Service Record", "product_handed_over_at", None),
+}
+
+# Bridge: followup_stage values that imply a current_service_stage advance.
+_FOLLOWUP_STAGE_SYNC = {
+	"technician_called": "Technician Visit Pending",
+	"technician_visited": "Technician Visited - Issue Pending",
+	"sc_followup_done": None,  # depends on flow — handled by phase 2.1 actions
+	"customer_informed": None,  # informational — stage doesn't change
+	"no_technician_update": None,  # risk escalation — handled separately
+	"customer_satisfied": "Customer Verification Pending",
+	"customer_not_satisfied": "Customer Verification Pending",
+}
+
+# Canonical field-to-field alignment: customer_informed_status is the canonical
+# operational field; customer_informed (Yes/No) is derived. Uses the existing
+# _CHANNEL_MAP values so actions and reports agree.
+# customer_informed_status values are documented here as the single source-of-truth:
+#   Informed by Call  /  Informed by WhatsApp  /  Informed by SMS
+#   Informed by Email /  Informed In-Person
+# When customer_informed_status is set, customer_informed auto-syncs to "Yes".
 
 
 # ---------------------------------------------------------------------------
@@ -168,6 +203,60 @@ def _validate_closure_type(value):
 		frappe.throw(_("'{0}' is not a valid Closure Type.").format(value))
 	return value
 
+
+# ---------------------------------------------------------------------------
+# H1 Hardening helpers
+# ---------------------------------------------------------------------------
+
+def _validate_closure_prerequisites(doc):
+	"""Block close_ticket / customer_confirmed unless linked records are complete
+	for Replacement, Return, Stock Complaint, and Product-at-Store flows."""
+	flow = doc.get("service_flow_type") or ""
+	record_info = _CLOSURE_FLOW_RECORDS.get(flow)
+	if not record_info:
+		return
+
+	record_doctype, check_field, acceptable = record_info
+	linked = frappe.db.get_all(
+		record_doctype,
+		filters={"ticket": doc.name},
+		fields=["name", check_field],
+		limit=1,
+	)
+	if not linked:
+		frappe.throw(_(
+			"Ticket cannot be closed. No {0} exists for this {1} flow ticket. "
+			"Complete the linked record process first."
+		).format(record_doctype, flow))
+
+	value = linked[0].get(check_field)
+	if acceptable is not None:
+		if value not in acceptable:
+			frappe.throw(_(
+				"Ticket cannot be closed. {0} status is '{1}' — must be one of: {2}."
+			).format(record_doctype, value or "Not Set", ", ".join(acceptable)))
+	else:
+		if not value or str(value).strip() == "":
+			frappe.throw(_(
+				"Ticket cannot be closed. {0} field '{1}' is not recorded."
+			).format(record_doctype, check_field))
+
+def _sync_stage_fields(doc, action_key):
+	"""Bridge followup_stage and current_service_stage where a mapping exists.
+	Call this from actions that set followup_stage to keep both fields aligned."""
+	sync_target = _FOLLOWUP_STAGE_SYNC.get(action_key)
+	if sync_target and not doc.get("current_service_stage"):
+		doc.current_service_stage = sync_target
+
+def _sync_customer_informed(doc, channel):
+	"""Set canonical customer_informed_status from _CHANNEL_MAP, and derive
+	customer_informed as Yes. Both fields agree: status is canonical, Yes/No is derived."""
+	status = _CHANNEL_MAP.get(channel, "Informed by Call")
+	doc.customer_informed_status = status
+	doc.customer_informed = "Yes"
+	doc.customer_informed_at = now_datetime()
+	doc.customer_informed_by = _acting_user()
+	doc.customer_informed_channel = channel
 
 # ---------------------------------------------------------------------------
 # Quick actions
@@ -312,6 +401,8 @@ def customer_confirmed(ticket_name, work_narration=None, closure_type=None):
 	doc = _load_ticket(ticket_name)
 	_block_if_final(doc)
 
+	_validate_closure_prerequisites(doc)
+
 	doc.customer_confirmation_received = "Yes"
 	doc.work_narration = work_narration
 	doc.closure_type = closure_type
@@ -341,6 +432,9 @@ def close_ticket(
 
 	doc = _load_ticket(ticket_name)
 	_block_if_final(doc)
+
+	# H1: Block closure unless linked records are complete for flow-specific prerequisites.
+	_validate_closure_prerequisites(doc)
 
 	# Block closure unless customer satisfaction is documented (Satisfied or Not Required).
 	# This prevents closing tickets after brand/service-center says "completed" without
@@ -566,11 +660,7 @@ def inform_customer(ticket_name, message=None, channel=None):
 	_block_if_final(doc)
 
 	doc.followup_stage = "customer_informed"
-	doc.customer_informed = "Yes"
-	doc.customer_informed_channel = channel
-	doc.customer_informed_at = now_datetime()
-	doc.customer_informed_by = _acting_user()
-	doc.customer_informed_status = _CHANNEL_MAP.get(channel, "Informed by Call")
+	_sync_customer_informed(doc, channel)
 
 	entry = "[Follow-up] Inform Customer — Channel: {0}".format(channel)
 	if message:
@@ -678,3 +768,211 @@ def record_customer_approval(ticket_name, approved_amount=None, payment_status=N
 
 	_save_ticket(doc)
 	return _result(doc, _("Customer approval recorded: amount {0}").format(approved_amount))
+
+
+# ---------------------------------------------------------------------------
+# Expansion quick actions (Phase 2.1)
+# ---------------------------------------------------------------------------
+
+
+def notify_brand_sc_for_pickup(ticket_name, brand_sc=None, notes=None):
+	_require_roles("Notify Brand SC for Pickup", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.current_service_stage = "Brand SC Picked Up"
+	if brand_sc:
+		doc.service_center = brand_sc
+	doc.followup_stage = "sc_followup_done"
+
+	entry = "[Store Service] Brand SC notified for pickup"
+	if brand_sc:
+		entry += " — SC: {0}".format(brand_sc)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Brand SC notified for pickup"))
+
+
+def record_diagnosis_received(ticket_name, diagnosis=None, notes=None):
+	_require_roles("Record Diagnosis Received", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.current_service_stage = "Diagnosis Received"
+	doc.followup_stage = "sc_followup_done"
+
+	entry = "[Store Service] Diagnosis received"
+	if diagnosis:
+		entry += " — {0}".format(diagnosis)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Diagnosis received recorded"))
+
+
+def notify_customer_for_collection(ticket_name, notes=None):
+	_require_roles("Notify Customer for Collection", {ROLE_MANAGER, ROLE_COORDINATOR, ROLE_FRONT_DESK})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.current_service_stage = "Customer Notified for Collection"
+	doc.followup_stage = "customer_informed"
+	doc.customer_informed = "Yes"
+	doc.customer_informed_at = now_datetime()
+
+	entry = "[Store Service] Customer notified for collection"
+	if notes:
+		entry += " — {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Customer notified for collection"))
+
+
+def hand_over_product(ticket_name, notes=None):
+	_require_roles("Hand Over Product", {ROLE_MANAGER, ROLE_COORDINATOR, ROLE_FRONT_DESK})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.current_service_stage = "Product Handed Over"
+	doc.followup_stage = "customer_satisfied"
+
+	entry = "[Store Service] Product handed over to customer"
+	if notes:
+		entry += " — {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Product handed over to customer"))
+
+
+def collect_old_unit(ticket_name, serial_no=None, notes=None):
+	_require_roles("Collect Old Unit", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.current_service_stage = "Old Unit Collected"
+	if serial_no:
+		doc.serial_no = serial_no
+
+	entry = "[Replacement] Old unit collected"
+	if serial_no:
+		entry += " — S/N: {0}".format(serial_no)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Old unit collected"))
+
+
+def dispatch_new_unit(ticket_name, new_serial_no=None, notes=None):
+	_require_roles("Dispatch New Unit", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.current_service_stage = "New Unit Dispatched"
+	doc.followup_stage = "sc_followup_done"
+
+	entry = "[Replacement] New unit dispatched"
+	if new_serial_no:
+		entry += " — New S/N: {0}".format(new_serial_no)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("New unit dispatched"))
+
+
+def return_old_unit_to_brand(ticket_name, notes=None):
+	_require_roles("Return Old Unit to Brand", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.current_service_stage = "Brand Reimbursement Pending"
+
+	entry = "[Replacement] Old unit returned to brand"
+	if notes:
+		entry += " — {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Old unit returned to brand"))
+
+
+def record_brand_reimbursement(ticket_name, amount=None, notes=None):
+	_require_roles("Record Brand Reimbursement", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.current_service_stage = "Reimbursement Received"
+
+	entry = "[Replacement] Brand reimbursement recorded"
+	if amount:
+		entry += " — Amount: {0}".format(amount)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Brand reimbursement recorded"))
+
+
+def verify_return_reason(ticket_name, reason=None, notes=None):
+	_require_roles("Verify Return Reason", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	reason = _require(reason, "Return Reason")
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.current_service_stage = "Return Reason Verified"
+
+	entry = "[Return] Return reason verified — {0}".format(reason)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Return reason verified"))
+
+
+def notify_brand_for_return(ticket_name, notes=None):
+	_require_roles("Notify Brand for Return", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.current_service_stage = "Brand Notified for Return"
+
+	entry = "[Return] Brand notified for return"
+	if notes:
+		entry += " — {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Brand notified for return"))

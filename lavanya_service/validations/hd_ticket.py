@@ -400,6 +400,59 @@ def validate_serial_number_required(doc):
 		frappe.throw(f"Serial No is required for {ticket_type} tickets.")
 
 
+def validate_linked_record_closure(doc):
+	"""H1: Linked-record closure checks — prevent closing a ticket before its
+	linked service record (Replacement, Return, Stock, Store) is completed."""
+	flow = _value(doc, "service_flow_type") or _value(doc, "ticket_type")
+	stage = _value(doc, "current_service_stage")
+
+	if flow == "Replacement / Exchange":
+		ref = _value(doc, "replacement_reference")
+		if ref:
+			rec_status = frappe.db.get_value("Replacement Record", ref, "status")
+			if rec_status != "Completed":
+				frappe.throw(
+					"Cannot close: Replacement Record {0} status is '{1}' (must be Completed).".format(ref, rec_status)
+				)
+		elif _value(doc, "status") == "Closed":
+			frappe.throw("Cannot close: Replacement / Exchange ticket requires a completed Replacement Record.")
+
+	if flow == "Refund Case" or stage in ("Return Reason Verified", "Brand Notified for Return", "Customer Refund Processed"):
+		ref = _value(doc, "return_reference")
+		if ref:
+			rec_status = frappe.db.get_value("Return Service Record", ref, "status")
+			refund = frappe.db.get_value("Return Service Record", ref, "refund_status")
+			if rec_status != "Completed":
+				frappe.throw(
+					"Cannot close: Return Service Record {0} status is '{1}' (must be Completed).".format(ref, rec_status)
+				)
+			if refund not in ("Processed", "Not Applicable"):
+				frappe.throw(
+					"Cannot close: Return Service Record refund status is '{0}' (must be Processed or Not Applicable).".format(refund)
+				)
+
+	if flow == "Stock Complaint":
+		ref = _value(doc, "stock_complaint_reference")
+		if ref:
+			rec_status = frappe.db.get_value("Stock Complaint Record", ref, "status")
+			if rec_status != "Completed":
+				frappe.throw(
+					"Cannot close: Stock Complaint Record {0} status is '{1}' (must be Completed).".format(ref, rec_status)
+				)
+
+	if flow == "Customer Product at Store":
+		receipt = _value(doc, "service_product_receipt")
+		if not receipt and _value(doc, "status") == "Closed":
+			frappe.throw("Cannot close: Customer Product at Store ticket requires a Service Product Receipt.")
+		ref = _value(doc, "store_service_reference")
+		if ref:
+			rec_status = frappe.db.get_value("Store Service Record", ref, "status")
+			if rec_status != "Completed":
+				frappe.throw(
+					"Cannot close: Store Service Record {0} status is '{1}' (must be Completed).".format(ref, rec_status)
+				)
+
+
 def validate_closure_required(doc):
 	status = _value(doc, "status")
 
@@ -418,3 +471,6 @@ def validate_closure_required(doc):
 
 	if missing:
 		frappe.throw("Closed status requires: " + ", ".join(missing) + ".")
+
+	# H1: Linked-record closure checks
+	validate_linked_record_closure(doc)

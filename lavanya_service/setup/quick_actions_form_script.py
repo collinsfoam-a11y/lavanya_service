@@ -421,6 +421,124 @@ function setupForm({ doc, call, toast, createToast, $dialog }) {
         api: REPEAT_API + ".clear_repeat_complaint",
       });
     }),
+
+    // ── Expansion actions (Phase 2.3) ──
+
+    action("Notify Brand SC for Pickup", function () {
+      lavanyaModal({
+        title: "Notify Brand SC for Pickup",
+        submitLabel: "Notify",
+        api: API + ".notify_brand_sc_for_pickup",
+        fields: [
+          { name: "brand_sc", label: "Brand Service Center", type: "text", hint: "Optional" },
+          { name: "notes", label: "Notes", type: "text", hint: "Optional" },
+        ],
+      });
+    }),
+
+    action("Record Diagnosis Received", function () {
+      lavanyaModal({
+        title: "Record Diagnosis Received",
+        submitLabel: "Record",
+        api: API + ".record_diagnosis_received",
+        fields: [
+          { name: "diagnosis", label: "Diagnosis", type: "text", hint: "Optional" },
+          { name: "notes", label: "Notes", type: "text", hint: "Optional" },
+        ],
+      });
+    }),
+
+    action("Notify Customer for Collection", function () {
+      lavanyaModal({
+        title: "Notify Customer for Collection",
+        submitLabel: "Notify",
+        api: API + ".notify_customer_for_collection",
+        fields: [
+          { name: "notes", label: "Notes", type: "text", hint: "Optional" },
+        ],
+      });
+    }),
+
+    action("Hand Over Product", function () {
+      lavanyaModal({
+        title: "Hand Over Product",
+        submitLabel: "Hand Over",
+        api: API + ".hand_over_product",
+        fields: [
+          { name: "notes", label: "Notes", type: "text", hint: "Optional" },
+        ],
+      });
+    }),
+
+    action("Collect Old Unit", function () {
+      lavanyaModal({
+        title: "Collect Old Unit",
+        submitLabel: "Collect",
+        api: API + ".collect_old_unit",
+        fields: [
+          { name: "serial_no", label: "Serial No", type: "text", hint: "Optional" },
+          { name: "notes", label: "Notes", type: "text", hint: "Optional" },
+        ],
+      });
+    }),
+
+    action("Dispatch New Unit", function () {
+      lavanyaModal({
+        title: "Dispatch New Unit",
+        submitLabel: "Dispatch",
+        api: API + ".dispatch_new_unit",
+        fields: [
+          { name: "new_serial_no", label: "New Serial No", type: "text", hint: "Optional" },
+          { name: "notes", label: "Notes", type: "text", hint: "Optional" },
+        ],
+      });
+    }),
+
+    action("Return Old Unit to Brand", function () {
+      lavanyaModal({
+        title: "Return Old Unit to Brand",
+        submitLabel: "Return",
+        api: API + ".return_old_unit_to_brand",
+        fields: [
+          { name: "notes", label: "Notes", type: "text", hint: "Optional" },
+        ],
+      });
+    }),
+
+    action("Record Brand Reimbursement", function () {
+      lavanyaModal({
+        title: "Record Brand Reimbursement",
+        submitLabel: "Record",
+        api: API + ".record_brand_reimbursement",
+        fields: [
+          { name: "amount", label: "Amount", type: "text", hint: "Optional" },
+          { name: "notes", label: "Notes", type: "text", hint: "Optional" },
+        ],
+      });
+    }),
+
+    action("Verify Return Reason", function () {
+      lavanyaModal({
+        title: "Verify Return Reason",
+        submitLabel: "Verify",
+        api: API + ".verify_return_reason",
+        fields: [
+          { name: "reason", label: "Return Reason", type: "text", required: true },
+          { name: "notes", label: "Notes", type: "text", hint: "Optional" },
+        ],
+      });
+    }),
+
+    action("Notify Brand for Return", function () {
+      lavanyaModal({
+        title: "Notify Brand for Return",
+        submitLabel: "Notify",
+        api: API + ".notify_brand_for_return",
+        fields: [
+          { name: "notes", label: "Notes", type: "text", hint: "Optional" },
+        ],
+      });
+    }),
   ];
 
   return { actions };

@@ -220,7 +220,8 @@ _ACTIVITY_TYPES = ("Info", "Workflow", "Edit", "Label", "Assigned", "Assignment 
 @frappe.whitelist()
 def get_new_ticket_options():
     """Option lists for the staff New Ticket screen (brands / product types /
-    ticket types). Reuses the QR intake's safe lists."""
+    ticket types). Reuses the QR intake's safe lists. Adds brand metadata
+    (toll-free, SLA, supported products) from operational masters."""
     if frappe.session.user == "Guest":
         frappe.throw("Not permitted", frappe.PermissionError)
     from lavanya_service.api.qr_intake import get_qr_intake_options
@@ -228,6 +229,25 @@ def get_new_ticket_options():
     opts = get_qr_intake_options()
     opts["complaint_sources"] = ["Staff Entered", "Phone Call", "WhatsApp", "Direct Visit", "Email"]
     opts["warranty_statuses"] = ["Unknown", "In Warranty", "Out of Warranty", "Extended Warranty", "Brand Denied"]
+
+    # Enrich brand list with metadata from Brand Service Master
+    brand_meta = []
+    for brand_name in opts.get("brands", []):
+        try:
+            if frappe.db.exists("Brand Service Master", brand_name):
+                brand_doc = frappe.get_doc("Brand Service Master", brand_name)
+                brand_meta.append({
+                    "name": brand_name,
+                    "toll_free": brand_doc.get("toll_free_number"),
+                    "default_sla_hours": brand_doc.get("default_registration_sla_hours"),
+                    "registration_channel": brand_doc.get("registration_channel"),
+                    "free_service_supported": bool(brand_doc.get("free_service_supported")),
+                    "notes": brand_doc.get("notes"),
+                })
+        except Exception:
+            pass  # skip brands with missing master data
+    opts["brand_metadata"] = brand_meta
+
     return opts
 
 
@@ -314,6 +334,18 @@ def create_ticket(
         doc.pincode = str(pincode).strip()
     doc.insert()
 
+    # H5B: auto-sync customer product profile (non-blocking)
+    try:
+        from lavanya_service.api.operational_masters import sync_customer_product_from_ticket
+        sync_customer_product_from_ticket(doc.name)
+    except Exception:
+        frappe.log_error(
+            title="Lavanya customer product sync failed",
+            message=frappe.get_traceback(),
+            reference_doctype="HD Ticket",
+            reference_name=doc.name,
+        )
+
     return {"ok": True, "ticket": doc.name, "message": f"Ticket {doc.name} created"}
 
 
@@ -388,25 +420,37 @@ def add_ticket_note(ticket_id, note):
 def schedule_appointment(ticket_name, appointment_datetime, technician=None, notes=None):
     """Schedule a site-visit appointment for a ticket (date+time+technician).
     Stored in the Lavanya Service Appointment doctype — no HD Ticket schema change."""
-    if frappe.session.user == "Guest":
-        frappe.throw("Not permitted", frappe.PermissionError)
-    if not frappe.db.exists("HD Ticket", ticket_name):
-        frappe.throw("Ticket not found.")
-    if not frappe.has_permission("HD Ticket", "write", doc=ticket_name):
-        frappe.throw("Not permitted", frappe.PermissionError)
+    from lavanya_service.api.operational_masters import create_service_appointment
 
-    dt = (appointment_datetime or "").replace("T", " ").strip()
-    if not dt:
-        frappe.throw("Appointment date & time is required.")
+    return create_service_appointment(
+        ticket_name,
+        appointment_datetime,
+        technician=technician,
+        notes=notes,
+    )
 
-    appt = frappe.new_doc("Lavanya Service Appointment")
-    appt.ticket = ticket_name
-    appt.appointment_datetime = dt
-    appt.technician = (technician or "").strip() or None
-    appt.notes = (notes or "").strip() or None
-    appt.status = "Scheduled"
-    appt.insert()
-    return {"ok": True, "appointment": appt.name, "message": "Appointment scheduled"}
+
+def _linked_service_records(ticket_id):
+    """H5E: fetch linked service records for a ticket (read-only). Returns dict
+    keyed by record type. Silently skips missing DocTypes."""
+    records = {}
+    record_types = {
+        "replacement": ("Replacement Record", ["name", "brand", "old_serial_no", "new_serial_no", "status", "old_unit_collected_at", "new_unit_dispatched_at"]),
+        "return_service": ("Return Service Record", ["name", "refund_status", "return_reason", "return_requested_at", "brand_notified_at"]),
+        "stock_complaint": ("Stock Complaint Record", ["name", "supplier", "issue_identified_at", "supplier_notified_at", "credit_note_received_at"]),
+        "store_service": ("Store Service Record", ["name", "product_handed_over_at", "diagnosis", "brand_sc_notified_at", "customer_collected_at"]),
+        "demo_installation": ("Demo Installation Record", ["name", "technician", "scheduled_at", "demo_conducted_at", "installation_completed_at"]),
+        "communication_log": ("Customer Communication Log", ["name", "communication_date", "communication_type", "direction", "agent", "summary"]),
+    }
+    for key, (doctype, fields) in record_types.items():
+        try:
+            if not frappe.db.exists("DocType", doctype):
+                continue
+            rows = frappe.get_all(doctype, filters={"ticket": ticket_id}, fields=fields, order_by="modified desc", limit=5)
+            records[key] = rows
+        except Exception:
+            records[key] = []
+    return records
 
 
 @frappe.whitelist()
@@ -443,6 +487,41 @@ def get_ticket_detail(ticket_id):
         last_movement = receipts[0].modified
         ready_for_pickup = (custody_status == "Ready for Customer Pickup")
 
+    # H5B: customer product history from operational masters
+    customer_products = []
+    try:
+        from lavanya_service.api.operational_masters import get_customer_product_history
+        if phone_1:
+            history = get_customer_product_history(phone_1)
+            customer_products = history.get("products", [])
+    except Exception:
+        pass
+
+    # H5B: brand metadata from Brand Service Master
+    brand_info = {}
+    try:
+        brand_name = ticket.get("brand")
+        if brand_name and frappe.db.exists("Brand Service Master", brand_name):
+            brand_doc = frappe.get_doc("Brand Service Master", brand_name)
+            brand_info = {
+                "name": brand_doc.name,
+                "toll_free": brand_doc.get("toll_free_number") or "",
+                "default_sla_hours": brand_doc.get("default_registration_sla_hours") or 4,
+                "portal_url": brand_doc.get("portal_url") or "",
+                "registration_channel": brand_doc.get("registration_channel") or "",
+                "free_service_supported": bool(brand_doc.get("free_service_supported")),
+            }
+    except Exception:
+        pass
+
+    # H5B: local technician lookup for the ticket's product type
+    technicians = []
+    try:
+        from lavanya_service.api.operational_masters import list_local_technicians
+        technicians = list_local_technicians(product_type=ticket.get("product_type"), area=ticket.get("pincode"))
+    except Exception:
+        pass
+
     # Safe payload
     return {
         "name": ticket.name,
@@ -464,6 +543,10 @@ def get_ticket_detail(ticket_id):
             "invoice_number": ticket.get("invoice_no") or ticket.get("invoice_number"),
             "purchase_date": ticket.get("purchase_date")
         },
+        "customer_products": customer_products,
+        "brand_info": brand_info,
+        "technicians": technicians,
+        "linked_records": _linked_service_records(ticket_id),
         "workflow": {
             "status": ticket.status,
             "pending_reason": ticket.get("pending_reason"),

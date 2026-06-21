@@ -118,7 +118,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/utils/toast'
 import { useConfirm } from '@/utils/confirm'
@@ -127,39 +127,17 @@ import LavThemeToggle from '@/components/LavThemeToggle.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { toasts, dismiss } = useToast()
+const { toasts, dismiss, show: showToast } = useToast()
 const { confirm } = useConfirm()
-const { show: showToast } = useToast()
 const q = ref('')
-
-let gPressed = false
 
 function goSearch() {
   const term = q.value.trim()
   router.push({ path: '/tickets', query: term ? { search: term } : {} })
 }
 
-function onKeyDown(e) {
-  if (e.key === 'g') {
-    gPressed = true
-    setTimeout(() => { gPressed = false }, 500)
-    return
-  }
-  if (gPressed && e.key === 't') {
-    gPressed = false
-    e.preventDefault()
-    router.push('/tickets')
-    return
-  }
-  gPressed = false
-  if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
-    e.preventDefault()
-    showToast('Shortcuts: g+t → Tickets, ? → this help')
-  }
-}
-
-onMounted(() => document.addEventListener('keydown', onKeyDown))
-onUnmounted(() => document.removeEventListener('keydown', onKeyDown))
+// Keyboard shortcuts are handled centrally in App.vue (g+h, g+t, g+n, g+r, g+s, ?, Esc).
+// AppShell does not register its own document-level keydown listener.
 
 const navItems = [
   { label: 'Today\'s Work', mobileLabel: 'Work', icon: 'dashboard', to: '/', subtitle: 'Critical, important, and normal follow-ups' },

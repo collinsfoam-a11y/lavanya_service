@@ -178,13 +178,13 @@
               <template v-for="(s, i) in workflowTimeline" :key="s.key">
                 <div class="flex items-center gap-2 px-3 py-2 rounded-full shrink-0 font-label-md text-label-md transition-all"
                   :class="s.status === 'completed' ? 'text-white' : s.status === 'current' ? 'text-white ring-2 ring-offset-1 ring-primary' : s.status === 'waiting' ? 'text-white' : s.status === 'blocked' ? 'text-white' : 'text-on-surface-variant bg-surface-container'"
-                  :style="s.status === 'completed' ? { background: COLORS.success } : s.status === 'current' ? { background: COLORS.primary } : s.status === 'waiting' ? { background: COLORS.warning } : s.status === 'blocked' ? { background: COLORS.error } : {}"
+                  :style="s.status === 'completed' ? { background: 'var(--lav-success)' } : s.status === 'current' ? { background: 'var(--lav-primary)' } : s.status === 'waiting' ? { background: 'var(--lav-warning)' } : s.status === 'blocked' ? { background: 'var(--lav-danger)' } : {}"
                   :title="s.label">
                   <span class="material-symbols-outlined" style="font-size:14px">{{ s.status === 'completed' ? 'check' : s.icon }}</span>
                   <span class="truncate max-w-[120px]">{{ s.label }}</span>
                 </div>
                 <span v-if="i < workflowTimeline.length - 1" class="w-4 h-0.5 shrink-0 rounded-full"
-                  :style="{ background: workflowTimeline[i+1].status === 'pending' ? COLORS.outline : COLORS.success }"></span>
+                  :style="{ background: workflowTimeline[i+1].status === 'pending' ? 'var(--lav-border)' : 'var(--lav-success)' }"></span>
               </template>
             </div>
           </div>
@@ -201,7 +201,10 @@
               <span class="material-symbols-outlined text-secondary">repeat</span>
               Marked as repeat complaint<template v-if="ticket.repeat.previous_ticket"> · linked to <span class="font-semibold text-primary">{{ ticket.repeat.previous_ticket }}</span></template>
             </div>
-            <button @click="clearRepeat" class="px-3 h-8 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low shrink-0">Clear</button>
+            <div class="flex items-center gap-2 shrink-0">
+              <button @click="openAction('escalate_case')" class="px-3 h-8 rounded-lg bg-warning text-on-warning font-label-md text-label-md hover:opacity-90">Escalate</button>
+              <button @click="clearRepeat" class="px-3 h-8 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low">Clear</button>
+            </div>
           </div>
           <div v-else-if="repeatCandidates.length" class="rounded-xl p-4"
                style="border:1px solid rgba(148,55,0,0.4); background:rgba(148,55,0,0.07)">
@@ -263,14 +266,14 @@
               </div>
               <div>
                 <span class="block text-label-md text-outline">Customer Update Due</span>
-                <span v-if="ticket.reminder.customer_update_due" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ color: COLORS.warning, background: hexToRgba(COLORS.warning, 0.12) }">Due now</span>
+                <span v-if="ticket.reminder.customer_update_due" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ color: 'var(--lav-warning)', background: `color-mix(in srgb, var(--lav-warning) 12%, transparent)` }">Due now</span>
                 <template v-else>No</template>
               </div>
               <div><span class="block text-label-md text-outline">Reminder Rule</span> {{ ticket.reminder.reminder_rule_applied || 'No rule (fallback)' }}</div>
               <div>
                 <span class="block text-label-md text-outline">Next Follow-up</span>
                 {{ fmtDT(ticket.reminder.next_follow_up_date) }}
-                <span v-if="ticket.reminder.manual_followup" class="ml-1 px-1.5 py-0.5 rounded font-label-md text-label-md" :style="{ color: COLORS.secondary, background: hexToRgba(COLORS.secondary, 0.12) }">manual</span>
+                <span v-if="ticket.reminder.manual_followup" class="ml-1 px-1.5 py-0.5 rounded font-label-md text-label-md" :style="{ color: 'var(--lav-secondary)', background: `color-mix(in srgb, var(--lav-secondary) 12%, transparent)` }">manual</span>
               </div>
               <div><span class="block text-label-md text-outline">Due Soon At</span> {{ fmtDT(ticket.reminder.computed_due_soon_at) }}</div>
               <div><span class="block text-label-md text-outline">Stage Due At</span> {{ fmtDT(ticket.reminder.computed_stage_due_at) }}</div>
@@ -278,7 +281,7 @@
               <div><span class="block text-label-md text-outline">Promised Update At</span> {{ fmtDT(ticket.reminder.customer_promised_update_at) }}</div>
               <div v-if="ticket.reminder.promise_breach_reason" class="col-span-2">
                 <span class="block text-label-md text-outline">Promise Breach Reason</span>
-                <span :style="{ color: COLORS.error }">{{ ticket.reminder.promise_breach_reason }}</span>
+                <span :style="{ color: 'var(--lav-danger)' }">{{ ticket.reminder.promise_breach_reason }}</span>
               </div>
             </div>
           </section>
@@ -300,7 +303,7 @@
               </div>
               <div v-if="ticket.ai.risk_reason">
                 <span class="block text-label-md text-outline">Risk Reason</span>
-                <p class="font-body-md text-on-surface mt-0.5" :style="{ color: COLORS.error }">{{ ticket.ai.risk_reason }}</p>
+                <p class="font-body-md text-on-surface mt-0.5" :style="{ color: 'var(--lav-danger)' }">{{ ticket.ai.risk_reason }}</p>
               </div>
               <div v-if="ticket.ai.manager_summary">
                 <span class="block text-label-md text-outline">Manager Summary</span>
@@ -392,7 +395,7 @@
               </div>
 
               <!-- Part Tracking (conditional) -->
-              <div v-if="ticket.stage.part_required" class="rounded-xl p-4 bg-surface-container" :style="{ borderLeft: '4px solid ' + COLORS.warning }">
+              <div v-if="ticket.stage.part_required" class="rounded-xl p-4 bg-surface-container" :style="{ borderLeft: '4px solid var(--lav-warning)' }">
                 <div class="font-label-md text-label-md text-outline mb-3 flex items-center gap-1.5">
                   <span class="material-symbols-outlined" style="font-size:16px">build</span>
                   Part Tracking
@@ -418,7 +421,7 @@
               </div>
 
               <!-- Financial (conditional) -->
-              <div v-if="ticket.stage.estimated_amount || ticket.stage.customer_approved_amount || (ticket.stage.payment_status && ticket.stage.payment_status !== 'Not Applicable')" class="rounded-xl p-4 bg-surface-container" :style="{ borderLeft: '4px solid ' + COLORS.success }">
+              <div v-if="ticket.stage.estimated_amount || ticket.stage.customer_approved_amount || (ticket.stage.payment_status && ticket.stage.payment_status !== 'Not Applicable')" class="rounded-xl p-4 bg-surface-container" :style="{ borderLeft: '4px solid var(--lav-success)' }">
                 <div class="font-label-md text-label-md text-outline mb-3 flex items-center gap-1.5">
                   <span class="material-symbols-outlined" style="font-size:16px">payments</span>
                   Financial
@@ -486,6 +489,60 @@
             </div>
           </section>
 
+          <!-- H5B: Customer Product History -->
+          <section id="sec-customer-products" v-if="ticket.customer_products?.length">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Customer Products ({{ ticket.customer_products.length }})</h3>
+            <div class="flex flex-col gap-3">
+              <div v-for="cp in ticket.customer_products" :key="cp.name" class="rounded-xl p-4 bg-surface-container border border-outline-variant">
+                <div class="flex items-start justify-between gap-3 mb-2">
+                  <div class="font-body-md font-semibold text-on-surface">{{ cp.brand }} {{ cp.product_type }} · {{ cp.model_no || '—' }}</div>
+                  <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md shrink-0" :style="chip(cp.warranty_status)">{{ cp.warranty_status }}</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 font-label-md text-label-md text-on-surface-variant">
+                  <div>S/N: <span class="text-on-surface">{{ cp.serial_no || '—' }}</span></div>
+                  <div>Purchase: <span class="text-on-surface">{{ cp.purchase_date || '—' }}</span></div>
+                  <div>Warranty: <span class="text-on-surface">{{ cp.warranty_end_date || '—' }}</span></div>
+                  <div>Invoice: <span class="text-on-surface">{{ cp.invoice_number || '—' }}</span></div>
+                </div>
+                <div v-if="cp.ticket_count > 1" class="mt-2 flex items-center gap-2">
+                  <span class="material-symbols-outlined text-warning" style="font-size:16px">repeat</span>
+                  <span class="font-label-md text-label-md text-on-surface-variant">{{ cp.ticket_count }} service tickets for this product</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- H5B: Brand Info Card -->
+          <section id="sec-brand-info" v-if="ticket.brand_info?.name">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Brand Info</h3>
+            <div class="rounded-xl p-4 bg-surface-container border border-outline-variant">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 font-body-md text-on-surface-variant">
+                <div>
+                  <span class="block text-label-md text-outline">Toll-free</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.brand_info.toll_free || '—' }}</span>
+                </div>
+                <div>
+                  <span class="block text-label-md text-outline">Default SLA</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.brand_info.default_sla_hours }}h</span>
+                </div>
+                <div>
+                  <span class="block text-label-md text-outline">Registration Channel</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.brand_info.registration_channel || '—' }}</span>
+                </div>
+                <div>
+                  <span class="block text-label-md text-outline">Free Service</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.brand_info.free_service_supported ? 'Supported' : 'Not available' }}</span>
+                </div>
+              </div>
+              <div v-if="ticket.brand_info.portal_url" class="mt-3 pt-3 border-t border-outline-variant">
+                <a :href="ticket.brand_info.portal_url" target="_blank" class="text-primary hover:underline font-label-md flex items-center gap-1">
+                  <span class="material-symbols-outlined" style="font-size:16px">open_in_new</span>
+                  Brand Portal
+                </a>
+              </div>
+            </div>
+          </section>
+
           <!-- Workflow Summary -->
           <section id="sec-workflow">
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Workflow</h3>
@@ -520,6 +577,169 @@
               <div><span class="block text-label-md text-outline">Custody Status</span> {{ ticket.receipt?.custody_status || '—' }}</div>
               <div><span class="block text-label-md text-outline">Last Movement</span> {{ ticket.receipt?.last_movement?.substring(0,10) || '—' }}</div>
               <div><span class="block text-label-md text-outline">Ready for Pickup</span> {{ ticket.receipt?.ready_for_pickup ? 'Yes' : 'No' }}</div>
+              <!-- H5C: custody closure guard -->
+              <div v-if="ticket.receipt?.number" class="col-span-2 mt-2 pt-2 border-t border-outline-variant">
+                <span class="block text-label-md text-outline mb-1">Custody Closure Guard</span>
+                <span class="font-body-md" :class="custodyGuard.allowed ? 'text-success' : 'text-warning'">{{ custodyGuard.reason }}</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- H5E: Linked Service Records -->
+          <section id="sec-linked-records" v-if="hasLinkedRecords">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Service Records</h3>
+            <div class="flex flex-col gap-3">
+              <!-- Replacement Record -->
+              <div v-if="ticket.linked_records?.replacement?.length" v-for="rec in ticket.linked_records.replacement" :key="rec.name"
+                   class="rounded-xl p-4 bg-surface-container border" :style="{ borderLeft: '4px solid var(--lav-secondary)' }">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-secondary">swap_horiz</span>
+                  <span class="font-label-lg text-on-surface font-semibold">Replacement Record</span>
+                  <span class="ml-auto font-label-md text-primary">{{ rec.name }}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 font-label-md text-on-surface-variant">
+                  <div>Status: <span class="text-on-surface">{{ rec.status || '—' }}</span></div>
+                  <div>Old S/N: <span class="text-on-surface">{{ rec.old_serial_no || '—' }}</span></div>
+                  <div>New S/N: <span class="text-on-surface">{{ rec.new_serial_no || '—' }}</span></div>
+                  <div>Collected: <span class="text-on-surface">{{ rec.old_unit_collected_at?.substring(0,16) || '—' }}</span></div>
+                </div>
+              </div>
+              <!-- Return Record -->
+              <div v-if="ticket.linked_records?.return_service?.length" v-for="rec in ticket.linked_records.return_service" :key="rec.name"
+                   class="rounded-xl p-4 bg-surface-container border" :style="{ borderLeft: '4px solid var(--lav-warning)' }">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-warning">keyboard_return</span>
+                  <span class="font-label-lg text-on-surface font-semibold">Return Record</span>
+                  <span class="ml-auto font-label-md text-primary">{{ rec.name }}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 font-label-md text-on-surface-variant">
+                  <div>Refund: <span class="text-on-surface">{{ rec.refund_status || '—' }}</span></div>
+                  <div>Reason: <span class="text-on-surface">{{ rec.return_reason || '—' }}</span></div>
+                  <div>Requested: <span class="text-on-surface">{{ rec.return_requested_at?.substring(0,10) || '—' }}</span></div>
+                </div>
+              </div>
+              <!-- Stock Complaint Record -->
+              <div v-if="ticket.linked_records?.stock_complaint?.length" v-for="rec in ticket.linked_records.stock_complaint" :key="rec.name"
+                   class="rounded-xl p-4 bg-surface-container border" :style="{ borderLeft: '4px solid var(--lav-danger)' }">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-danger">inventory_2</span>
+                  <span class="font-label-lg text-on-surface font-semibold">Stock Complaint</span>
+                  <span class="ml-auto font-label-md text-primary">{{ rec.name }}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 font-label-md text-on-surface-variant">
+                  <div>Supplier: <span class="text-on-surface">{{ rec.supplier || '—' }}</span></div>
+                  <div>Notified: <span class="text-on-surface">{{ rec.supplier_notified_at?.substring(0,10) || '—' }}</span></div>
+                  <div>Credit Note: <span class="text-on-surface">{{ rec.credit_note_received_at?.substring(0,10) || '—' }}</span></div>
+                </div>
+              </div>
+              <!-- Store Service Record -->
+              <div v-if="ticket.linked_records?.store_service?.length" v-for="rec in ticket.linked_records.store_service" :key="rec.name"
+                   class="rounded-xl p-4 bg-surface-container border" :style="{ borderLeft: '4px solid var(--lav-primary)' }">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-primary">store</span>
+                  <span class="font-label-lg text-on-surface font-semibold">Store Service</span>
+                  <span class="ml-auto font-label-md text-primary">{{ rec.name }}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 font-label-md text-on-surface-variant">
+                  <div>Diagnosis: <span class="text-on-surface">{{ rec.diagnosis || '—' }}</span></div>
+                  <div>Handed Over: <span class="text-on-surface">{{ rec.product_handed_over_at?.substring(0,16) || '—' }}</span></div>
+                  <div>Collected: <span class="text-on-surface">{{ rec.customer_collected_at?.substring(0,16) || '—' }}</span></div>
+                </div>
+              </div>
+              <!-- Communication Log -->
+              <div v-if="ticket.linked_records?.communication_log?.length">
+                <div class="font-label-md text-label-md text-on-surface-variant mb-2">Communication Log ({{ ticket.linked_records.communication_log.length }})</div>
+                <div v-for="entry in ticket.linked_records.communication_log" :key="entry.name"
+                     class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-lowest border border-outline-variant">
+                  <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px">
+                    {{ entry.communication_type === 'Call' ? 'phone_in_talk' : entry.communication_type === 'WhatsApp' ? 'chat' : entry.communication_type === 'SMS' ? 'sms' : 'mail' }}
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-body-md text-on-surface">{{ entry.summary || '(no summary)' }}</div>
+                    <div class="font-label-md text-on-surface-variant">
+                      {{ entry.communication_type }} · {{ entry.direction || 'Outbound' }}
+                      <template v-if="entry.agent"> · {{ entry.agent }}</template>
+                      <template v-if="entry.communication_date"> · {{ entry.communication_date?.substring(0,16) }}</template>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- H5C: Technician Assignment -->
+          <section id="sec-technician" v-if="ticket.technicians?.length || ticket.stage?.service_charge_type">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Technician Assignment</h3>
+            <div v-if="ticket.technicians?.length" class="rounded-xl border border-outline-variant bg-surface-container p-4 mb-3">
+              <div class="font-label-md text-label-md text-on-surface-variant mb-2">Matching technicians ({{ ticket.technicians.length }})</div>
+              <div class="flex flex-col gap-2">
+                <div v-for="tech in ticket.technicians.slice(0,5)" :key="tech.name" class="flex items-center justify-between gap-3 p-3 rounded-lg bg-surface-container-lowest border border-outline-variant">
+                  <div class="flex-1 min-w-0">
+                    <div class="font-body-md font-semibold text-on-surface truncate">{{ tech.technician_name }}</div>
+                    <div class="font-label-md text-label-md text-on-surface-variant">
+                      {{ tech.phone || 'No phone' }}
+                      <template v-if="tech.skills"> · {{ tech.skills }}</template>
+                      <template v-if="tech.area"> · {{ tech.area }}</template>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span v-if="tech.rating" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: 'color-mix(in srgb, var(--lav-success) 12%, transparent)', color: 'var(--lav-success)' }">⭐ {{ tech.rating }}</span>
+                    <button type="button" @click="assignTechnician(tech)" class="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:opacity-90">Assign</button>
+                    <a v-if="tech.phone" :href="'tel:' + tech.phone" class="px-3 py-1.5 rounded-lg border border-outline-variant text-primary font-label-md text-label-md hover:bg-surface-container-low">Call</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="rounded-xl bg-surface-container p-4 text-on-surface-variant font-body-md">
+              No matching technicians found for {{ ticket.product?.type || 'this product type' }}. Assign manually or check area coverage.
+            </div>
+          </section>
+
+          <!-- H5C: Appointment Flow -->
+          <section id="sec-appointment">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center gap-2">
+              <span class="material-symbols-outlined" style="font-size:22px">event</span>
+              Appointment
+            </h3>
+            <div v-if="ticket.appointment" class="rounded-xl border border-outline-variant bg-surface-container p-4 mb-3">
+              <div class="grid grid-cols-2 gap-3 font-body-md text-on-surface-variant">
+                <div>
+                  <span class="block text-label-md text-outline">Date/Time</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.appointment.appointment_datetime?.substring(0,16) || '—' }}</span>
+                </div>
+                <div>
+                  <span class="block text-label-md text-outline">Technician</span>
+                  <span class="text-on-surface font-semibold">{{ ticket.appointment.technician || '—' }}</span>
+                </div>
+                <div v-if="ticket.appointment.status">
+                  <span class="block text-label-md text-outline">Status</span>
+                  <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="appointmentStatusChip(ticket.appointment.status)">{{ ticket.appointment.status }}</span>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-outline-variant">
+                <button @click="openAction('schedule_appointment')" class="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:opacity-90">Schedule</button>
+                <button @click="openAction('schedule_appointment')" class="px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low">Reschedule</button>
+                <span class="text-label-md text-on-surface-variant self-center">· Visit actions in quick panel →</span>
+              </div>
+            </div>
+            <div v-else class="rounded-xl bg-surface-container p-4 text-on-surface-variant font-body-md flex items-center justify-between">
+              <span>No appointment scheduled.</span>
+              <button @click="openAction('schedule_appointment')" class="px-4 py-2 rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90">Schedule Appointment</button>
+            </div>
+          </section>
+
+          <!-- H5C: Proof / Attachment Categories -->
+          <section id="sec-proof" class="rounded-xl border border-outline-variant bg-surface-container-lowest p-4">
+            <h3 class="font-headline-md text-headline-md text-primary mb-3">Proof Categories</h3>
+            <p class="font-body-md text-on-surface-variant mb-3">Required proof documents by service context. Upload not yet available — reference for staff verification.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div v-for="cat in proofCategories" :key="cat.label" class="flex items-center gap-2 p-2 rounded-lg bg-surface-container">
+                <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">{{ cat.icon }}</span>
+                <div>
+                  <div class="font-label-md text-on-surface">{{ cat.label }}</div>
+                  <div class="font-label-md text-label-md text-on-surface-variant">{{ cat.context }}</div>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -653,7 +873,7 @@
                 <!-- Step indicator -->
                 <div class="relative z-10 flex items-center justify-center w-[46px] h-[46px] rounded-full shrink-0 shadow-sm transition-all"
                   :class="step.status === 'current' ? 'bg-primary text-white ring-4 ring-primary/20' : 'bg-surface-container-highest text-outline'"
-                  :style="step.status === 'completed' ? { background: COLORS.success, color: 'white' } : {}">
+                  :style="step.status === 'completed' ? { background: 'var(--lav-success)', color: 'white' } : {}">
                   <span v-if="step.status === 'completed'" class="material-symbols-outlined" style="font-size:22px">check</span>
                   <span v-else class="material-symbols-outlined" style="font-size:22px">{{ step.icon }}</span>
                 </div>
@@ -661,7 +881,7 @@
                 <div class="flex-1 min-w-0 pt-2">
                   <div class="font-body-md font-semibold"
                     :class="step.status === 'current' ? 'text-primary' : 'text-on-surface-variant'"
-                    :style="step.status === 'completed' ? { color: COLORS.success } : {}">
+                    :style="step.status === 'completed' ? { color: 'var(--lav-success)' } : {}">
                     {{ step.label }}
                   </div>
                   <div v-if="step.status === 'current' && step.action" class="mt-2">
@@ -672,7 +892,7 @@
                       {{ step.buttonLabel || step.label }}
                     </button>
                   </div>
-                  <div v-else-if="step.status === 'completed' && step.completedLabel" class="font-label-md text-label-md mt-0.5 flex items-center gap-1" :style="{ color: COLORS.success }">
+                  <div v-else-if="step.status === 'completed' && step.completedLabel" class="font-label-md text-label-md mt-0.5 flex items-center gap-1" :style="{ color: 'var(--lav-success)' }">
                     <span class="material-symbols-outlined" style="font-size:14px">done</span>
                     {{ step.completedLabel }}
                   </div>
@@ -878,7 +1098,7 @@ import LavActionBar from '@/components/LavActionBar.vue'
 import LavWorkflowTimeline from '@/components/lavanya/tickets/LavWorkflowTimeline.vue'
 import LavCustomerJourneyCard from '@/components/lavanya/tickets/LavCustomerJourneyCard.vue'
 import LavFollowupQualityBadge from '@/components/lavanya/tickets/LavFollowupQualityBadge.vue'
-import { chip, dueChip, promiseChip, escChip, stageChip, satisfactionChip, informedChip, fmtDT, ticketAge, relTime, hexToRgba, COLORS, qualityBadge, friendlyLabel } from '@/utils'
+import { chip, dueChip, promiseChip, escChip, stageChip, satisfactionChip, informedChip, fmtDT, ticketAge, relTime, qualityBadge, friendlyLabel } from '@/utils'
 import { useToast } from '@/utils/toast'
 import { useConfirm } from '@/utils/confirm'
 import LavConfirm from '@/components/LavConfirm.vue'
@@ -920,16 +1140,75 @@ const closureGuard = computed(() => {
   return { allowed: false, reason: 'Customer confirmation pending.' }
 })
 
+// H5C: custody closure guard — prevents closure if product is not returned/collected
+const custodyGuard = computed(() => {
+  const r = ticket.value?.receipt || {}
+  if (!r.number) return { allowed: true, reason: 'No product in custody.' }
+  const status = r.custody_status || ''
+  if (!status || status === 'Ready for Customer Pickup') return { allowed: true, reason: `${status || 'Ready for pickup'}. Can close after handover.` }
+  if (status.includes('Sent') || status.includes('Returned from SC')) return { allowed: false, reason: `Product at ${status}. Complete custody chain before closure.` }
+  return { allowed: true, reason: `${status}.` }
+})
+
+// H5C: appointment status chip
+function appointmentStatusChip(status) {
+  const map = {
+    Scheduled: 'var(--lav-primary)',
+    Confirmed: 'var(--lav-success)',
+    Rescheduled: 'var(--lav-warning)',
+    Visited: 'var(--lav-success)',
+    Missed: 'var(--lav-danger)',
+    Cancelled: 'var(--lav-muted)',
+  }
+  const color = map[status] || 'var(--lav-muted)'
+  return { background: _bg(color), color }
+}
+
+// H5C: assign technician from master data
+function assignTechnician(tech) {
+  showToast(`Technician ${tech.technician_name} selected. Open Schedule Appointment to set a date.`)
+  // Technician assignment is set via the schedule_appointment action modal
+  openAction('schedule_appointment')
+}
+
+// H5C: proof categories (read-only reference for staff)
+const proofCategories = [
+  { label: 'Invoice Copy', icon: 'receipt_long', context: 'All service types' },
+  { label: 'Warranty Card', icon: 'verified', context: 'Warranty claims' },
+  { label: 'Product / Serial Photo', icon: 'photo_camera', context: 'All service types' },
+  { label: 'Brand Ticket Screenshot', icon: 'screenshot', context: 'Brand warranty' },
+  { label: 'Service Center Job Sheet', icon: 'assignment', context: 'Product at store' },
+  { label: 'Technician Visit Proof', icon: 'handyman', context: 'Technician visits' },
+  { label: 'Customer Approval Proof', icon: 'how_to_reg', context: 'Estimates / paid service' },
+  { label: 'Payment Receipt', icon: 'payments', context: 'Paid / local service' },
+  { label: 'Closure Confirmation', icon: 'task_alt', context: 'All closed tickets' },
+  { label: 'Returned Product Photo', icon: 'inventory_2', context: 'Return / replacement' },
+  { label: 'Showroom Receipt', icon: 'store', context: 'Product at store' },
+  { label: 'WhatsApp Screenshot Import', icon: 'chat', context: 'Customer communication' },
+]
+
+// H5E: linked service records summary
+const hasLinkedRecords = computed(() => {
+  const r = ticket.value?.linked_records || {}
+  return Object.values(r).some(arr => (arr || []).length > 0)
+})
+
 const SECTIONS = [
   { id: 'sec-stage', label: 'Stage' },
   { id: 'sec-reminder', label: 'Reminder' },
   { id: 'sec-ai-advisory', label: 'AI Advisory' },
   { id: 'sec-communication', label: 'Comms' },
-  { id: 'sec-followup-tracking', label: 'Follow-up Tracking' },
+  { id: 'sec-followup-tracking', label: 'Tracking' },
   { id: 'sec-customer', label: 'Customer' },
   { id: 'sec-product', label: 'Product' },
+  { id: 'sec-customer-products', label: 'History' },
+  { id: 'sec-brand-info', label: 'Brand' },
   { id: 'sec-workflow', label: 'Workflow' },
   { id: 'sec-receipt', label: 'Custody' },
+  { id: 'sec-technician', label: 'Technician' },
+  { id: 'sec-appointment', label: 'Appointment' },
+  { id: 'sec-linked-records', label: 'Records' },
+  { id: 'sec-proof', label: 'Proof' },
   { id: 'sec-followup', label: 'Follow-ups' },
   { id: 'sec-activity', label: 'Activity' },
   { id: 'sec-actions', label: 'Actions' },
@@ -955,23 +1234,28 @@ const showNotificationTemplatePicker = ref(false)
 
 const selectedNotificationTemplateDoc = computed(() => notificationTemplates.value.find(t => t.name === selectedNotificationTemplate.value))
 
+// CSS-var-safe background tint helper (replaces hexToRgba for theme responsiveness)
+function _bg(colorVar, alpha = 0.12) {
+  return `color-mix(in srgb, ${colorVar} ${Math.round(alpha * 100)}%, transparent)`
+}
+
 function notificationChannelChip(channel) {
-  const color = channel === 'WhatsApp' ? COLORS.success : channel === 'SMS' ? COLORS.primary : channel === 'Internal' ? COLORS.secondary : COLORS.neutral
-  return { background: hexToRgba(color, 0.12), color }
+  const color = channel === 'WhatsApp' ? 'var(--lav-success)' : channel === 'SMS' ? 'var(--lav-primary)' : channel === 'Internal' ? 'var(--lav-secondary)' : 'var(--lav-muted)'
+  return { background: _bg(color), color }
 }
 
 function notificationStatusChip(status) {
   const map = {
-    Queued: COLORS.primary,
-    'Approval Pending': COLORS.warning,
-    Approved: COLORS.success,
-    Skipped: COLORS.neutral,
-    Failed: COLORS.error,
-    Cancelled: COLORS.neutral,
-    Sent: COLORS.success,
+    Queued: 'var(--lav-primary)',
+    'Approval Pending': 'var(--lav-warning)',
+    Approved: 'var(--lav-success)',
+    Skipped: 'var(--lav-muted)',
+    Failed: 'var(--lav-danger)',
+    Cancelled: 'var(--lav-muted)',
+    Sent: 'var(--lav-success)',
   }
-  const color = map[status] || COLORS.neutral
-  return { background: hexToRgba(color, 0.12), color }
+  const color = map[status] || 'var(--lav-muted)'
+  return { background: _bg(color), color }
 }
 
 async function loadNotificationData() {
@@ -1054,9 +1338,9 @@ const loadFollowupFlow = async () => {
 }
 const aiBusy = ref(false)
 function aiStatusChip(s) {
-	const map = { Suggested: COLORS.secondary, Accepted: COLORS.success, Ignored: COLORS.neutral, 'Review Needed': COLORS.error }
-	const c = map[s] || COLORS.neutral
-	return { background: hexToRgba(c, 0.12), color: c }
+	const map = { Suggested: 'var(--lav-secondary)', Accepted: 'var(--lav-success)', Ignored: 'var(--lav-muted)', 'Review Needed': 'var(--lav-danger)' }
+	const c = map[s] || 'var(--lav-muted)'
+	return { background: _bg(c), color: c }
 }
 async function acceptAiSuggestion() {
 	aiBusy.value = true
@@ -1084,20 +1368,20 @@ async function ignoreAiSuggestion() {
 }
 
 const FOLLOWUP_ACTION_STYLES = {
-	'Verify Technician Called': { icon: 'phone_in_talk', bg: hexToRgba(COLORS.primary), fg: COLORS.primary },
-	'Verify Technician Visit': { icon: 'handyman', bg: hexToRgba(COLORS.secondary), fg: COLORS.secondary },
-	'Record SC Follow-up': { icon: 'support_agent', bg: hexToRgba(COLORS.secondary), fg: COLORS.secondary },
-	'Inform Customer': { icon: 'campaign', bg: hexToRgba(COLORS.success), fg: COLORS.success },
-	'Mark No Update': { icon: 'warning', bg: hexToRgba(COLORS.warning), fg: COLORS.warning },
-	'Escalate Case': { icon: 'escalator_warning', bg: hexToRgba(COLORS.error), fg: COLORS.error },
-	'Record Satisfaction': { icon: 'sentiment_satisfied', bg: hexToRgba(COLORS.success), fg: COLORS.success },
-	'Record Customer Approval': { icon: 'contract', bg: hexToRgba(COLORS.tertiary), fg: COLORS.tertiary },
+	'Verify Technician Called': { icon: 'phone_in_talk', bg: _bg('var(--lav-primary)'), fg: 'var(--lav-primary)' },
+	'Verify Technician Visit': { icon: 'handyman', bg: _bg('var(--lav-secondary)'), fg: 'var(--lav-secondary)' },
+	'Record SC Follow-up': { icon: 'support_agent', bg: _bg('var(--lav-secondary)'), fg: 'var(--lav-secondary)' },
+	'Inform Customer': { icon: 'campaign', bg: _bg('var(--lav-success)'), fg: 'var(--lav-success)' },
+	'Mark No Update': { icon: 'warning', bg: _bg('var(--lav-warning)'), fg: 'var(--lav-warning)' },
+	'Escalate Case': { icon: 'escalator_warning', bg: _bg('var(--lav-danger)'), fg: 'var(--lav-danger)' },
+	'Record Satisfaction': { icon: 'sentiment_satisfied', bg: _bg('var(--lav-success)'), fg: 'var(--lav-success)' },
+	'Record Customer Approval': { icon: 'contract', bg: _bg('var(--lav-tertiary)'), fg: 'var(--lav-tertiary)' },
 }
 function followupActionStyle(text) {
 	for (const [key, style] of Object.entries(FOLLOWUP_ACTION_STYLES)) {
 		if (text.includes(key)) return style
 	}
-	return { icon: 'support_agent', bg: hexToRgba(COLORS.neutral, 0.12), fg: COLORS.neutral }
+	return { icon: 'support_agent', bg: _bg('var(--lav-muted)', 0.12), fg: 'var(--lav-muted)' }
 }
 function followupActionIcon(text) { return followupActionStyle(text).icon }
 function followupActionBg(text) { return followupActionStyle(text).bg }
@@ -1106,28 +1390,28 @@ function followupActionFg(text) { return followupActionStyle(text).fg }
 // Follow-up tracking banner state
 const followupBanner = computed(() => {
 	const s = ticket.value?.stage || {}
-	const _c = (c, a = 0.12) => ({ bg: hexToRgba(c, a), fg: c })
+	const _c = (colorVar, a = 0.12) => ({ bg: _bg(colorVar, a), fg: colorVar })
 	if (s.customer_satisfaction_status === 'Satisfied' || s.customer_satisfaction_status === 'Not Required')
-		return { ..._c(COLORS.success), icon: 'sentiment_satisfied', title: 'Customer Satisfied', sub: 'No further follow-up needed.' }
+		return { ..._c('var(--lav-success)'), icon: 'sentiment_satisfied', title: 'Customer Satisfied', sub: 'No further follow-up needed.' }
 	if (s.customer_satisfaction_status === 'Not Satisfied')
-		return { ..._c(COLORS.error), icon: 'sentiment_dissatisfied', title: 'Customer Not Satisfied', sub: 'Escalate or follow up to resolve concerns.' }
+		return { ..._c('var(--lav-danger)'), icon: 'sentiment_dissatisfied', title: 'Customer Not Satisfied', sub: 'Escalate or follow up to resolve concerns.' }
 	if (s.escalation_level && s.escalation_level !== 'None')
-		return { ..._c(COLORS.error), icon: 'escalator_warning', title: `Escalated — ${s.escalation_level}`, sub: 'Case requires higher-level attention.' }
+		return { ..._c('var(--lav-danger)'), icon: 'escalator_warning', title: `Escalated — ${s.escalation_level}`, sub: 'Case requires higher-level attention.' }
 	if (s.followup_stage === 'no_technician_update')
-		return { ..._c(COLORS.warning), icon: 'warning', title: 'No Update from Technician', sub: 'No response from service center — escalation may be needed.' }
+		return { ..._c('var(--lav-warning)'), icon: 'warning', title: 'No Update from Technician', sub: 'No response from service center — escalation may be needed.' }
 	if (s.followup_stage === 'part_pending')
-		return { ..._c(COLORS.warning), icon: 'build', title: 'Awaiting Part', sub: s.part_delay_reason || 'Part not yet received.' }
+		return { ..._c('var(--lav-warning)'), icon: 'build', title: 'Awaiting Part', sub: s.part_delay_reason || 'Part not yet received.' }
 	if (!s.customer_informed_status || s.customer_informed_status === 'Pending')
-		return { ..._c(COLORS.warning), icon: 'campaign', title: 'Customer Not Informed', sub: 'Customer needs to be contacted about their service status.' }
+		return { ..._c('var(--lav-warning)'), icon: 'campaign', title: 'Customer Not Informed', sub: 'Customer needs to be contacted about their service status.' }
 	if (s.customer_informed_status === 'Customer Not Reachable')
-		return { ..._c(COLORS.error), icon: 'person_off', title: 'Customer Not Reachable', sub: 'Multiple attempts failed — document efforts.' }
+		return { ..._c('var(--lav-danger)'), icon: 'person_off', title: 'Customer Not Reachable', sub: 'Multiple attempts failed — document efforts.' }
 	if (s.followup_stage === 'technician_call_pending')
-		return { ..._c(COLORS.primary, 0.08), icon: 'phone_in_talk', title: 'Technician Call Pending', sub: 'Verify if technician has called the customer.' }
+		return { ..._c('var(--lav-primary)', 0.08), icon: 'phone_in_talk', title: 'Technician Call Pending', sub: 'Verify if technician has called the customer.' }
 	if (s.followup_stage === 'technician_visit_pending')
-		return { ..._c(COLORS.primary, 0.08), icon: 'handyman', title: 'Technician Visit Pending', sub: 'Verify if technician has visited the customer.' }
+		return { ..._c('var(--lav-primary)', 0.08), icon: 'handyman', title: 'Technician Visit Pending', sub: 'Verify if technician has visited the customer.' }
 	if (s.followup_stage === 'customer_confirmation_pending')
-		return { ..._c(COLORS.tertiary), icon: 'how_to_reg', title: 'Awaiting Customer Confirmation', sub: 'Waiting for customer to confirm service completion.' }
-	return { ..._c(COLORS.primary, 0.08), icon: 'support_agent', title: 'Follow-up in Progress', sub: 'Ticket is actively being followed up.' }
+		return { ..._c('var(--lav-tertiary)'), icon: 'how_to_reg', title: 'Awaiting Customer Confirmation', sub: 'Waiting for customer to confirm service completion.' }
+	return { ..._c('var(--lav-primary)', 0.08), icon: 'support_agent', title: 'Follow-up in Progress', sub: 'Ticket is actively being followed up.' }
 })
 
 // ── Workflow Timeline Stages ──

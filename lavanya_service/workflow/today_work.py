@@ -175,24 +175,39 @@ GROUPS = [
 		"priority": 13,
 	},
 	{
+		"key": "store_service",
+		"label": "Store Service",
+		"priority": 14,
+	},
+	{
+		"key": "replacement",
+		"label": "Replacement / Exchange",
+		"priority": 15,
+	},
+	{
+		"key": "return",
+		"label": "Return / Refund",
+		"priority": 16,
+	},
+	{
 		"key": "product_receipt_missing",
 		"label": "Product Receipt Missing",
-		"priority": 14,
+		"priority": 17,
 	},
 	{
 		"key": "closure_pending",
 		"label": "Closure Pending",
-		"priority": 15,
+		"priority": 18,
 	},
 	{
 		"key": "new_complaints",
 		"label": "New Complaints",
-		"priority": 16,
+		"priority": 19,
 	},
 	{
 		"key": "upcoming_work",
 		"label": "Upcoming Work",
-		"priority": 17,
+		"priority": 20,
 	},
 ]
 
@@ -208,6 +223,9 @@ HELPDESK_AGENT_GROUPS = {
 	"customer_not_informed",
 	"escalated_cases",
 	"customer_satisfaction_pending",
+	"store_service",
+	"replacement",
+	"return",
 }
 
 FRONT_DESK_GROUPS = {
@@ -289,6 +307,21 @@ def classify_ticket(row, today_date=None):
 			and not _has_value(row, "service_product_receipt")
 		):
 			keys.append("product_receipt_missing")
+
+		service_path = _value(row, "service_path")
+		if service_path == "store_service" and _value(row, "current_service_stage") in (
+			"Brand SC Diagnosis Pending", "Brand SC Notified",
+			"Diagnosis Received", "Product Handed Over",
+		):
+			keys.append("store_service")
+		if service_path == "replacement_brand" and _value(row, "current_service_stage") in (
+			"Old Unit Collected", "New Unit Dispatched", "Brand Reimbursement Pending",
+		):
+			keys.append("replacement")
+		if service_path == "return_service" and _value(row, "current_service_stage") in (
+			"Return Requested", "Return Reason Verified", "Brand Notified for Return",
+		):
+			keys.append("return")
 		if status == "New":
 			keys.append("new_complaints")
 

@@ -130,7 +130,7 @@
         class="lav-bucket"
       >
         <div class="lav-bucket__head" :style="{ borderLeft: '4px solid ' + accent(group.key) }">
-          <span class="lav-badge" :style="{ background: group.count ? accent(group.key) : COLORS.outline }">{{ group.count }}</span>
+          <span class="lav-badge" :style="{ background: group.count ? accent(group.key) : 'var(--lav-border)' }">{{ group.count }}</span>
           <h3 class="font-headline-md text-headline-md text-on-surface">{{ group.label }}</h3>
         </div>
 
@@ -259,15 +259,15 @@ function clearFilters() {
 const intel = computed(() => {
   const t = allTickets.value
   return [
-    { key: 'promise_breach', label: 'Promise Breach', icon: 'gpp_bad', hue: COLORS.error,
+    { key: 'promise_breach', label: 'Promise Breach', icon: 'gpp_bad', hue: 'var(--lav-danger)',
       count: t.filter((x) => x.customer_promise_status === 'Breached').length },
-    { key: 'escalated', label: 'Escalated', icon: 'priority_high', hue: COLORS.warning,
+    { key: 'escalated', label: 'Escalated', icon: 'priority_high', hue: 'var(--lav-warning)',
       count: t.filter((x) => escLevel(x) !== 'None').length },
-    { key: 'overdue', label: 'Overdue', icon: 'error', hue: COLORS.error,
+    { key: 'overdue', label: 'Overdue', icon: 'error', hue: 'var(--lav-danger)',
       count: t.filter((x) => x.overdue_status === 'Overdue').length },
-    { key: 'due_soon', label: 'Due Soon', icon: 'schedule', hue: COLORS.warning,
+    { key: 'due_soon', label: 'Due Soon', icon: 'schedule', hue: 'var(--lav-warning)',
       count: t.filter((x) => x.overdue_status === 'Due Soon').length },
-    { key: 'update_due', label: 'Customer Update Due', icon: 'campaign', hue: COLORS.secondary,
+    { key: 'update_due', label: 'Customer Update Due', icon: 'campaign', hue: 'var(--lav-secondary)',
       count: t.filter((x) => x.customer_update_due).length },
   ]
 })
@@ -309,11 +309,11 @@ const METRICS = [
 ]
 
 const METRIC_TIERS = [
-  { key: 'critical', label: 'Critical', color: COLORS.error, icon: 'warning',
+  { key: 'critical', label: 'Critical', color: 'var(--lav-danger)', icon: 'warning',
     keys: ['overdue_follow_up', 'no_technician_update', 'escalated_cases', 'customer_not_informed'] },
-  { key: 'important', label: 'Important', color: COLORS.warning, icon: 'priority_high',
+  { key: 'important', label: 'Important', color: 'var(--lav-warning)', icon: 'priority_high',
     keys: ['technician_call_due', 'technician_visit_due', 'due_today', 'customer_satisfaction_pending'] },
-  { key: 'normal', label: 'Normal', color: COLORS.primary, icon: 'check_circle',
+  { key: 'normal', label: 'Normal', color: 'var(--lav-primary)', icon: 'check_circle',
     keys: ['registration_pending', 'waiting_on_customer', 'waiting_on_part', 'ready_for_pickup',
            'product_receipt_missing', 'closure_pending', 'new_complaints'] },
 ]
