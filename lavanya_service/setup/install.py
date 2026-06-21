@@ -45,6 +45,12 @@ def _ensure_h5d_service_records():
 	}
 
 
+def _ensure_whatsapp_inbox():
+	"""H6A: idempotently create WhatsApp Inbox DocTypes."""
+	from lavanya_service.setup.whatsapp_inbox import create_whatsapp_inbox
+	return create_whatsapp_inbox()
+
+
 def _steps():
 	"""Ordered (label, callable) setup steps.
 
@@ -77,6 +83,7 @@ def _steps():
 		("customer_profile_doctype", ensure_lavanya_customer_profile),
 		("h5_operational_data_foundation", ensure_h5_operational_data_foundation),
 		("h5d_service_records", _ensure_h5d_service_records),
+		("whatsapp_inbox", _ensure_whatsapp_inbox),
 		
 		# 2. Helpdesk configurations (Statuses, Priorities, Types)
 		("helpdesk_statuses_priorities_types", configure_statuses_priorities_types),

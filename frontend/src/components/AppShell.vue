@@ -144,6 +144,7 @@ const navItems = [
   { label: 'Tickets', mobileLabel: 'Tickets', icon: 'confirmation_number', to: '/tickets', subtitle: 'Search, filters, and ticket detail drawer' },
   { label: 'Reports', mobileLabel: 'Reports', icon: 'assessment', to: '/reports', subtitle: 'Manager reports and safety previews' },
   { label: 'Field Mode', mobileLabel: 'Field', icon: 'phone_iphone', to: '/field', subtitle: 'Counter-friendly phone lookup and quick work' },
+  { label: 'WhatsApp', mobileLabel: 'Chat', icon: 'chat', to: '/whatsapp', subtitle: 'Read-only inbox and draft outbound queue' },
   { label: 'New Ticket', mobileLabel: 'New', icon: 'add_box', to: '/new-ticket', subtitle: 'Register a customer complaint' },
   { label: 'Settings', mobileLabel: 'Settings', icon: 'settings', to: '/settings', subtitle: 'Theme, safety locks, and feature flags' },
 ]

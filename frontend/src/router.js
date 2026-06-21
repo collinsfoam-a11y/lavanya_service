@@ -32,6 +32,11 @@ const routes = [
     component: () => import('@/pages/FieldMode.vue'),
   },
   {
+    path: '/whatsapp',
+    name: 'WhatsAppInbox',
+    component: () => import('@/pages/WhatsAppInbox.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/pages/NotFound.vue'),
