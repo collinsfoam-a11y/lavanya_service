@@ -30,6 +30,8 @@ FALLBACK_REPEAT_MIN = 24 * 60
 FALLBACK_DUE_SOON_BEFORE_MIN = 4 * 60
 FALLBACK_MANAGER_ESCALATE_MIN = 48 * 60
 FALLBACK_OWNER_ESCALATE_MIN = 96 * 60
+# §5: consecutive no-updates before a ticket parks as Pending Customer Response.
+FALLBACK_MAX_FOLLOWUP_ATTEMPTS = 5
 
 # Specificity bonus per matched rule field (Step-3 spec).
 SPECIFICITY = {
@@ -51,6 +53,7 @@ _RULE_FIELDS = [
 	"first_followup_after_minutes", "repeat_every_minutes", "due_soon_before_minutes",
 	"overdue_after_minutes", "manager_escalate_after_minutes", "owner_escalate_after_minutes",
 	"customer_update_required", "customer_update_every_minutes",
+	"max_followup_attempts",
 	"pause_when_sla_paused", "business_hours_only",
 ]
 
@@ -158,6 +161,20 @@ def resolve_reminder_rule(ticket, rules=None):
 
 	candidates.sort(key=sort_key)
 	return candidates[0][0]
+
+
+def resolve_max_followup_attempts(ticket, rules=None):
+	"""§5: configured max consecutive no-updates before parking. 0 = unbounded.
+	Falls back to FALLBACK_MAX_FOLLOWUP_ATTEMPTS when no rule sets it."""
+	rule = resolve_reminder_rule(ticket, rules=rules)
+	if rule:
+		val = rule.get("max_followup_attempts")
+		if not _blank(val):
+			try:
+				return int(val)
+			except (TypeError, ValueError):
+				pass
+	return FALLBACK_MAX_FOLLOWUP_ATTEMPTS
 
 
 # ── timing computations (pure) ──────────────────────────────────────────────────

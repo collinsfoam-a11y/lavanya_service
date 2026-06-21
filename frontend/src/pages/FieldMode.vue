@@ -88,11 +88,11 @@
           <span class="material-symbols-outlined" aria-hidden="true">add_box</span>
           New Ticket
         </button>
-        <button type="button" class="field-action" @click="goTodayWork">
+        <button type="button" class="field-action" @click="callCustomer">
           <span class="material-symbols-outlined" aria-hidden="true">phone_in_talk</span>
           Call Customer
         </button>
-        <button type="button" class="field-action" @click="goTodayWork">
+        <button type="button" class="field-action" @click="verifyVisit">
           <span class="material-symbols-outlined" aria-hidden="true">fact_check</span>
           Verify Visit
         </button>
@@ -177,9 +177,22 @@ function openFirstResult() {
   focusSearch()
 }
 
-function goTodayWork() {
-  router.push('/')
+function callCustomer() {
+  if (selectedTicket.value) {
+    const t = results.value.find((x) => x.name === selectedTicket.value)
+    if (t?.phone_1) {
+      window.location.href = `tel:${t.phone_1}`
+      return
+    }
+  }
+  focusSearch()
 }
+
+function verifyVisit() {
+  if (selectedTicket.value) return
+  focusSearch()
+}
+
 
 async function runSearch() {
   const term = search.value.trim()

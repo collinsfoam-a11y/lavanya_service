@@ -21,8 +21,29 @@ def _perm(role, write=1):
 	}
 
 
+def _ensure_upgrade_fields():
+	"""Idempotently add fields introduced after the DocType was first created, so
+	existing installs pick them up on migrate (the create path below only runs once)."""
+	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+
+	create_custom_fields({
+		REMINDER_RULE: [
+			{
+				"fieldname": "max_followup_attempts",
+				"label": "Max Follow-up Attempts",
+				"fieldtype": "Int",
+				"default": "5",
+				"insert_after": "customer_update_every_minutes",
+				"description": "§5: after this many consecutive no-updates the ticket parks as Pending Customer Response (0 = unbounded)",
+			},
+		]
+	}, update=True)
+	frappe.clear_cache(doctype=REMINDER_RULE)
+
+
 def create_reminder_rule_doctype():
 	if frappe.db.exists("DocType", REMINDER_RULE):
+		_ensure_upgrade_fields()
 		return "exists"
 
 	doc = frappe.get_doc(
@@ -58,6 +79,8 @@ def create_reminder_rule_doctype():
 				_f("owner_escalate_after_minutes", "Owner Escalate After (min)", "Int"),
 				_f("customer_update_required", "Customer Update Required", "Check"),
 				_f("customer_update_every_minutes", "Customer Update Every (min)", "Int"),
+				_f("max_followup_attempts", "Max Follow-up Attempts", "Int", default="5",
+					description="§5: after this many consecutive no-updates the ticket parks as Pending Customer Response (0 = unbounded)"),
 				_f("flags_section", "Flags", "Section Break"),
 				_f("pause_when_sla_paused", "Pause When SLA Paused", "Check", default="1"),
 				_f("business_hours_only", "Business Hours Only", "Check"),

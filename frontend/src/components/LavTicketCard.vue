@@ -10,47 +10,37 @@
     @keydown.enter.prevent="emit('open', ticket.name)"
     @keydown.space.prevent="emit('open', ticket.name)"
   >
-    <div class="lav-ticket-card__top">
+    <div class="lav-ticket-card__top flex items-center gap-3">
       <div class="lav-ticket-card__avatar" aria-hidden="true">{{ initial }}</div>
       <div class="min-w-0 flex-1">
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center justify-between gap-2">
           <span class="font-body-md font-semibold text-primary truncate">{{ ticket.name }}</span>
           <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="chip(ticket.status)">{{ ticket.status || 'Open' }}</span>
-          <span v-if="quality && quality !== 'Good'" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="qualityChip(quality)">{{ quality }}</span>
         </div>
         <h3 class="mt-1 font-body-md text-on-surface font-semibold truncate">{{ ticket.subject || '(no subject)' }}</h3>
-        <p class="font-label-md text-label-md text-on-surface-variant truncate">
-          <template v-if="ticket.customer_name">{{ ticket.customer_name }}</template>
-          <template v-if="ticket.phone_1"> · {{ ticket.phone_1 }}</template>
-          <template v-if="product(ticket)"> · {{ product(ticket) }}</template>
-        </p>
       </div>
     </div>
 
-    <div class="lav-ticket-card__meta">
-      <div>
-        <span class="lav-ticket-card__label">Next Action</span>
-        <span class="lav-ticket-card__value">{{ nextAction }}</span>
+    <div class="my-3 p-2 rounded-lg bg-surface-container border-l-4" :style="{ borderLeftColor: accent }">
+      <div class="flex items-center gap-2 text-primary">
+        <span class="material-symbols-outlined" style="font-size:16px">bolt</span>
+        <span class="font-label-md font-bold uppercase tracking-wider">Next Action</span>
       </div>
-      <div>
-        <span class="lav-ticket-card__label">Due</span>
-        <span class="lav-ticket-card__value" :style="followStyle(ticket.next_follow_up_date)">{{ followText(ticket.next_follow_up_date) }}</span>
-      </div>
-      <div>
-        <span class="lav-ticket-card__label">Customer Informed</span>
-        <span class="lav-ticket-card__value">{{ informedState }}</span>
-      </div>
-      <div v-if="escalation && escalation !== 'None'">
-        <span class="lav-ticket-card__label">Escalation</span>
-        <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="escChip(escalation)">{{ escalation }}</span>
-      </div>
+      <div class="font-body-md text-on-surface font-semibold mt-1">{{ nextAction }}</div>
     </div>
 
-    <div class="lav-ticket-card__footer">
-      <span v-if="ticket.pending_reason" class="font-label-md text-label-md text-on-surface-variant truncate">{{ ticket.pending_reason }}</span>
-      <span v-if="ticket.customer_update_due" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="promiseChip('Pending')">Customer update due</span>
-      <span v-if="ticket.customer_promise_status === 'Breached'" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="promiseChip('Breached')">Promise breached</span>
-      <span class="ml-auto inline-flex items-center gap-1 font-label-md text-label-md text-primary">
+    <div class="flex flex-wrap gap-1.5 mb-3">
+      <span v-if="ticket.overdue_status === 'Overdue'" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="followStyle(ticket.next_follow_up_date)">Overdue</span>
+      <span v-if="informedState !== 'Pending' && informedState !== 'Due now'" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="informedChip(informedState)">Informed</span>
+      <span v-if="ticket.stage?.part_required" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: 'color-mix(in srgb, var(--lav-warning) 12%, transparent)', color: 'var(--lav-warning)' }">Part Pending</span>
+      <span v-if="escalation && escalation !== 'None'" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="escChip(escalation)">{{ escalation }}</span>
+    </div>
+
+    <div class="lav-ticket-card__footer flex items-center justify-between">
+      <div class="font-label-md text-label-md text-on-surface-variant truncate max-w-[60%]">
+        {{ ticket.customer_name || '—' }}
+      </div>
+      <span class="inline-flex items-center gap-1 font-label-md text-label-md text-primary font-bold">
         Open
         <span class="material-symbols-outlined" style="font-size:16px" aria-hidden="true">chevron_right</span>
       </span>
@@ -60,7 +50,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { chip, escChip, followStyle, followText, product, promiseChip, qualityBadge, qualityChip } from '@/utils'
+import { chip, escChip, followStyle, followText, informedChip, product, promiseChip, qualityBadge, qualityChip } from '@/utils'
 
 const props = defineProps({
   ticket: { type: Object, required: true },

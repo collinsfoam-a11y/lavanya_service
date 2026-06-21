@@ -1,7 +1,7 @@
 <template>
   <Transition name="drawer">
     <div v-if="ticketId" class="fixed inset-0 z-50 flex justify-end bg-on-surface/20" @click.self="close">
-      <div class="w-full max-w-4xl bg-surface-container-lowest h-full shadow-xl flex flex-col md:flex-row overflow-hidden drawer__panel">
+      <div class="w-full max-w-4xl bg-surface-container-lowest h-full shadow-xl flex flex-col overflow-hidden drawer__panel">
       
       <!-- Main Detail Area -->
       <div class="flex-1 overflow-y-auto border-r border-outline-variant flex flex-col">
@@ -9,107 +9,114 @@
         <div v-else-if="error" class="p-8 text-center text-error">Failed to load ticket.</div>
         <div v-else-if="ticket" class="p-6 md:p-8 flex flex-col gap-8">
           
-          <!-- Header -->
-          <header class="flex flex-col gap-2 border-b border-outline-variant pb-4">
-            <div class="flex items-start justify-between">
-              <div>
-                <h2 class="font-headline-lg text-headline-lg text-on-surface">{{ ticket.name }}</h2>
-                <div class="flex flex-wrap gap-2 mt-2">
-                  <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="chip(ticket.status)">{{ ticket.status }}</span>
-                  <span class="px-2.5 py-0.5 rounded-full font-label-md text-label-md bg-surface-variant text-on-surface-variant">{{ ticket.priority }}</span>
-                  <SlaBadge :agreement-status="ticket.sla?.agreement_status" :response-by="ticket.sla?.response_by" :resolution-by="ticket.sla?.resolution_by" />
+           <!-- Header -->
+           <header class="flex flex-col gap-4 border-b border-outline-variant pb-6">
+             <div class="flex items-start justify-between">
+               <div>
+                 <div class="flex items-center gap-3">
+                   <h2 class="font-headline-lg text-headline-lg text-on-surface">{{ ticket.name }}</h2>
+                   <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="chip(ticket.status)">{{ ticket.status }}</span>
+                   <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="closureGuard.allowed ? { background: 'var(--lav-success)', color: 'white' } : { background: 'var(--lav-danger)', color: 'white' }">
+                     {{ closureGuard.allowed ? 'Ready to Close' : 'Closure Blocked' }}
+                   </span>
+                 </div>
+                 <div class="flex flex-wrap gap-x-4 gap-y-1 mt-3 font-body-md text-on-surface-variant">
+                   <span>Customer: <span class="font-semibold text-on-surface">{{ ticket.customer?.name || '—' }}</span></span>
+                   <span>Mobile: <span class="text-on-surface">{{ ticket.customer?.mobile || '—' }}</span></span>
+                   <span>Product: <span class="text-on-surface">{{ ticket.product?.item || '—' }}</span></span>
+                   <span>Age: <span class="text-on-surface">{{ ticketAge(ticket.creation) }} days</span></span>
+                   <SlaBadge :agreement-status="ticket.sla?.agreement_status" :response-by="ticket.sla?.response_by" :resolution-by="ticket.sla?.resolution_by" />
+                 </div>
+               </div>
+               <button @click="close" class="p-2 rounded hover:bg-surface-container-low" aria-label="Close ticket detail">
+                 <span class="material-symbols-outlined" aria-hidden="true">close</span>
+               </button>
+             </div>
+           </header>
+
+
+            <!-- Do This Now Command Center -->
+            <section class="rounded-2xl p-6 mb-8 border-2 border-primary bg-gradient-to-br from-primary-container/40 to-surface-container shadow-sm relative overflow-hidden">
+              <!-- Decorative background element -->
+              <div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl"></div>
+              
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary" style="font-size:28px">bolt</span>
+                  <h3 class="font-headline-md text-headline-md text-primary font-bold uppercase tracking-wide">Do This Now</h3>
+                </div>
+                <span v-if="doThisNow.primaryAction" class="px-2 py-0.5 rounded-full font-label-md text-label-md bg-primary text-on-primary text-xs font-bold uppercase">Priority Action</span>
+              </div>
+
+              <div class="mb-6">
+                <div class="font-headline-sm text-headline-sm text-on-surface font-bold leading-tight">{{ doThisNow.instruction }}</div>
+                <div class="font-body-md text-on-surface-variant mt-2 leading-relaxed">{{ doThisNow.reason }}</div>
+              </div>
+
+              <div class="flex flex-wrap gap-3">
+                <button v-if="doThisNow.primaryAction" @click="openAction(doThisNow.primaryAction.key)"
+                  class="px-6 py-3 rounded-xl font-label-md flex items-center gap-2 bg-primary text-on-primary hover:bg-primary-dark active:scale-[0.97] transition-all shadow-md font-bold">
+                  <span class="material-symbols-outlined" style="font-size:20px">{{ doThisNow.primaryAction.icon }}</span>
+                  {{ doThisNow.primaryAction.label }}
+                </button>
+                <button v-if="ticket.customer?.mobile" @click="whatsappCustomer"
+                  class="px-6 py-3 rounded-xl font-label-md flex items-center gap-2 bg-surface-container border border-outline-variant text-on-surface hover:bg-surface-container-low active:scale-[0.97] transition-all">
+                  <span class="material-symbols-outlined" style="font-size:20px">chat</span> Inform Customer
+                </button>
+                <button v-if="doThisNow.canReverify" @click="openAction('set_reverification')"
+                  class="px-6 py-3 rounded-xl font-label-md flex items-center gap-2 bg-surface-container border border-outline-variant text-on-surface hover:bg-surface-container-low active:scale-[0.97] transition-all">
+                  <span class="material-symbols-outlined" style="font-size:20px">refresh</span> Set Reverification
+                </button>
+              </div>
+            </section>
+
+            <!-- Action Library — Quick access to all possible workflow moves -->
+            <section id="sec-action-library" class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-6 mb-8">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-headline-md text-headline-md text-on-surface font-bold flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary">grid_view</span> Action Library
+                </h3>
+                <span class="text-label-md text-on-surface-variant italic">Choose a manual workflow move</span>
+              </div>
+              
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <button 
+                  v-for="(def, key) in ACTIONS" 
+                  :key="key" 
+                  @click="openAction(key)"
+                  class="flex flex-col items-center justify-center p-3 rounded-xl border border-outline-variant bg-surface-container hover:border-primary hover:bg-primary-container/20 transition-all group active:scale-[0.98]"
+                >
+                  <span class="material-symbols-outlined mb-2 text-on-surface-variant group-hover:text-primary transition-colors" style="font-size: 24px">
+                    {{ def.icon }}
+                  </span>
+                  <span class="text-xs font-label-md text-center leading-tight text-on-surface-variant group-hover:text-on-surface">
+                    {{ def.title }}
+                  </span>
+                </button>
+              </div>
+
+              <!-- Special Closure Action (Prominent) -->
+              <div v-if="closureGuard.allowed" class="mt-6 pt-6 border-t border-outline-variant flex justify-center">
+                <button @click="openAction('close_ticket')" 
+                  class="w-full max-w-xs px-6 py-3 bg-error text-on-error rounded-xl font-label-md font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all shadow-sm">
+                  <span class="material-symbols-outlined" style="font-size: 20px">task_alt</span> Close Ticket
+                </button>
+              </div>
+              <div v-else class="mt-6 pt-6 border-t border-outline-variant flex justify-center">
+                <div class="px-4 py-2 rounded-lg bg-error-container text-error border border-error flex items-center gap-2 text-xs font-label-md">
+                  <span class="material-symbols-outlined" style="font-size: 16px">lock</span>
+                  <span>Closure Blocked: {{ closureGuard.reason }}</span>
                 </div>
               </div>
-              <button @click="close" class="p-2 rounded hover:bg-surface-container-low" aria-label="Close ticket detail">
-                <span class="material-symbols-outlined" aria-hidden="true">close</span>
-              </button>
-            </div>
-            <div class="mt-4 font-body-md text-on-surface-variant grid grid-cols-2 gap-y-2">
-              <div>Customer: <span class="font-bold text-on-surface">{{ ticket.customer?.name || '—' }}</span></div>
-              <div>Mobile: <span class="text-on-surface">{{ ticket.customer?.mobile || '—' }}</span></div>
-              <div>Age: <span class="text-on-surface">{{ ticketAge(ticket.creation) }} days</span></div>
-              <div>Assigned: <span class="text-on-surface">{{ ticket.assigned_to || 'Unassigned' }}</span></div>
-            </div>
-            <div class="mt-3 flex items-center gap-2 flex-wrap">
-              <!-- P0-5: Customer Informed badge — prominent in header -->
-              <span v-if="ticket.stage?.customer_informed_status" class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="informedChip(ticket.stage.customer_informed_status)">
-                <span class="material-symbols-outlined" style="font-size:14px" aria-hidden="true">{{ ticket.stage.customer_informed_status === 'Pending' || ticket.stage.customer_informed_status === 'Customer Not Reachable' ? 'campaign' : 'check_circle' }}</span>
-                {{ ticket.stage.customer_informed_status }}
-              </span>
-              <span v-else class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: 'color-mix(in srgb, var(--lav-warning) 12%, transparent)', color: 'var(--lav-warning)' }">Customer not informed</span>
-              <!-- Part pending badge -->
-              <span v-if="ticket.stage?.part_required" class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: 'color-mix(in srgb, var(--lav-warning) 12%, transparent)', color: 'var(--lav-warning)' }">
-                <span class="material-symbols-outlined" style="font-size:14px" aria-hidden="true">build</span>
-                Part pending: {{ ticket.stage.part_expected_date || '—' }}
-              </span>
-              <button
-                v-if="ticket.customer?.mobile"
-                  @click="whatsappCustomer"
-                  class="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg font-label-md text-body-md bg-success text-on-success"
-                  :aria-label="'Generate WhatsApp draft for ' + ticket.customer?.name"
-                >
-                  <span class="material-symbols-outlined" style="font-size:18px" aria-hidden="true">chat</span> WhatsApp Draft
-                </button>
-              <a :href="'/helpdesk/tickets/' + ticket.name" target="_blank" class="text-primary hover:underline font-label-md">
-                Open in Standard Helpdesk ↗
-              </a>
-            </div>
-          </header>
+            </section>
 
-          <!-- Next Action Bar — context-aware primary/secondary/danger actions -->
-          <div class="rounded-xl p-4 mb-2 border border-outline-variant bg-surface-container-low">
-            <div class="flex items-center gap-2 mb-3">
-              <span class="material-symbols-outlined text-primary" style="font-size:20px">flash_on</span>
-              <span class="font-label-lg text-label-lg font-semibold text-primary">Next Action</span>
-              <LavFollowupQualityBadge v-if="qualityLevel" :ticket="ticket" class="ml-auto" />
-            </div>
-            <LavActionBar>
-              <template #primary>
-                <button v-for="action in nextActions.primary" :key="action.key"
-                  @click="openAction(action.key)"
-                  class="px-4 py-2.5 rounded-lg font-label-md text-left flex items-center gap-2 bg-primary text-on-primary hover:opacity-90 active:scale-[0.97] transition-all">
-                  <span class="material-symbols-outlined" style="font-size:18px">{{ action.icon }}</span>
-                  {{ action.label }}
-                </button>
-              </template>
-              <template #secondary>
-                <button v-for="action in nextActions.secondary" :key="action.key"
-                  @click="openAction(action.key)"
-                  class="px-4 py-2.5 rounded-lg font-label-md text-left flex items-center gap-2 bg-primary-container text-on-primary hover:opacity-90 active:scale-[0.97] transition-all">
-                  <span class="material-symbols-outlined" style="font-size:18px">{{ action.icon }}</span>
-                  {{ action.label }}
-                </button>
-              </template>
-              <template #danger>
-                <button v-for="action in nextActions.danger" :key="action.key"
-                  @click="openAction(action.key)"
-                  class="px-4 py-2.5 rounded-lg font-label-md text-left flex items-center gap-2 bg-error text-on-error hover:opacity-90 active:scale-[0.97] transition-all">
-                  <span class="material-symbols-outlined" style="font-size:18px">{{ action.icon }}</span>
-                  {{ action.label }}
-                </button>
-              </template>
-            </LavActionBar>
-            <div v-if="!nextActions.primary.length && !nextActions.secondary.length && !nextActions.danger.length" class="text-on-surface-variant font-body-md py-1">
-              No actions available for this ticket state.
-            </div>
-          </div>
+
 
           <!-- Workflow Timeline — visual stage progression -->
           <LavWorkflowTimeline :ticket="ticket" />
 
           <!-- Customer Journey Summary Card -->
           <LavCustomerJourneyCard :ticket="ticket" />
-
-          <!-- Closure Guard — UX-R1: made prominent -->
-          <section class="rounded-xl border p-4" :class="closureGuard.allowed ? 'border-success bg-success-container' : 'border-error bg-error-container'">
-            <div class="flex items-start gap-4">
-              <span class="material-symbols-outlined text-4xl" :class="closureGuard.allowed ? 'text-success' : 'text-error'" aria-hidden="true">{{ closureGuard.allowed ? 'verified' : 'lock' }}</span>
-              <div class="flex-1">
-                <h3 class="font-headline-lg text-headline-lg" :class="closureGuard.allowed ? 'text-success' : 'text-error'">{{ closureGuard.allowed ? 'Closure Allowed' : 'Closure Not Allowed' }}</h3>
-                <p class="font-body-lg text-body-lg text-on-surface mt-1 font-semibold">{{ closureGuard.reason }}</p>
-              </div>
-            </div>
-          </section>
 
           <!-- Communication Preview — P2.2 dry-run notifications only -->
           <section id="sec-communication" class="rounded-xl border border-outline-variant bg-surface-container-lowest p-4">
@@ -184,23 +191,6 @@
             </div>
           </section>
 
-          <!-- Visual Workflow Timeline -->
-          <div v-if="workflowTimeline.length" class="overflow-x-auto -mx-1">
-            <div class="flex items-center gap-1 min-w-max py-1">
-              <template v-for="(s, i) in workflowTimeline" :key="s.key">
-                <div class="flex items-center gap-2 px-3 py-2 rounded-full shrink-0 font-label-md text-label-md transition-all"
-                  :class="s.status === 'completed' ? 'text-white' : s.status === 'current' ? 'text-white ring-2 ring-offset-1 ring-primary' : s.status === 'waiting' ? 'text-white' : s.status === 'blocked' ? 'text-white' : 'text-on-surface-variant bg-surface-container'"
-                  :style="s.status === 'completed' ? { background: 'var(--lav-success)' } : s.status === 'current' ? { background: 'var(--lav-primary)' } : s.status === 'waiting' ? { background: 'var(--lav-warning)' } : s.status === 'blocked' ? { background: 'var(--lav-danger)' } : {}"
-                  :title="s.label">
-                  <span class="material-symbols-outlined" style="font-size:14px">{{ s.status === 'completed' ? 'check' : s.icon }}</span>
-                  <span class="truncate max-w-[120px]">{{ s.label }}</span>
-                </div>
-                <span v-if="i < workflowTimeline.length - 1" class="w-4 h-0.5 shrink-0 rounded-full"
-                  :style="{ background: workflowTimeline[i+1].status === 'pending' ? 'var(--lav-border)' : 'var(--lav-success)' }"></span>
-              </template>
-            </div>
-          </div>
-
           <!-- Sticky section nav -->
           <nav class="sticky top-0 z-10 -mx-6 md:-mx-8 px-6 md:px-8 py-2 bg-surface-container-lowest/95 backdrop-blur flex gap-4 border-b border-outline-variant overflow-x-auto">
             <a v-for="s in SECTIONS" :key="s.id" :href="'#' + s.id" class="whitespace-nowrap font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" @click.prevent="scrollToSection(s.id)">{{ s.label }}</a>
@@ -233,8 +223,13 @@
           </div>
 
           <!-- Service Stage (delta Sprint 2) — read display, blank-safe -->
-          <section id="sec-stage" v-if="ticket.stage">
-            <h3 class="font-headline-md text-headline-md text-primary mb-3">Service Stage</h3>
+           <section id="sec-stage" v-if="ticket.stage">
+             <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center justify-between">
+               Service Stage
+               <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: _bg(sectionStatuses['sec-stage'].color), color: sectionStatuses['sec-stage'].color }">
+                 {{ sectionStatuses['sec-stage'].label }}
+               </span>
+             </h3>
             <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
               <div><span class="block text-label-md text-outline">Service Flow</span> {{ ticket.stage.service_flow_type || '—' }}</div>
               <div><span class="block text-label-md text-outline">Current Service Step</span> {{ ticket.stage.current_service_stage || '—' }}</div>
@@ -343,13 +338,23 @@
           </section>
 
           <!-- Follow-up Tracking (Phase 1N-6B) -->
-          <section id="sec-followup-tracking" v-if="ticket.stage && (ticket.stage.service_path || ticket.stage.followup_stage || ticket.stage.service_charge_type)">
-            <h3 class="font-headline-md text-headline-md text-primary mb-4 flex items-center gap-2">
-              <span class="material-symbols-outlined" style="font-size:22px">support_agent</span>
-              Follow-up Tracking
-            </h3>
+           <section id="sec-followup-tracking" v-if="ticket.stage && (ticket.stage.service_path || ticket.stage.followup_stage || ticket.stage.service_charge_type)">
+             <h3 class="font-headline-md text-headline-md text-primary mb-4 flex items-center justify-between">
+               <span class="flex items-center gap-2">
+                 <span class="material-symbols-outlined" style="font-size:22px">support_agent</span>
+                 Follow-up Tracking
+               </span>
+               <div class="flex gap-2">
+                 <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: _bg(sectionStatuses['sec-followup-tracking'].color), color: sectionStatuses['sec-followup-tracking'].color }">
+                   {{ sectionStatuses['sec-followup-tracking'].label }}
+                 </span>
+                 <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: _bg(sectionStatuses['sec-verification'].color), color: sectionStatuses['sec-verification'].color }">
+                   {{ sectionStatuses['sec-verification'].label }}
+                 </span>
+               </div>
+              </h3>
 
-            <!-- Status Banner -->
+             <!-- Status Banner -->
             <div class="rounded-xl p-4 mb-4 flex items-center gap-3 transition-all" :style="{ background: followupBanner.bg, color: followupBanner.fg, borderLeft: '4px solid ' + followupBanner.fg }">
               <span class="material-symbols-outlined" style="font-size:28px">{{ followupBanner.icon }}</span>
               <div>
@@ -476,8 +481,13 @@
           </section>
 
           <!-- Customer Summary -->
-          <section id="sec-customer">
-            <h3 class="font-headline-md text-headline-md text-primary mb-3">Customer</h3>
+           <section id="sec-customer">
+             <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center justify-between">
+               Customer
+               <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: _bg(sectionStatuses['sec-customer'].color), color: sectionStatuses['sec-customer'].color }">
+                 {{ sectionStatuses['sec-customer'].label }}
+               </span>
+             </h3>
             <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
               <div><span class="block text-label-md text-outline">Name</span> {{ ticket.customer?.name || '—' }}</div>
               <div><span class="block text-label-md text-outline">Mobile</span> {{ ticket.customer?.mobile || '—' }}</div>
@@ -493,8 +503,13 @@
           </section>
 
           <!-- Product Summary -->
-          <section id="sec-product">
-            <h3 class="font-headline-md text-headline-md text-primary mb-3">Product</h3>
+           <section id="sec-product">
+             <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center justify-between">
+               Product
+               <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: _bg(sectionStatuses['sec-product'].color), color: sectionStatuses['sec-product'].color }">
+                 {{ sectionStatuses['sec-product'].label }}
+               </span>
+             </h3>
             <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
               <div><span class="block text-label-md text-outline">Type</span> {{ ticket.product?.type || '—' }}</div>
               <div><span class="block text-label-md text-outline">Category/Item</span> {{ ticket.product?.item || '—' }}</div>
@@ -769,12 +784,15 @@
           </section>
 
           <!-- H5C: Appointment Flow -->
-          <section id="sec-appointment">
-            <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center gap-2">
-              <span class="material-symbols-outlined" style="font-size:22px">event</span>
-              Appointment
-            </h3>
-            <div v-if="ticket.appointment" class="rounded-xl border border-outline-variant bg-surface-container p-4 mb-3">
+           <section id="sec-appointment">
+             <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center justify-between">
+               <span class="material-symbols-outlined" style="font-size:22px">event</span>
+               Appointment
+               <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: _bg(sectionStatuses['sec-appointment'].color), color: sectionStatuses['sec-appointment'].color }">
+                 {{ sectionStatuses['sec-appointment'].label }}
+               </span>
+              </h3>
+             <div v-if="ticket.appointment" class="rounded-xl border border-outline-variant bg-surface-container p-4 mb-3">
               <div class="grid grid-cols-2 gap-3 font-body-md text-on-surface-variant">
                 <div>
                   <span class="block text-label-md text-outline">Date/Time</span>
@@ -905,138 +923,8 @@
         </div>
       </div>
 
-      <!-- Quick Action Panel -->
-      <div id="sec-actions" class="w-full md:w-80 bg-surface flex flex-col overflow-y-auto border-t md:border-t-0 md:border-l border-outline-variant">
-        <div class="p-4 border-b border-outline-variant bg-surface-container-low sticky top-0 z-10">
-          <h3 class="font-headline-md text-headline-md text-on-surface">Quick Actions</h3>
-        </div>
-        <div class="p-4 flex flex-col gap-3">
 
-          <button @click="openAction('brand_complaint')" class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-            <span class="material-symbols-outlined" style="font-size: 18px">verified</span> Register Brand Complaint
-          </button>
 
-          <button @click="openNeedInvoice" class="w-full px-4 py-3 bg-primary text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-            <span class="material-symbols-outlined" style="font-size: 18px">receipt_long</span> Need Invoice
-          </button>
-
-          <button @click="openAction('follow_up_sc')" class="w-full px-4 py-3 bg-primary-container text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-            <span class="material-symbols-outlined" style="font-size: 18px">support_agent</span> Follow Up Service Center
-          </button>
-
-          <button @click="openAction('waiting_part')" class="w-full px-4 py-3 bg-primary-container text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-            <span class="material-symbols-outlined" style="font-size: 18px">build</span> Waiting for Part
-          </button>
-
-          <button @click="openAction('schedule_appointment')" class="w-full px-4 py-3 bg-primary-container text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-            <span class="material-symbols-outlined" style="font-size: 18px">event</span> Schedule Appointment
-          </button>
-
-          <button @click="openAction('set_promise')" class="w-full px-4 py-3 bg-primary-container text-on-primary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-            <span class="material-symbols-outlined" style="font-size: 18px">schedule_send</span> Set Customer Promise
-          </button>
-
-          <!-- Follow-up Journey Flow (Phase 1N-6B) -->
-          <div class="pt-2 mt-1 border-t border-outline-variant font-label-md text-label-md text-on-surface-variant uppercase tracking-wide">Follow-up Journey</div>
-
-          <div class="relative pl-4 mt-3">
-            <!-- Vertical connector line -->
-            <div class="absolute left-[23px] top-0 bottom-0 w-0.5 bg-outline-variant rounded-full"></div>
-            <ul class="flex flex-col gap-0">
-              <li v-for="(step, si) in followupFlowSteps" :key="step.key" class="relative flex items-start gap-4 pb-6 last:pb-0">
-                <!-- Step indicator -->
-                <div class="relative z-10 flex items-center justify-center w-[46px] h-[46px] rounded-full shrink-0 shadow-sm transition-all"
-                  :class="step.status === 'current' ? 'bg-primary text-white ring-4 ring-primary/20' : 'bg-surface-container-highest text-outline'"
-                  :style="step.status === 'completed' ? { background: 'var(--lav-success)', color: 'white' } : {}">
-                  <span v-if="step.status === 'completed'" class="material-symbols-outlined" style="font-size:22px">check</span>
-                  <span v-else class="material-symbols-outlined" style="font-size:22px">{{ step.icon }}</span>
-                </div>
-                <!-- Step content -->
-                <div class="flex-1 min-w-0 pt-2">
-                  <div class="font-body-md font-semibold"
-                    :class="step.status === 'current' ? 'text-primary' : 'text-on-surface-variant'"
-                    :style="step.status === 'completed' ? { color: 'var(--lav-success)' } : {}">
-                    {{ step.label }}
-                  </div>
-                  <div v-if="step.status === 'current' && step.action" class="mt-2">
-                    <button @click="openAction(step.action)" 
-                      class="px-4 py-2 rounded-lg font-label-md text-label-md flex items-center gap-1.5 transition-all hover:opacity-90 active:scale-[0.97]"
-                      :class="step.buttonClass || 'bg-primary text-on-primary'">
-                      <span class="material-symbols-outlined" style="font-size:16px">{{ step.icon }}</span>
-                      {{ step.buttonLabel || step.label }}
-                    </button>
-                  </div>
-                  <div v-else-if="step.status === 'completed' && step.completedLabel" class="font-label-md text-label-md mt-0.5 flex items-center gap-1" :style="{ color: 'var(--lav-success)' }">
-                    <span class="material-symbols-outlined" style="font-size:14px">done</span>
-                    {{ step.completedLabel }}
-                  </div>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          <!-- Side note: Mark No Update / Escalate (always shown as alt path) -->
-          <div v-if="followupAltActions.length" class="mt-3 pt-3 border-t border-outline-variant">
-            <div class="font-label-md text-label-md text-outline mb-2 flex items-center gap-1.5">
-              <span class="material-symbols-outlined" style="font-size:16px">alt_route</span>
-              Alternative Actions
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <button v-for="alt in followupAltActions" :key="alt.action" @click="openAction(alt.action)"
-                class="px-3 py-1.5 rounded-lg font-label-md text-label-md flex items-center gap-1.5 transition-all hover:opacity-90 active:scale-[0.97]"
-                :class="alt.buttonClass">
-                <span class="material-symbols-outlined" style="font-size:16px">{{ alt.icon }}</span>
-                {{ alt.label }}
-              </button>
-            </div>
-          </div>
-
-          <button @click="openProductReceipt" class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-            <span class="material-symbols-outlined" style="font-size: 18px">inventory_2</span> Create Product Receipt
-          </button>
-
-          <button
-            :disabled="!ticket?.receipt?.number"
-            @click="ticket?.receipt?.number ? openReadyForPickup() : null"
-            class="w-full px-4 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-left flex items-center gap-2 transition-all group relative"
-            :class="ticket?.receipt?.number ? 'hover:opacity-90 active:scale-[0.98]' : 'opacity-50 cursor-not-allowed'"
-          >
-            <span class="material-symbols-outlined" style="font-size: 18px">hail</span> Mark Ready for Pickup
-            <span v-if="!ticket?.receipt?.number" class="absolute hidden group-hover:block bottom-full left-0 mb-2 p-2 bg-inverse-surface text-inverse-on-surface text-xs rounded shadow w-full z-20">Create Product Receipt first.</span>
-          </button>
-
-          <button @click="openAction('customer_confirmed')" class="w-full px-4 py-3 bg-tertiary text-on-tertiary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-            <span class="material-symbols-outlined" style="font-size: 18px">how_to_reg</span> Customer Confirmed
-          </button>
-
-          <button @click="openAction('close_ticket')" class="w-full px-4 py-3 bg-error text-on-error rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-            <span class="material-symbols-outlined" style="font-size: 18px">task_alt</span> Close Ticket
-          </button>
-
-          <!-- Product custody movements (only when a receipt exists) -->
-          <template v-if="ticket?.receipt?.number">
-            <div class="pt-2 mt-1 border-t border-outline-variant font-label-md text-label-md text-on-surface-variant uppercase tracking-wide">Product custody</div>
-            <button @click="openAction('sent_to_sc')" class="w-full px-4 py-3 bg-surface-container-highest text-on-surface rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-              <span class="material-symbols-outlined" style="font-size: 18px">local_shipping</span> Send to Service Center
-            </button>
-            <button @click="openAction('returned_from_sc')" class="w-full px-4 py-3 bg-surface-container-highest text-on-surface rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-              <span class="material-symbols-outlined" style="font-size: 18px">assignment_return</span> Returned from SC
-            </button>
-            <button @click="openAction('delivered')" class="w-full px-4 py-3 bg-surface-container-highest text-on-surface rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-              <span class="material-symbols-outlined" style="font-size: 18px">verified</span> Delivered to Customer
-            </button>
-          </template>
-
-          <!-- Reopen (only when the ticket is closed/resolved) -->
-          <button v-if="isClosed" @click="openAction('reopen')" class="w-full px-4 py-3 bg-tertiary text-on-tertiary rounded-lg font-label-md text-left flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
-            <span class="material-symbols-outlined" style="font-size: 18px">restart_alt</span> Reopen Ticket
-          </button>
-
-        </div>
-        <div class="p-4 mt-auto text-xs text-on-surface-variant text-center bg-surface-container-low border-t border-outline-variant">
-          Actions are role-gated and validated server-side. You'll see a clear message if your role can't run one.
-        </div>
-      </div>
 	  
 	</div>
   </div>
@@ -1176,6 +1064,7 @@ import { chip, dueChip, promiseChip, escChip, stageChip, satisfactionChip, infor
 import { useToast } from '@/utils/toast'
 import { useConfirm } from '@/utils/confirm'
 import LavConfirm from '@/components/LavConfirm.vue'
+import { resolveActions as resolveEngineActions, ACTION_REGISTRY as ENGINE_REGISTRY, canCloseTicket as engineCanClose } from '@/config/outcome-map.js'
 
 const props = defineProps({
   ticketId: { type: String, default: null }
@@ -1201,18 +1090,60 @@ const showDetails = ref(false)  // UX-R1: collapsible sections toggle
 const repeatCandidates = ref([])
 
 const isClosed = computed(() => ['Closed', 'Cancelled', 'Resolved'].includes(ticket.value?.status))
+
+const doThisNow = computed(() => {
+  const s = ticket.value?.stage || {}
+  const t = ticket.value || {}
+  return {
+    instruction: s.next_action || t.next_action || 'Review ticket details',
+    reason: s.pending_reason || t.pending_reason || 'Routine follow-up required to ensure service progression.',
+    primaryAction: (nextActions.value?.primary || []).shift(),
+    canReverify: s.followup_stage === 'customer_confirmation_pending' || s.current_service_stage?.includes('Verification'),
+  }
+})
+
+const sectionStatuses = computed(() => {
+  const s = ticket.value?.stage || {}
+  const p = ticket.value?.product || {}
+  const c = ticket.value?.customer || {}
+  const a = ticket.value?.appointment || {}
+  const today = new Date().toISOString().split('T')[0]
+
+  return {
+    'sec-customer': {
+      label: (c.name && c.mobile) ? 'Complete' : 'Missing Info',
+      color: (c.name && c.mobile) ? 'var(--lav-success)' : 'var(--lav-warning)',
+    },
+    'sec-product': {
+      label: (p.brand && p.serial_no) ? 'Complete' : 'Missing Info',
+      color: (p.brand && p.serial_no) ? 'var(--lav-success)' : 'var(--lav-warning)',
+    },
+    'sec-stage': {
+      label: s.manufacturer_registered === 'Yes' ? 'Done' : 'Pending',
+      color: s.manufacturer_registered === 'Yes' ? 'var(--lav-success)' : 'var(--lav-primary)',
+    },
+    'sec-appointment': {
+      label: s.followup_stage === 'no_technician_update' ? 'Missed' : a.appointment_datetime ? 'Scheduled' : a.status === 'Visited' ? 'Visited' : 'Not Scheduled',
+      color: s.followup_stage === 'no_technician_update' ? 'var(--lav-danger)' : a.appointment_datetime ? 'var(--lav-primary)' : a.status === 'Visited' ? 'var(--lav-success)' : 'var(--lav-muted)',
+    },
+    'sec-followup-tracking': {
+      label: s.part_required === 'Yes' ? (s.part_expected_date && s.part_expected_date < today ? 'ETA Overdue' : 'Part Pending') : 'Not Required',
+      color: s.part_required === 'Yes' ? (s.part_expected_date && s.part_expected_date < today ? 'var(--lav-danger)' : 'var(--lav-warning)') : 'var(--lav-success)',
+    },
+    'sec-verification': {
+      label: s.customer_satisfaction_status === 'Satisfied' ? 'Done' : s.customer_satisfaction_status === 'Not Satisfied' ? 'Blocked' : s.followup_stage === 'customer_confirmation_pending' ? 'Due' : 'Pending',
+      color: s.customer_satisfaction_status === 'Satisfied' ? 'var(--lav-success)' : s.customer_satisfaction_status === 'Not Satisfied' ? 'var(--lav-danger)' : s.followup_stage === 'customer_confirmation_pending' ? 'var(--lav-warning)' : 'var(--lav-muted)',
+    },
+    'sec-actions': {
+      label: closureGuard.value.allowed ? 'Ready' : 'Blocked',
+      color: closureGuard.value.allowed ? 'var(--lav-success)' : 'var(--lav-danger)',
+    },
+  }
+})
+
 const closureGuard = computed(() => {
-  const s = ticket.value?.stage || ticket.value || {}
-  const satisfaction = s.customer_satisfaction_status
-  const confirmed = s.customer_confirmation_received || ticket.value?.customer_confirmation_received
   if (isClosed.value) return { allowed: true, reason: 'Ticket is already closed or resolved.' }
-  if (confirmed === 'Yes' || satisfaction === 'Satisfied' || satisfaction === 'Not Required') {
-    return { allowed: true, reason: 'Customer confirmed issue solved.' }
-  }
-  if (satisfaction === 'Not Satisfied') {
-    return { allowed: false, reason: 'Customer is not satisfied; follow-up must continue.' }
-  }
-  return { allowed: false, reason: 'Customer confirmation pending.' }
+  return engineCanClose(ticket.value)
 })
 
 // H5C: custody closure guard — prevents closure if product is not returned/collected
@@ -2081,84 +2012,18 @@ async function submitAction() {
 
 const qualityLevel = computed(() => ticket.value ? qualityBadge(ticket.value) : '')
 
+// Engine-driven action resolution using OUTCOME_MAP config (UI-ENGINE-R1)
 const nextActions = computed(() => {
   if (!ticket.value) return { primary: [], secondary: [], danger: [] }
-  const s = ticket.value.stage || {}
   const status = ticket.value.status || ''
-  const fs = s.followup_stage || ''
-  const informed = s.customer_informed_status
-  const satisfaction = s.customer_satisfaction_status
-  const esc = s.escalation_level
 
-  if (status === 'Closed' || status === 'Cancelled' || status === 'Resolved') {
-    return { primary: [], secondary: [], danger: [{ key: 'reopen', label: 'Reopen Ticket', icon: 'restart_alt' }] }
+  // Terminal states — no actions
+  if (status === 'Closed' || status === 'Cancelled') {
+    return { primary: [], secondary: [], danger: [] }
   }
 
-  const primary = []
-  const secondary = []
-  const danger = []
-
-  // Context-aware action selection
-  if (satisfaction === 'Satisfied' || satisfaction === 'Not Required') {
-    primary.push({ key: 'close_ticket', label: 'Close Ticket', icon: 'task_alt' })
-  } else if (satisfaction === 'Not Satisfied') {
-    primary.push({ key: 'record_satisfaction', label: 'Record Satisfaction', icon: 'sentiment_satisfied' })
-    danger.push({ key: 'escalate_case', label: 'Escalate', icon: 'escalator_warning' })
-  } else if (!satisfaction) {
-    if (status === 'Ready for Pickup' || fs === 'customer_satisfied') {
-      primary.push({ key: 'record_satisfaction', label: 'Record Satisfaction', icon: 'sentiment_satisfied' })
-    }
-  }
-
-  if (fs === 'no_technician_update') {
-    primary.push({ key: 'record_sc_followup', label: 'Record SC Follow-up', icon: 'support_agent' })
-    danger.push({ key: 'escalate_case', label: 'Escalate Case', icon: 'escalator_warning' })
-    secondary.push({ key: 'inform_customer', label: 'Inform Customer', icon: 'campaign' })
-  }
-
-  if (!informed || informed === 'Pending') {
-    if (fs !== 'no_technician_update') {
-      primary.push({ key: 'inform_customer', label: 'Inform Customer', icon: 'campaign' })
-    }
-  }
-
-  if (fs === 'technician_called' || fs === 'technician_visited' || fs === 'sc_followup_done') {
-    secondary.push({ key: 'record_sc_followup', label: 'Record SC Follow-up', icon: 'support_agent' })
-  }
-
-  if (status === 'Brand Registered') {
-    if (!primary.length) primary.push({ key: 'verify_tech_called', label: 'Verify Technician Called', icon: 'phone_in_talk' })
-    secondary.push({ key: 'record_sc_followup', label: 'Record SC Follow-up', icon: 'support_agent' })
-    if (!informed || informed === 'Pending') secondary.push({ key: 'inform_customer', label: 'Inform Customer', icon: 'campaign' })
-  }
-
-  if (status === 'New' || status === 'Open') {
-    if (!primary.length) primary.push({ key: 'brand_complaint', label: 'Register Brand Complaint', icon: 'verified' })
-  }
-
-  if (status === 'Waiting on Part / Approval' || fs === 'part_pending') {
-    primary.push({ key: 'mark_product_ready', label: 'Mark Product Ready', icon: 'hail' })
-  }
-
-  if (status === 'Ready for Pickup' && satisfaction !== 'Satisfied' && satisfaction !== 'Not Required') {
-    if (!primary.length) primary.push({ key: 'record_satisfaction', label: 'Record Satisfaction', icon: 'sentiment_satisfied' })
-  }
-
-  if (s.estimated_amount || s.customer_approved_amount) {
-    secondary.push({ key: 'record_approval', label: 'Record Approval', icon: 'contract' })
-  }
-
-  // Always-available secondary actions
-  if (!secondary.find(a => a.key === 'inform_customer') && (!informed || informed !== 'Informed by Call')) {
-    secondary.push({ key: 'inform_customer', label: 'Inform Customer', icon: 'campaign' })
-  }
-
-  // Danger actions
-  if (!danger.find(a => a.key === 'close_ticket') && status !== 'New') {
-    danger.push({ key: 'close_ticket', label: 'Close Ticket', icon: 'task_alt' })
-  }
-
-  return { primary, secondary, danger }
+  // Use engine-driven resolution from OUTCOME_MAP config
+  return resolveEngineActions(ticket.value)
 })
 
 const reminderEsc = computed(() => ticket.value?.reminder?.escalation_level || 'None')

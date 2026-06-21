@@ -1,63 +1,33 @@
 <template>
-  <div class="w-full">
-    <!-- Desktop horizontal -->
-    <div class="hidden md:flex items-start justify-between gap-2">
-      <div
-        v-for="(step, idx) in steps"
-        :key="step.key"
-        class="flex-1 flex flex-col items-center text-center"
-      >
+  <div class="w-full flex flex-col gap-3">
+    <div
+      v-for="(step, idx) in steps"
+      :key="step.key"
+      class="flex items-start gap-3"
+    >
+      <div class="flex flex-col items-center">
         <div
-          class="w-9 h-9 rounded-full flex items-center justify-center mb-2 border-2 transition-colors"
+          class="w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors"
           :class="stateClass(step.state)"
           :aria-label="step.label + ': ' + step.state"
         >
-          <span class="material-symbols-outlined" style="font-size:18px">{{ step.icon }}</span>
-        </div>
-        <div class="font-label-md text-label-md font-semibold" :class="textClass(step.state)">
-          {{ step.label }}
-        </div>
-        <div v-if="step.sub" class="font-label-md text-label-md text-on-surface-variant">
-          {{ step.sub }}
+          <span class="material-symbols-outlined" style="font-size:16px">{{ step.icon }}</span>
         </div>
         <div
           v-if="idx < steps.length - 1"
-          class="hidden lg:block h-0.5 w-full mt-5"
+          class="w-0.5 flex-1 min-h-[24px] mt-1"
           :class="connectorClass(step.state, steps[idx + 1].state)"
           aria-hidden="true"
         ></div>
       </div>
-    </div>
-
-    <!-- Mobile vertical -->
-    <div class="md:hidden flex flex-col gap-3">
-      <div
-        v-for="(step, idx) in steps"
-        :key="step.key"
-        class="flex items-start gap-3"
-      >
-        <div class="flex flex-col items-center">
-          <div
-            class="w-8 h-8 rounded-full flex items-center justify-center border-2"
-            :class="stateClass(step.state)"
-          >
-            <span class="material-symbols-outlined" style="font-size:16px">{{ step.icon }}</span>
-          </div>
-          <div
-            v-if="idx < steps.length - 1"
-            class="w-0.5 flex-1 min-h-[24px] mt-1"
-            :class="connectorClass(step.state, steps[idx + 1].state)"
-            aria-hidden="true"
-          ></div>
-        </div>
-        <div class="flex-1 pb-3">
+      <div class="flex-1 pb-3">
+        <div class="flex items-center gap-2">
           <div class="font-label-md text-label-md font-semibold" :class="textClass(step.state)">
             {{ step.label }}
           </div>
-          <div v-if="step.sub" class="font-label-md text-label-md text-on-surface-variant">
-            {{ step.sub }}
-          </div>
+          <span v-if="step.state === 'complete'" class="material-symbols-outlined text-success" style="font-size:16px">check_circle</span>
         </div>
+        <div v-if="step.sub" class="font-label-md text-label-md text-on-surface-variant mt-0.5">{{ step.sub }}</div>
       </div>
     </div>
   </div>

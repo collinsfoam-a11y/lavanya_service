@@ -89,6 +89,7 @@ SAFE_TICKET_FIELDS = [
 
 CLASSIFICATION_FIELDS = [
 	"status_category",
+	"parked_pending_customer",
 	"warranty_status",
 	"manufacturer_registered",
 	"brand_ticket_number",
@@ -282,6 +283,12 @@ def get_today_work_data(user=None, owner=None, include_counts=True, limit=50):
 def classify_ticket(row, today_date=None):
 	today_date = getdate(today_date or today())
 	keys = []
+
+	# §5 bounded non-response: a parked (Pending Customer Response) ticket leaves
+	# Today's Work entirely until resume_followup re-enters the loop. It is not
+	# closed, so it stays queryable in a dedicated parked report — just invisible here.
+	if _value(row, "parked_pending_customer"):
+		return keys
 
 	if is_active_ticket(row):
 		follow_up_date = _date_value(row, "next_follow_up_date")

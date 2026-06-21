@@ -12,8 +12,9 @@
     </div>
 
     <!-- Service Command Center — Critical / Important / Normal tiers -->
-    <div v-for="tier in METRIC_TIERS" :key="tier.key" class="mb-gutter">
+    <div v-for="tier in METRIC_TIERS" :key="tier.key" class="mb-gutter group">
       <LavSectionHeader
+        class="transition-all group-hover:translate-x-1"
         :title="tier.label"
         :icon="tier.icon"
         :badge="tierCount(tier)"
@@ -23,6 +24,7 @@
         <LavStatCard
           v-for="m in tierMetrics(tier)"
           :key="m.key"
+          class="hover:shadow-md transition-all hover:-translate-y-1 cursor-pointer"
           :icon="m.icon"
           :label="m.label"
           :value="metricCount(m.key)"
@@ -124,7 +126,7 @@
         <span class="material-symbols-outlined">checklist</span> Action Queue
       </div>
       <div
-        v-for="group in filteredGroups"
+        v-for="group in enrichedFilteredGroups"
         :key="group.key"
         :id="'bucket-' + group.key"
         class="lav-bucket"
@@ -139,7 +141,20 @@
         </div>
         <ul v-else role="list" :aria-label="'Tickets in ' + group.label">
           <li v-for="t in group.tickets" :key="t.name" class="p-3 border-b border-outline-variant last:border-b-0">
-            <LavTicketCard :ticket="t" :accent="accent(group.key)" @open="selectedTicket = $event" />
+            <div class="lav-ticket-row">
+              <LavTicketCard :ticket="t" :accent="accent(group.key)" @open="selectedTicket = $event" class="flex-1" />
+              <div v-if="t.primaryAction" class="lav-action-cell">
+                <button
+                  class="lav-action-btn"
+                  :style="{ '--action-color': t.primaryActionColor }"
+                  @click.stop="selectedActionTicket = t.name"
+                  :aria-label="'Record outcome for ' + t.name"
+                >
+                  <span class="material-symbols-outlined" style="font-size:18px">{{ t.primaryActionIcon }}</span>
+                  <span class="font-label-md text-label-md">{{ t.primaryActionLabel }}</span>
+                </button>
+              </div>
+            </div>
           </li>
         </ul>
       </div>
@@ -148,6 +163,14 @@
 
     <!-- Ticket Detail Drawer -->
     <TicketDetail :ticketId="selectedTicket" @close="selectedTicket = null" @refresh="loadTodayWork" />
+    
+    <!-- Action Screen for outcome capture -->
+    <ActionScreen 
+      v-if="selectedActionTicket" 
+      :ticketId="selectedActionTicket" 
+      @close="selectedActionTicket = null" 
+      @refresh="loadTodayWork" 
+    />
   </AppShell>
 </template>
 
@@ -156,6 +179,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { call } from '@/api'
 import AppShell from '@/components/AppShell.vue'
 import TicketDetail from '@/components/TicketDetail.vue'
+import ActionScreen from '@/components/ActionScreen.vue'
 import SlaBadge from '@/components/SlaBadge.vue'
 import LavCard from '@/components/LavCard.vue'
 import LavSectionHeader from '@/components/LavSectionHeader.vue'
@@ -164,12 +188,14 @@ import LavChip from '@/components/LavChip.vue'
 import LavEmptyState from '@/components/LavEmptyState.vue'
 import LavLoadingState from '@/components/LavLoadingState.vue'
 import LavTicketCard from '@/components/LavTicketCard.vue'
-import { accentMetric, COLORS } from '@/utils/index.js'
+import { accentMetric } from '@/utils/index.js'
+import { resolveActions as resolveEngineActions, getPrimaryAction, ACTION_REGISTRY as ENGINE_REGISTRY } from '@/config/outcome-map.js'
 
 const raw = ref({})
 const loading = ref(true)
 const error = ref(false)
 const selectedTicket = ref(null)
+const selectedActionTicket = ref(null)
 const showFilters = ref(false)
 
 async function loadTodayWork() {
@@ -388,4 +414,71 @@ function accent(key) {
   return accentMetric(key)
 }
 
+// Engine-driven action enrichment for each ticket
+const enrichedGroups = computed(() => {
+  return groups.value.map(group => {
+    const enrichedTickets = group.tickets.map(ticket => {
+      const actions = resolveEngineActions(ticket)
+      const primary = getPrimaryAction(ticket)
+      return {
+        ...ticket,
+        engineActions: actions,
+        primaryAction: primary,
+        primaryActionLabel: primary ? (ENGINE_REGISTRY[primary.action]?.label || primary.action) : null,
+        primaryActionIcon: primary ? (ENGINE_REGISTRY[primary.action]?.icon || 'touch_app') : null,
+        primaryActionColor: primary ? (ENGINE_REGISTRY[primary.action]?.color || 'var(--lav-primary)') : null,
+      }
+    })
+    return { ...group, tickets: enrichedTickets }
+  })
+})
+
+// Filter enriched groups
+const enrichedFilteredGroups = computed(() => {
+  return enrichedGroups.value.map(g => {
+    const tickets = sortByUrgency((g.tickets || []).filter(matchesFilters))
+    return { ...g, tickets, count: tickets.length }
+  })
+})
+
 </script>
+
+<style scoped>
+.lav-ticket-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.lav-action-cell {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.lav-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--action-color, var(--lav-primary));
+  background: color-mix(in srgb, var(--action-color, var(--lav-primary)) 8%, transparent);
+  color: var(--action-color, var(--lav-primary));
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  font-family: var(--font-label-md);
+}
+
+.lav-action-btn:hover {
+  background: var(--action-color, var(--lav-primary));
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--action-color, var(--lav-primary)) 30%, transparent);
+}
+
+.lav-action-btn:active {
+  transform: translateY(0);
+}
+</style>

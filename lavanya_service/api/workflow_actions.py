@@ -142,6 +142,13 @@ def escalate_case(ticket_name, reason=None):
 
 
 @frappe.whitelist(methods=["POST"])
+def resume_followup(ticket_name, next_follow_up_date=None, notes=None):
+	return quick_actions.resume_followup(
+		ticket_name, next_follow_up_date=next_follow_up_date, notes=notes
+	)
+
+
+@frappe.whitelist(methods=["POST"])
 def record_satisfaction(ticket_name, satisfaction_status=None, notes=None):
 	return quick_actions.record_satisfaction(
 		ticket_name, satisfaction_status=satisfaction_status, notes=notes
