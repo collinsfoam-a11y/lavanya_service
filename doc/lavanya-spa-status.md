@@ -10,7 +10,7 @@ Console" design realized on the frappe-ui theme). Covers **what's done**, **what
 pending**, **how to build each pending item**, and **how to verify** — including a
 reproducible authenticated-screenshot harness.
 
-Branch: `feature/phase-2-frappe-ui-scaffold`
+Branch: `safety/h5-worktree-classification` (merge target: `feature/phase-2-frappe-ui-scaffold`)
 Site (dev): `lavanya-dev.localhost` (container `devcontainer-example-frappe-1`, webserver port `8001`, published to host)
 
 ---
@@ -257,3 +257,52 @@ This method caught the empty-Tickets bug (`cc849fa`) that build/serve checks mis
 6. Commit **only own files** (never `git add -A`; a parallel agent also writes here —
    avoid `setup/`, `api/coordinator_dashboard.py`, `api/manager_dashboard.py`,
    `fixtures/client_script.json`, `page/*dashboard/`, `utils/add_client_script.py`).
+
+---
+
+## 7. H5A–H5F Current State (2026-06-21)
+
+### H5 stack summary
+
+| Phase | Commit | Description |
+|---|---|---|
+| H5A | `6f54d2e` | Theme tokens → CSS custom properties, duplicate handler removed, Field Mode fixes |
+| H5B | `f066728` | Operational masters wired into New Ticket and Ticket Detail |
+| H5C | `394f320` | Technician assignments, appointment flow, custody guard, proof categories |
+| H5D | `87ec6dd` | Restored 10 service record DocTypes + 2 advisory scheduler tasks |
+| H5E | `37f91a4` | Linked service record cards in Ticket Detail UI |
+
+### SPA pages (complete)
+
+- `/` — Today's Work (15 metric groups, 6-tier filters, reminder intel chips)
+- `/tickets` — Tickets list (search, sort, 8 saved filters, mobile cards, infinite scroll)
+- `/new-ticket` — New Ticket (customer lookup, brand metadata, previous product quick-select)
+- `/reports` — Reports Center (8 tabs: Overview, Brand Delay, Supplier Control, Follow-up Quality, Penalty, Notifications, Aging, Reports Catalog)
+- `/settings` — Settings (theme flags, UI flags, safety locks, manager/read-only mode, dirty-state save)
+- `/field` — Field Mode (phone-first search, critical work grid, recent tickets, safe quick actions)
+
+### Component library (complete)
+
+18 components: LavCard, LavSectionHeader, LavBadge, LavChip, LavStatCard, LavActionBar, LavEmptyState, LavLoadingState, LavSafetyLockPanel, LavThemeToggle, LavWorkflowTimeline, LavCustomerJourneyCard, LavFollowupQualityBadge, LavTicketCard, LavConfirm, LavModal, SlaBadge, AppShell
+
+### Theme system (complete)
+
+6 themes: lavanya-light, lavanya-dark, lavanya-blue, lavanya-green, high-contrast, compact-counter
+Zero `COLORS.*` in Vue components — all migrated to CSS custom properties.
+
+### Safety state (confirmed)
+
+- 0 native confirm/alert/prompt in frontend
+- 0 live WhatsApp/SMS send paths
+- 0 ERP posting paths active
+- 0 penalty application paths active
+- 0 automatic closure paths
+- Closure guard active with customer confirmation requirement
+- Manager-only settings enforced
+
+### Known gaps
+
+- TW-015 group-order mismatch (pre-existing, documented)
+- Appointment Confirm/Miss/Visited backend handlers not yet built
+- File upload for proofs not yet implemented
+- SPA build requires Windows host `node_modules`

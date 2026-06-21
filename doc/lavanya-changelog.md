@@ -489,4 +489,84 @@ all browser sizes, feature gaps, upgrade suggestions, what to avoid, what's miss
 
 ### Compatibility notes
 - No code was modified — documentation only
+
+---
+
+## 2026-06-21 12:00 — H5D: Restore deferred service record modules safely
+
+### What changed
+- `lavanya_service/setup/comm_log.py` — Customer Communication Log DocType
+- `lavanya_service/setup/demo_record.py` — Demo Installation Record DocType
+- `lavanya_service/setup/replacement_record.py` — Replacement Record DocType
+- `lavanya_service/setup/return_record.py` — Return Service Record DocType
+- `lavanya_service/setup/stock_record.py` — Stock Complaint Record DocType
+- `lavanya_service/setup/store_record.py` — Store Service Record DocType
+- `lavanya_service/setup/area_perf_log.py` — Area Performance Log DocType
+- `lavanya_service/setup/supplier_sla.py` — Supplier SLA Definition DocType
+- `lavanya_service/setup/supplier_payment_block.py` — Supplier Payment Block DocType
+- `lavanya_service/setup/supplier_perf_log.py` — Supplier Performance Log DocType
+- `lavanya_service/tasks/payment_block.py` — Advisory payment block scheduler (Pending Review only)
+- `lavanya_service/tasks/performance_log.py` — Read-only supplier/area performance log scheduler
+- `lavanya_service/setup/install.py` — Added `_ensure_h5d_service_records()` step
+- Deleted `lavanya_service/utils/ensure_whitelist.py` (incomplete, whitelisting via hooks.py)
+
+### Previous state
+13 deferred files in `.worktree-temp/` blocked by missing `setup/masters.py` dependency.
+
+### Current state
+All 12 restorable files committed. Dependencies on `setup/masters.py` (ensure_doctype/field/permission) verified compatible. All DocType creation is idempotent. Scheduler tasks are advisory (payment_block: Pending Review status) or read-only (performance_log). Wired into install/migrate pipeline.
+
+### Why changed
+Service record DocTypes, supplier governance, communication logs, and performance tracking were documented but not installed. Restoring them completes the operational data foundation.
+
+### Compatibility notes
+- All `ensure_doctype` calls are idempotent
+- No ERP posting, accounting entries, or live WhatsApp/SMS
+- Supplier payment block creates records in "Pending Review" status — requires manager action
+
+---
+
+## 2026-06-21 12:30 — H5E: Linked service record UI + verification
+
+### What changed
+- `lavanya_service/api/stitch_console.py` — Added `_linked_service_records()` helper, wired into `get_ticket_detail()`
+- `frontend/src/components/TicketDetail.vue` — Added Service Records section with read-only cards for Replacement, Return, Stock Complaint, Store Service, Demo/Installation, and Communication Log
+- Added `hasLinkedRecords` computed property
+- Added "Records" entry to sticky section nav
+
+### Previous state
+Service record DocTypes existed but had no visibility in Ticket Detail. Staff could not see linked replacement/return/stock/store records from the ticket view.
+
+### Current state
+`get_ticket_detail()` now fetches linked records across 6 DocTypes. Ticket Detail shows read-only cards with key fields and color-coded borders. Section only renders when records exist.
+
+### Compatibility notes
+- `_linked_service_records()` silently skips missing DocTypes
+- All records are read-only display; no edit/create forms added
+- No new API endpoints required
+
+---
+
+## 2026-06-21 13:00 — H5F: Pilot readiness regression gate
+
+### What changed
+- `doc/h5f_pilot_readiness_report.md` — Created complete pilot readiness report
+- `doc/lavanya-changelog.md` — This entry
+- Static safety scan confirmed: 0 native confirm/alert/prompt, 0 live WhatsApp/SMS, 0 ERP posting, 0 penalty application, 0 COLORS.* in Vue
+
+### Previous state
+H5A-H5E feature work complete but no formal pilot readiness documentation or merge preparation.
+
+### Current state
+Full static safety verification passed. Pilot readiness report documents:
+- 8 commits on safety branch
+- Feature inventory (28 items)
+- Known gaps (6 items, all low/medium severity)
+- Verification command inventory
+- Merge instructions from safety branch to feature branch
+
+### Compatibility notes
+- Merge to `feature/phase-2-frappe-ui-scaffold` with `--no-ff`
+- SPA build verification pending (requires Windows host `node_modules`)
+- TW-015 known pre-existing group-order mismatch in today_work tests
 - No migration needed
