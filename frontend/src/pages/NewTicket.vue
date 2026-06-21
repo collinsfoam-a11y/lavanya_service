@@ -14,7 +14,7 @@
     <!-- Success state -->
     <div v-if="created" class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 max-w-2xl">
       <div class="flex items-center gap-3 mb-4">
-        <span class="material-symbols-outlined text-3xl" :style="{ color: COLORS.success }">check_circle</span>
+        <span class="material-symbols-outlined text-3xl" :style="{ color: 'var(--lav-success)' }">check_circle</span>
         <div>
           <div class="font-headline-md text-headline-md text-on-surface">Ticket {{ created }} created</div>
           <div class="font-body-md text-on-surface-variant">{{ form.customer_name }} · {{ form.brand }} {{ form.product_type }}</div>
@@ -43,7 +43,7 @@
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface-variant">Mobile <span class="text-error">*</span></span>
             <input v-model="form.mobile" type="tel" class="lav-input" placeholder="10-digit mobile" @blur="lookupCustomer" />
-          <span v-if="lookupHint" class="font-label-md text-label-md" :style="{ color: lookupHint.color || COLORS.success }">{{ lookupHint.text }}</span>
+          <span v-if="lookupHint" class="font-label-md text-label-md" :style="{ color: lookupHint.color || 'var(--lav-success)' }">{{ lookupHint.text }}</span>
         </label>
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface-variant">Brand <span class="text-error">*</span></span>
@@ -127,7 +127,7 @@ import AppShell from '@/components/AppShell.vue'
 import LavConfirm from '@/components/LavConfirm.vue'
 import { useConfirm } from '@/utils/confirm'
 import { useToast } from '@/utils/toast'
-import { COLORS } from '@/utils'
+// Colors now use CSS custom properties (e.g. 'var(--lav-success)') for theme responsiveness
 
 const router = useRouter()
 const { confirm } = useConfirm()
@@ -155,12 +155,12 @@ async function lookupCustomer() {
       if (!form.brand && res.last_brand && opts.value.brands?.includes(res.last_brand)) form.brand = res.last_brand
       if ((!form.product_type || form.product_type === '') && res.last_product_type && opts.value.product_types?.includes(res.last_product_type)) form.product_type = res.last_product_type
       const n = res.ticket_count || 0
-      lookupHint.value = { text: `Returning customer${n ? ` · ${n} previous ticket${n > 1 ? 's' : ''}` : ''} — details prefilled`, color: COLORS.success }
+      lookupHint.value = { text: `Returning customer${n ? ` · ${n} previous ticket${n > 1 ? 's' : ''}` : ''} — details prefilled`, color: 'var(--lav-success)' }
     } else {
-      lookupHint.value = { text: 'Customer not found. Continue with new entry.', color: COLORS.warning }
+      lookupHint.value = { text: 'Customer not found. Continue with new entry.', color: 'var(--lav-warning)' }
     }
   } catch (e) {
-    lookupHint.value = { text: 'Could not check previous tickets. Try again later.', color: COLORS.error }
+    lookupHint.value = { text: 'Could not check previous tickets. Try again later.', color: 'var(--lav-danger)' }
   }
 }
 

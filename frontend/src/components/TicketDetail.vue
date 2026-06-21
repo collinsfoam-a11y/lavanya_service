@@ -178,13 +178,13 @@
               <template v-for="(s, i) in workflowTimeline" :key="s.key">
                 <div class="flex items-center gap-2 px-3 py-2 rounded-full shrink-0 font-label-md text-label-md transition-all"
                   :class="s.status === 'completed' ? 'text-white' : s.status === 'current' ? 'text-white ring-2 ring-offset-1 ring-primary' : s.status === 'waiting' ? 'text-white' : s.status === 'blocked' ? 'text-white' : 'text-on-surface-variant bg-surface-container'"
-                  :style="s.status === 'completed' ? { background: COLORS.success } : s.status === 'current' ? { background: COLORS.primary } : s.status === 'waiting' ? { background: COLORS.warning } : s.status === 'blocked' ? { background: COLORS.error } : {}"
+                  :style="s.status === 'completed' ? { background: 'var(--lav-success)' } : s.status === 'current' ? { background: 'var(--lav-primary)' } : s.status === 'waiting' ? { background: 'var(--lav-warning)' } : s.status === 'blocked' ? { background: 'var(--lav-danger)' } : {}"
                   :title="s.label">
                   <span class="material-symbols-outlined" style="font-size:14px">{{ s.status === 'completed' ? 'check' : s.icon }}</span>
                   <span class="truncate max-w-[120px]">{{ s.label }}</span>
                 </div>
                 <span v-if="i < workflowTimeline.length - 1" class="w-4 h-0.5 shrink-0 rounded-full"
-                  :style="{ background: workflowTimeline[i+1].status === 'pending' ? COLORS.outline : COLORS.success }"></span>
+                  :style="{ background: workflowTimeline[i+1].status === 'pending' ? 'var(--lav-border)' : 'var(--lav-success)' }"></span>
               </template>
             </div>
           </div>
@@ -278,7 +278,7 @@
               <div><span class="block text-label-md text-outline">Promised Update At</span> {{ fmtDT(ticket.reminder.customer_promised_update_at) }}</div>
               <div v-if="ticket.reminder.promise_breach_reason" class="col-span-2">
                 <span class="block text-label-md text-outline">Promise Breach Reason</span>
-                <span :style="{ color: COLORS.error }">{{ ticket.reminder.promise_breach_reason }}</span>
+                <span :style="{ color: 'var(--lav-danger)' }">{{ ticket.reminder.promise_breach_reason }}</span>
               </div>
             </div>
           </section>
@@ -300,7 +300,7 @@
               </div>
               <div v-if="ticket.ai.risk_reason">
                 <span class="block text-label-md text-outline">Risk Reason</span>
-                <p class="font-body-md text-on-surface mt-0.5" :style="{ color: COLORS.error }">{{ ticket.ai.risk_reason }}</p>
+                <p class="font-body-md text-on-surface mt-0.5" :style="{ color: 'var(--lav-danger)' }">{{ ticket.ai.risk_reason }}</p>
               </div>
               <div v-if="ticket.ai.manager_summary">
                 <span class="block text-label-md text-outline">Manager Summary</span>
@@ -392,7 +392,7 @@
               </div>
 
               <!-- Part Tracking (conditional) -->
-              <div v-if="ticket.stage.part_required" class="rounded-xl p-4 bg-surface-container" :style="{ borderLeft: '4px solid ' + COLORS.warning }">
+              <div v-if="ticket.stage.part_required" class="rounded-xl p-4 bg-surface-container" :style="{ borderLeft: '4px solid var(--lav-warning)' }">
                 <div class="font-label-md text-label-md text-outline mb-3 flex items-center gap-1.5">
                   <span class="material-symbols-outlined" style="font-size:16px">build</span>
                   Part Tracking
@@ -418,7 +418,7 @@
               </div>
 
               <!-- Financial (conditional) -->
-              <div v-if="ticket.stage.estimated_amount || ticket.stage.customer_approved_amount || (ticket.stage.payment_status && ticket.stage.payment_status !== 'Not Applicable')" class="rounded-xl p-4 bg-surface-container" :style="{ borderLeft: '4px solid ' + COLORS.success }">
+              <div v-if="ticket.stage.estimated_amount || ticket.stage.customer_approved_amount || (ticket.stage.payment_status && ticket.stage.payment_status !== 'Not Applicable')" class="rounded-xl p-4 bg-surface-container" :style="{ borderLeft: '4px solid var(--lav-success)' }">
                 <div class="font-label-md text-label-md text-outline mb-3 flex items-center gap-1.5">
                   <span class="material-symbols-outlined" style="font-size:16px">payments</span>
                   Financial
@@ -653,7 +653,7 @@
                 <!-- Step indicator -->
                 <div class="relative z-10 flex items-center justify-center w-[46px] h-[46px] rounded-full shrink-0 shadow-sm transition-all"
                   :class="step.status === 'current' ? 'bg-primary text-white ring-4 ring-primary/20' : 'bg-surface-container-highest text-outline'"
-                  :style="step.status === 'completed' ? { background: COLORS.success, color: 'white' } : {}">
+                  :style="step.status === 'completed' ? { background: 'var(--lav-success)', color: 'white' } : {}">
                   <span v-if="step.status === 'completed'" class="material-symbols-outlined" style="font-size:22px">check</span>
                   <span v-else class="material-symbols-outlined" style="font-size:22px">{{ step.icon }}</span>
                 </div>
@@ -661,7 +661,7 @@
                 <div class="flex-1 min-w-0 pt-2">
                   <div class="font-body-md font-semibold"
                     :class="step.status === 'current' ? 'text-primary' : 'text-on-surface-variant'"
-                    :style="step.status === 'completed' ? { color: COLORS.success } : {}">
+                    :style="step.status === 'completed' ? { color: 'var(--lav-success)' } : {}">
                     {{ step.label }}
                   </div>
                   <div v-if="step.status === 'current' && step.action" class="mt-2">
@@ -672,7 +672,7 @@
                       {{ step.buttonLabel || step.label }}
                     </button>
                   </div>
-                  <div v-else-if="step.status === 'completed' && step.completedLabel" class="font-label-md text-label-md mt-0.5 flex items-center gap-1" :style="{ color: COLORS.success }">
+                  <div v-else-if="step.status === 'completed' && step.completedLabel" class="font-label-md text-label-md mt-0.5 flex items-center gap-1" :style="{ color: 'var(--lav-success)' }">
                     <span class="material-symbols-outlined" style="font-size:14px">done</span>
                     {{ step.completedLabel }}
                   </div>
