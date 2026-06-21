@@ -30,7 +30,18 @@
               <div>Age: <span class="text-on-surface">{{ ticketAge(ticket.creation) }} days</span></div>
               <div>Assigned: <span class="text-on-surface">{{ ticket.assigned_to || 'Unassigned' }}</span></div>
             </div>
-            <div class="mt-3 flex items-center gap-3 flex-wrap">
+            <div class="mt-3 flex items-center gap-2 flex-wrap">
+              <!-- P0-5: Customer Informed badge — prominent in header -->
+              <span v-if="ticket.stage?.customer_informed_status" class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="informedChip(ticket.stage.customer_informed_status)">
+                <span class="material-symbols-outlined" style="font-size:14px" aria-hidden="true">{{ ticket.stage.customer_informed_status === 'Pending' || ticket.stage.customer_informed_status === 'Customer Not Reachable' ? 'campaign' : 'check_circle' }}</span>
+                {{ ticket.stage.customer_informed_status }}
+              </span>
+              <span v-else class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: 'color-mix(in srgb, var(--lav-warning) 12%, transparent)', color: 'var(--lav-warning)' }">Customer not informed</span>
+              <!-- Part pending badge -->
+              <span v-if="ticket.stage?.part_required" class="px-2.5 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: 'color-mix(in srgb, var(--lav-warning) 12%, transparent)', color: 'var(--lav-warning)' }">
+                <span class="material-symbols-outlined" style="font-size:14px" aria-hidden="true">build</span>
+                Part pending: {{ ticket.stage.part_expected_date || '—' }}
+              </span>
               <button
                 v-if="ticket.customer?.mobile"
                   @click="whatsappCustomer"

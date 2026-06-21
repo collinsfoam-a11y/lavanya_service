@@ -436,6 +436,25 @@ def close_ticket(
 	# H1: Block closure unless linked records are complete for flow-specific prerequisites.
 	_validate_closure_prerequisites(doc)
 
+	# P0-2: Block closure if part is pending with no customer confirmation of fitting.
+	if doc.get("part_required") and not doc.get("part_fitted_confirmed"):
+		frappe.throw(_(
+			"Ticket cannot be closed. Part '{0}' is still pending (ETA: {1}). "
+			"Confirm part is fitted and customer confirms issue resolved before closure."
+		).format(doc.get("part_name", "Unknown"), doc.get("part_expected_date", "Unknown")))
+
+	# P0-3: Block closure if customer verification loop is unresolved.
+	verification_states = {
+		"technician_call_pending", "technician_visit_pending",
+		"customer_confirmation_pending", "customer_not_satisfied",
+		"no_technician_update", "appointment_missed",
+	}
+	if doc.get("followup_stage") in verification_states:
+		frappe.throw(_(
+			"Ticket cannot be closed. Follow-up stage is '{0}' — customer verification is unresolved. "
+			"Verify with customer and record satisfaction before closure."
+		).format(doc.get("followup_stage")))
+
 	# Block closure unless customer satisfaction is documented (Satisfied or Not Required).
 	# This prevents closing tickets after brand/service-center says "completed" without
 	# customer confirmation — a critical real-world follow-up guarantee.
@@ -976,3 +995,199 @@ def notify_brand_for_return(ticket_name, notes=None):
 
 	_save_ticket(doc)
 	return _result(doc, _("Brand notified for return"))
+
+
+# ---------------------------------------------------------------------------
+# P0-1: Appointment execution handlers (Confirm / Miss / Visited / Verify)
+# ---------------------------------------------------------------------------
+
+def confirm_appointment(ticket_name, appointment_datetime=None, technician=None, notes=None):
+	_require_roles("Confirm Appointment", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.followup_stage = "appointment_confirmed"
+	if appointment_datetime:
+		doc.next_follow_up_date = appointment_datetime
+	if technician:
+		doc.technician_name = str(technician).strip()
+
+	entry = "[Follow-up] Appointment Confirmed"
+	if technician:
+		entry += " — Technician: {0}".format(technician)
+	if appointment_datetime:
+		entry += " · {0}".format(appointment_datetime)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Appointment confirmed"))
+
+
+def mark_appointment_missed(ticket_name, reason=None, reschedule_date=None, notes=None):
+	_require_roles("Mark Appointment Missed", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	reason = _require(reason, "Reason")
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.followup_stage = "appointment_missed"
+	doc.escalation_level = _increment_escalation(doc.escalation_level)
+	if reschedule_date:
+		doc.next_follow_up_date = reschedule_date
+
+	entry = "[Follow-up] Appointment Missed — Reason: {0}".format(reason)
+	entry += " · Escalation: {0}".format(doc.escalation_level)
+	if reschedule_date:
+		entry += " · Reschedule: {0}".format(reschedule_date)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Appointment marked missed; escalated to {0}").format(doc.escalation_level))
+
+
+def mark_technician_visited(ticket_name, visit_result=None, notes=None):
+	_require_roles("Mark Technician Visited", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.followup_stage = "technician_visited"
+	doc.no_update_count = 0  # reset if update was received
+
+	entry = "[Follow-up] Technician Visited"
+	if visit_result:
+		entry += " — Result: {0}".format(visit_result)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Technician visit recorded"))
+
+
+def verify_customer_after_appointment(ticket_name, confirmed=None, satisfaction=None, notes=None):
+	"""P0-3: Post-visit customer verification — mandatory before closure."""
+	_require_roles("Verify Customer After Appointment", {ROLE_MANAGER, ROLE_COORDINATOR, ROLE_AGENT})
+
+	confirmed = _require(confirmed, "Customer Confirmation Status")
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	# Record customer's statement
+	doc.customer_informed_status = "Informed by Call"
+	doc.customer_informed = "Yes"
+	doc.customer_informed_at = now_datetime()
+	doc.customer_informed_by = _acting_user()
+
+	if confirmed in ("Yes", "Cleared", "Satisfied"):
+		doc.followup_stage = "customer_satisfied"
+		doc.customer_satisfaction_status = "Satisfied"
+	elif confirmed in ("No", "Not Cleared", "Still Issue"):
+		doc.followup_stage = "customer_not_satisfied"
+		doc.customer_satisfaction_status = "Not Satisfied"
+	elif confirmed == "Part Pending":
+		doc.followup_stage = "part_pending"
+		doc.status = "Waiting on Part / Approval"
+	else:
+		doc.followup_stage = "customer_confirmation_pending"
+
+	if satisfaction:
+		doc.customer_satisfaction_status = str(satisfaction).strip()
+
+	entry = "[Follow-up] Customer Verified — Outcome: {0}".format(confirmed)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Customer verified: {0}").format(confirmed))
+
+
+# ---------------------------------------------------------------------------
+# P0-2: Part-pending follow-up loop
+# ---------------------------------------------------------------------------
+
+def record_part_required(ticket_name, part_name=None, part_expected_date=None, next_follow_up_date=None, notes=None):
+	_require_roles("Record Part Required", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	part_name = _require(part_name, "Part Name")
+	part_expected_date = _require(part_expected_date, "Part Expected Date")
+	next_follow_up_date = _require(next_follow_up_date, "Next Follow-up Date")
+
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.part_required = 1
+	doc.part_name = part_name
+	doc.part_expected_date = part_expected_date
+	doc.followup_stage = "part_pending"
+	doc.status = "Waiting on Part / Approval"
+	doc.next_follow_up_date = next_follow_up_date
+
+	entry = "[Follow-up] Part Required — Name: {0} · ETA: {1}".format(part_name, part_expected_date)
+	entry += " · Next follow-up: {0}".format(next_follow_up_date)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Part pending recorded: {0}").format(part_name))
+
+
+def update_part_eta(ticket_name, new_eta=None, delay_reason=None, notes=None):
+	_require_roles("Update Part ETA", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	new_eta = _require(new_eta, "New ETA Date")
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	old_eta = doc.part_expected_date or "not set"
+	doc.part_expected_date = new_eta
+	if delay_reason:
+		doc.part_delay_reason = str(delay_reason).strip()
+
+	entry = "[Follow-up] Part ETA Updated — Old: {0} · New: {1}".format(old_eta, new_eta)
+	if delay_reason:
+		entry += " · Reason: {0}".format(delay_reason)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Part ETA updated to {0}").format(new_eta))
+
+
+# ---------------------------------------------------------------------------
+# P0-3: Auto-verification loop — set next customer verification date
+# ---------------------------------------------------------------------------
+
+def set_reverification_date(ticket_name, reverify_at=None, notes=None):
+	"""Set the next customer verification checkpoint. Used after every
+	service-center/technician remark to enforce the follow-up loop."""
+	_require_roles("Set Reverification Date", {ROLE_MANAGER, ROLE_COORDINATOR})
+
+	reverify_at = _require(reverify_at, "Reverification Date")
+	doc = _load_ticket(ticket_name)
+	_block_if_final(doc)
+
+	doc.next_follow_up_date = reverify_at
+
+	entry = "[Follow-up] Reverification set — Date: {0}".format(reverify_at)
+	if notes:
+		entry += " · {0}".format(notes)
+	doc.add_comment("Comment", entry)
+	_set_last_followup(doc, entry)
+
+	_save_ticket(doc)
+	return _result(doc, _("Reverification set to {0}").format(reverify_at))
