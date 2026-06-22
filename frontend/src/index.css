@@ -309,20 +309,14 @@
   }
 }
 
-/* Stitch "Today's Work Dashboard" — 6-metric grid + Action Queue.
-   Tailwind responsive utilities don't generate in this scaffold, so the grid
-   and cards are explicit CSS (matches the lav-* layout pattern above). */
+/* Stitch "Today's Work Dashboard" — metric grid + Action Queue.
+   Uses auto-fill + minmax so cards wrap naturally at any width and never
+   overflow the container (prevents horizontal page scrollbar). */
 .lav-metric-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--lav-gutter);
   margin-bottom: calc(24px * var(--lav-spacing-scale));
-}
-@media (min-width: 768px) {
-  .lav-metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-@media (min-width: 1200px) {
-  .lav-metric-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
 .lav-metric {
   position: relative;

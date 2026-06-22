@@ -79,7 +79,7 @@
         </div>
       </header>
 
-      <div class="flex-1 px-container-padding py-gutter w-full max-w-max-content-width mx-auto">
+      <div class="flex-1 px-container-padding py-gutter w-full max-w-max-content-width mx-auto min-w-0 overflow-x-hidden">
         <slot />
       </div>
 

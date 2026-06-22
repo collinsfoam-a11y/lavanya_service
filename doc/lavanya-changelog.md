@@ -838,3 +838,37 @@ Full safety scan passed. Regression report documents entire stack. Merge instruc
 - TW-015 known pre-existing
 - SPA build requires Windows host `node_modules`
 - No migration needed
+
+## 2026-06-22 — UX batch: metric-grid overflow fix + tabbed ticket drawer
+
+### What changed
+- `frontend/src/index.css` — `.lav-metric-grid` switched from fixed breakpoints (2/3/6 cols) to `auto-fill, minmax(200px, 1fr)` so cards wrap naturally and never overflow the container.
+- `frontend/src/components/AppShell.vue` — main content div gained `min-w-0 overflow-x-hidden` as a horizontal overflow safety net.
+- `frontend/src/components/TicketDetail.vue` — Replaced the 18-item sticky scroll nav with a 4-tab bar (Overview / Customer / Details / Comms). Each tab gates its sections via `v-show`, keeping the tab state reactive. Header, Do-This-Now, Action Library, Timeline, and Customer Journey remain visible on all tabs.
+
+### Previous state
+- Metric grid used fixed column counts with `minmax(0, 1fr)` — overflowed on narrower viewports causing horizontal page scrollbar.
+- Ticket drawer had a sticky scroll-to nav listing 18 sections — all content rendered vertically in one long scroll. No tabbed grouping.
+
+### Current state
+- Metric grid uses `auto-fill` with `minmax(200px, 1fr)` — cards wrap naturally, no overflow.
+- Main content area has overflow safety net.
+- Ticket drawer has 4 tabs:
+  - **Overview**: Service Stage, Reminder, AI Advisory, Follow-up Tracking, Repeat banner
+  - **Customer**: Customer Summary, Product Summary, Customer Products, CRM
+  - **Details**: Brand Info, Workflow, Receipt, Linked Records, Technician, Appointment, Proof, Activity (show-more toggle)
+  - **Comms**: Communication Preview *(note: Comms tab currently falls through to the always-visible Communication Preview section — future work to gate it)*
+- Tab bar sits below the customer journey card and above the section content.
+- Active tab has primary color styling with shadow for clear affordance.
+
+### Why changed
+Benchmark analysis vs Linear/Intercom/Zendesk/Front found the single-column drawer and metric-grid overflow as the two highest-leverage UX improvements — both pilot-safe, no backend changes.
+
+### What was obtained
+- No horizontal page scroll on Today's Work at any viewport width.
+- Ticket drawer matches the agent-workspace pattern (pinned context above, tabbed reference below). Operators can switch between overview, customer info, details, and comms without scrolling through unrelated sections.
+
+### Compatibility notes
+- Existing `SECTIONS` array and `scrollToSection()` function remain as dead code (no harmful side effects). Can be cleaned up in a follow-up.
+- All section `v-if` conditions preserved — tab visibility layers on top of existing conditional logic.
+- Build verified: 68 modules, 0 errors, 7.36s.

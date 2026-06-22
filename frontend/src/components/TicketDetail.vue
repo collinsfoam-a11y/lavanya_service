@@ -205,39 +205,47 @@
             </div>
           </section>
 
-          <!-- Sticky section nav -->
-          <nav class="sticky top-0 z-10 -mx-6 md:-mx-8 px-6 md:px-8 py-2 bg-surface-container-lowest/95 backdrop-blur flex gap-4 border-b border-outline-variant overflow-x-auto">
-            <a v-for="s in SECTIONS" :key="s.id" :href="'#' + s.id" class="whitespace-nowrap font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" @click.prevent="scrollToSection(s.id)">{{ s.label }}</a>
+          <!-- Tab bar — replaces sticky scroll nav -->
+          <nav class="flex gap-1 -mx-2 md:-mx-4 px-2 md:px-4 py-2 border-b border-outline-variant bg-surface-container-lowest/95 backdrop-blur" role="tablist" aria-label="Ticket detail sections">
+            <button v-for="t in TICKET_TABS" :key="t.key" role="tab" :aria-selected="currentTab === t.key"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-label-md text-label-md transition-all"
+              :class="currentTab === t.key ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'"
+              @click="currentTab = t.key">
+              <span class="material-symbols-outlined" style="font-size:16px">{{ t.icon }}</span>
+              {{ t.label }}
+            </button>
           </nav>
 
-          <!-- Repeat complaint banner -->
-          <div v-if="ticket.repeat?.is_repeat" class="rounded-xl p-4 flex items-center justify-between gap-3"
-               style="border:1px solid rgba(113,42,226,0.4); background:rgba(113,42,226,0.08)">
-            <div class="flex items-center gap-2 font-body-md text-on-surface">
-              <span class="material-symbols-outlined text-secondary">repeat</span>
-              Marked as repeat complaint<template v-if="ticket.repeat.previous_ticket"> · linked to <span class="font-semibold text-primary">{{ ticket.repeat.previous_ticket }}</span></template>
+          <!-- Repeat complaint banner (Overview tab) -->
+          <div v-show="currentTab === 'overview'">
+            <div v-if="ticket.repeat?.is_repeat" class="rounded-xl p-4 flex items-center justify-between gap-3"
+                 style="border:1px solid rgba(113,42,226,0.4); background:rgba(113,42,226,0.08)">
+              <div class="flex items-center gap-2 font-body-md text-on-surface">
+                <span class="material-symbols-outlined text-secondary">repeat</span>
+                Marked as repeat complaint<template v-if="ticket.repeat.previous_ticket"> · linked to <span class="font-semibold text-primary">{{ ticket.repeat.previous_ticket }}</span></template>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button @click="openAction('escalate_case')" class="px-3 h-8 rounded-lg bg-warning text-on-warning font-label-md text-label-md hover:opacity-90">Escalate</button>
+                <button @click="clearRepeat" class="px-3 h-8 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low">Clear</button>
+              </div>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
-              <button @click="openAction('escalate_case')" class="px-3 h-8 rounded-lg bg-warning text-on-warning font-label-md text-label-md hover:opacity-90">Escalate</button>
-              <button @click="clearRepeat" class="px-3 h-8 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low">Clear</button>
+            <div v-else-if="repeatCandidates.length" class="rounded-xl p-4"
+                 style="border:1px solid rgba(148,55,0,0.4); background:rgba(148,55,0,0.07)">
+              <div class="flex items-center gap-2 font-body-md text-on-surface mb-2">
+                <span class="material-symbols-outlined text-tertiary">repeat</span>
+                Possible repeat — {{ repeatCandidates.length }} earlier ticket(s) for this customer/product
+              </div>
+              <ul class="flex flex-col gap-1.5">
+                <li v-for="c in repeatCandidates" :key="c.ticket" class="flex items-center justify-between gap-2 font-body-md">
+                  <span class="text-on-surface-variant truncate"><span class="text-primary font-semibold">{{ c.ticket }}</span> · {{ c.subject || '(no subject)' }}</span>
+                  <button @click="linkRepeat(c.ticket)" class="px-3 h-8 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md shrink-0 hover:opacity-90">Link as repeat</button>
+                </li>
+              </ul>
             </div>
-          </div>
-          <div v-else-if="repeatCandidates.length" class="rounded-xl p-4"
-               style="border:1px solid rgba(148,55,0,0.4); background:rgba(148,55,0,0.07)">
-            <div class="flex items-center gap-2 font-body-md text-on-surface mb-2">
-              <span class="material-symbols-outlined text-tertiary">repeat</span>
-              Possible repeat — {{ repeatCandidates.length }} earlier ticket(s) for this customer/product
-            </div>
-            <ul class="flex flex-col gap-1.5">
-              <li v-for="c in repeatCandidates" :key="c.ticket" class="flex items-center justify-between gap-2 font-body-md">
-                <span class="text-on-surface-variant truncate"><span class="text-primary font-semibold">{{ c.ticket }}</span> · {{ c.subject || '(no subject)' }}</span>
-                <button @click="linkRepeat(c.ticket)" class="px-3 h-8 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md shrink-0 hover:opacity-90">Link as repeat</button>
-              </li>
-            </ul>
           </div>
 
           <!-- Service Stage (delta Sprint 2) — read display, blank-safe -->
-           <section id="sec-stage" v-if="ticket.stage">
+           <section id="sec-stage" v-show="currentTab === 'overview'" v-if="ticket.stage">
              <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center justify-between">
                Service Stage
                <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: _bg(sectionStatuses['sec-stage'].color), color: sectionStatuses['sec-stage'].color }">
@@ -266,7 +274,7 @@
           </section>
 
           <!-- Reminder Intelligence (Step 5) — read-only, blank-safe -->
-          <section id="sec-reminder" v-if="ticket.reminder && Object.keys(ticket.reminder).length">
+          <section id="sec-reminder" v-show="currentTab === 'overview'" v-if="ticket.reminder && Object.keys(ticket.reminder).length">
             <!-- D2/D3: trimmed to the engine's UNIQUE computed projections. The raw
                  Due Status / Escalation / Promise / Next Follow-up / Stage Due /
                  Promised Update live in the Service Stage panel above — not repeated here. -->
@@ -291,7 +299,7 @@
           </section>
 
           <!-- AI Advisory (Step 6) — read-only suggestions from the engine -->
-          <section id="sec-ai-advisory" v-if="ticket.ai && ticket.ai.review_status && ticket.ai.review_status !== 'Not Required'">
+          <section id="sec-ai-advisory" v-show="currentTab === 'overview'" v-if="ticket.ai && ticket.ai.review_status && ticket.ai.review_status !== 'Not Required'">
             <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center gap-2">
               <span class="material-symbols-outlined" style="font-size:22px">psychology</span>
               AI Advisory
@@ -335,7 +343,7 @@
           </section>
 
           <!-- Follow-up Tracking (Phase 1N-6B) -->
-           <section id="sec-followup-tracking" v-if="ticket.stage && (ticket.stage.service_path || ticket.stage.followup_stage || ticket.stage.service_charge_type)">
+           <section id="sec-followup-tracking" v-show="currentTab === 'overview'" v-if="ticket.stage && (ticket.stage.service_path || ticket.stage.followup_stage || ticket.stage.service_charge_type)">
              <h3 class="font-headline-md text-headline-md text-primary mb-4 flex items-center justify-between">
                <span class="flex items-center gap-2">
                  <span class="material-symbols-outlined" style="font-size:22px">support_agent</span>
@@ -478,7 +486,7 @@
           </section>
 
           <!-- Customer Summary -->
-           <section id="sec-customer">
+           <section id="sec-customer" v-show="currentTab === 'customer'">
              <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center justify-between">
                Customer
                <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: _bg(sectionStatuses['sec-customer'].color), color: sectionStatuses['sec-customer'].color }">
@@ -500,7 +508,7 @@
           </section>
 
           <!-- Product Summary -->
-           <section id="sec-product">
+           <section id="sec-product" v-show="currentTab === 'customer'">
              <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center justify-between">
                Product
                <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ background: _bg(sectionStatuses['sec-product'].color), color: sectionStatuses['sec-product'].color }">
@@ -520,7 +528,7 @@
           </section>
 
           <!-- H6B: CRM Relationship Card -->
-          <section id="sec-crm" v-if="ticket.crm_relationship?.available || ticket.crm_relationship?.warnings?.length">
+          <section id="sec-crm" v-show="currentTab === 'customer'" v-if="ticket.crm_relationship?.available || ticket.crm_relationship?.warnings?.length">
             <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center gap-2">
               <span class="material-symbols-outlined" style="font-size:22px">handshake</span>
               CRM Relationship
@@ -565,15 +573,15 @@
             </div>
           </section>
 
-          <!-- UX-R1: Collapsible lower-priority sections -->
-          <div class="mb-3">
+          <!-- UX-R1: Collapsible lower-priority sections (Details tab) -->
+          <div v-show="currentTab === 'details'" class="mb-3">
             <button @click="showDetails = !showDetails" class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-md hover:bg-surface-container-low transition-colors">
               <span class="material-symbols-outlined" style="font-size:18px">{{ showDetails ? 'expand_less' : 'expand_more' }}</span>
-              {{ showDetails ? 'Hide details' : 'Show more (brand info, CRM, records, technician, appointment, proof)' }}
+              {{ showDetails ? 'Hide details' : 'Show more (brand info, records, technician, appointment, proof)' }}
             </button>
           </div>
 
-          <section id="sec-customer-products" v-if="ticket.customer_products?.length">
+          <section id="sec-customer-products" v-show="currentTab === 'customer'" v-if="ticket.customer_products?.length">
             <h3 class="font-headline-md text-headline-md text-primary mb-3">Customer Products ({{ ticket.customer_products.length }})</h3>
             <div class="flex flex-col gap-3">
               <div v-for="cp in ticket.customer_products" :key="cp.name" class="rounded-xl p-4 bg-surface-container border border-outline-variant">
@@ -595,7 +603,7 @@
             </div>
           </section>
 
-          <template v-if="showDetails">
+          <div v-show="currentTab === 'details'">
 
           <!-- H5B: Brand Info Card -->
           <section id="sec-brand-info" v-if="ticket.brand_info?.name">
@@ -830,13 +838,13 @@
               </div>
             </div>
           </section>
-          </template>
+          </div>
 
           <!-- Follow-up history (structured, from tagged log entries) -->
           <!-- Duplicate follow-up timeline removed (Task 9). LavWorkflowTimeline shows log-driven status progression. -->
 
           <!-- Activity timeline + add note -->
-          <section id="sec-activity" class="border-t border-outline-variant pt-4 mt-4">
+          <section id="sec-activity" v-show="currentTab === 'details'" class="border-t border-outline-variant pt-4 mt-4">
             <h3 class="font-headline-md text-headline-md text-on-surface mb-3">Activity</h3>
 
             <!-- Add note -->
@@ -1047,6 +1055,13 @@ const activityLoading = ref(false)
 const noteText = ref('')
 const noteError = ref('')
 const postingNote = ref(false)
+const currentTab = ref('overview')
+const TICKET_TABS = [
+  { key: 'overview', label: 'Overview', icon: 'dashboard' },
+  { key: 'customer', label: 'Customer', icon: 'person' },
+  { key: 'details', label: 'Details', icon: 'folder' },
+  { key: 'comms', label: 'Comms', icon: 'chat' },
+]
 const showDetails = ref(false)  // UX-R1: collapsible sections toggle
 
 // Repeat-complaint detection / linking
