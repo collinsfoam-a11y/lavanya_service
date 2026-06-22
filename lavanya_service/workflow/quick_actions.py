@@ -162,6 +162,30 @@ def _block_if_final(doc):
 		)
 
 
+# Flows whose current_service_stage is driven by the brand-warranty / local
+# follow-up loop (i.e. by followup_stage). Other flows (custody, replacement,
+# return, installation, stock…) own current_service_stage via their own advancers,
+# so we must never derive over them.
+_FOLLOWUP_LOOP_FLOWS = {"", "Customer Complaint - Site", "Out of Warranty Local Service"}
+
+
+def _sync_service_stage_from_followup(doc):
+	"""SoT: within the follow-up loop, followup_stage is authoritative — derive
+	current_service_stage from it so the two stage fields cannot drift (e.g.
+	registration_done → "Brand Registered", part_pending → "Spare Pending"). Guarded
+	by service_flow_type so non-follow-up flows keep their own richer stage."""
+	fs = doc.get("followup_stage")
+	if not fs:
+		return
+	if (doc.get("service_flow_type") or "") not in _FOLLOWUP_LOOP_FLOWS:
+		return
+	from lavanya_service import stage_rules as sr
+
+	derived = sr.derive_stage_from_followup(fs)
+	if derived and doc.get("current_service_stage") != derived:
+		doc.current_service_stage = derived
+
+
 def _save_ticket(doc):
 	"""Persist ticket changes preserving the real actor in the audit trail.
 
@@ -173,6 +197,9 @@ def _save_ticket(doc):
 	acting_user = _acting_user()
 	if not frappe.has_permission(TICKET_DOCTYPE, "write", doc=doc, user=acting_user):
 		frappe.throw(_("You are not permitted to update this ticket."), frappe.PermissionError)
+
+	# SoT: reconcile the canonical stage from followup_stage before persisting.
+	_sync_service_stage_from_followup(doc)
 
 	doc.flags.ignore_lavanya_field_guard = True
 	doc.save(ignore_permissions=True)
