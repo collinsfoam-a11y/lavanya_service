@@ -118,8 +118,9 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { call } from '@/api'
 import { useToast } from '@/utils/toast'
 import { useConfirm } from '@/utils/confirm'
 import LavConfirm from '@/components/LavConfirm.vue'
@@ -130,6 +131,13 @@ const router = useRouter()
 const { toasts, dismiss, show: showToast } = useToast()
 const { confirm } = useConfirm()
 const q = ref('')
+const isAdmin = ref(false)
+
+onMounted(async () => {
+  try {
+    isAdmin.value = !!(await call('lavanya_service.api.ui_settings.can_manage_lavanya_settings'))
+  } catch { isAdmin.value = false }
+})
 
 function goSearch() {
   const term = q.value.trim()
@@ -139,18 +147,20 @@ function goSearch() {
 // Keyboard shortcuts are handled centrally in App.vue (g+h, g+t, g+n, g+r, g+s, ?, Esc).
 // AppShell does not register its own document-level keydown listener.
 
-const navItems = [
+const ALL_NAV_ITEMS = [
   { label: 'Today\'s Work', mobileLabel: 'Work', icon: 'dashboard', to: '/', subtitle: 'Critical, important, and normal follow-ups' },
   { label: 'Tickets', mobileLabel: 'Tickets', icon: 'confirmation_number', to: '/tickets', subtitle: 'Search, filters, and ticket detail drawer' },
   { label: 'Reports', mobileLabel: 'Reports', icon: 'assessment', to: '/reports', subtitle: 'Manager reports and safety previews' },
-  { label: 'Field Mode', mobileLabel: 'Field', icon: 'phone_iphone', to: '/field', subtitle: 'Counter-friendly phone lookup and quick work' },
+  { label: 'Field Mode', mobileLabel: 'Field', icon: 'phone_iphone', to: '/field', subtitle: 'Counter-friendly phone lookup and quick work', adminOnly: true },
   { label: 'WhatsApp Drafts', mobileLabel: 'Drafts', icon: 'chat', to: '/whatsapp', subtitle: 'Read-only inbox and draft outbound queue (no live send)' },
   { label: 'Customer 360', mobileLabel: 'Customer', icon: 'person_search', to: '/customer-360', subtitle: 'Customer profile, products, tickets, and CRM context' },
   { label: 'New Ticket', mobileLabel: 'New', icon: 'add_box', to: '/new-ticket', subtitle: 'Register a customer complaint' },
-  { label: 'Settings', mobileLabel: 'Settings', icon: 'settings', to: '/settings', subtitle: 'Theme, safety locks, and feature flags' },
+  { label: 'Settings', mobileLabel: 'Settings', icon: 'settings', to: '/settings', subtitle: 'Theme, safety locks, and feature flags', adminOnly: true },
 ]
 
-const mobileNavItems = computed(() => navItems.filter((i) => ['/', '/new-ticket', '/customer-360', '/whatsapp', '/tickets'].includes(i.to)))
+const navItems = computed(() => ALL_NAV_ITEMS.filter((i) => !i.adminOnly || isAdmin.value))
+
+const mobileNavItems = computed(() => navItems.value.filter((i) => ['/', '/new-ticket', '/customer-360', '/whatsapp', '/tickets'].includes(i.to)))
 
 async function confirmLogout() {
   const ok = await confirm('Are you sure you want to log out?', 'Logout')
@@ -159,7 +169,7 @@ async function confirmLogout() {
   }
 }
 
-const activeItem = computed(() => navItems.find((i) => isActive(i)))
+const activeItem = computed(() => navItems.value.find((i) => isActive(i)))
 
 const headerTitle = computed(() => activeItem.value?.label || 'Service Console')
 

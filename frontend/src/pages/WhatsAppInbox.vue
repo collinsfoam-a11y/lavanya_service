@@ -7,7 +7,7 @@
   <AppShell>
     <div class="mb-gutter">
       <LavSectionHeader title="WhatsApp Drafts" icon="chat" />
-      <p class="font-body-md text-on-surface-variant -mt-2">Read-only inbound messages &amp; draft-only outbound queue</p>
+      <p class="font-body-md text-on-surface-variant -mt-2">Draft-only outbound queue. Live WhatsApp sending is disabled in pilot.</p>
     </div>
 
     <!-- Safety Banner -->

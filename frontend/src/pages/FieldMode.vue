@@ -89,17 +89,17 @@
           New Ticket
         </button>
         <button type="button" class="field-action opacity-50 cursor-not-allowed" disabled
-          title="Open a ticket and use Call from the ticket drawer">
+          title="Not enabled in pilot. Open a ticket and use Call from the ticket drawer" aria-label="Call Customer — Not enabled in pilot">
           <span class="material-symbols-outlined" aria-hidden="true">phone_in_talk</span>
           Call Customer
         </button>
         <button type="button" class="field-action opacity-50 cursor-not-allowed" disabled
-          title="Open a ticket and use Verify Technician Visit from the ticket drawer">
+          title="Not enabled in pilot. Open a ticket and use Verify Technician Visit from the ticket drawer" aria-label="Verify Visit — Not enabled in pilot">
           <span class="material-symbols-outlined" aria-hidden="true">fact_check</span>
           Verify Visit
         </button>
         <button type="button" class="field-action opacity-50 cursor-not-allowed" disabled
-          title="Open a ticket and use WhatsApp Draft from the ticket drawer">
+          title="Not enabled in pilot. Open a ticket and use WhatsApp Draft from the ticket drawer" aria-label="WhatsApp Draft — Not enabled in pilot">
           <span class="material-symbols-outlined" aria-hidden="true">chat</span>
           WhatsApp Draft
         </button>
@@ -115,6 +115,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { call } from '@/api'
+import { useToast } from '@/utils/toast'
 import AppShell from '@/components/AppShell.vue'
 import TicketDetail from '@/components/TicketDetail.vue'
 import LavCard from '@/components/LavCard.vue'
@@ -126,6 +127,7 @@ import LavTicketCard from '@/components/LavTicketCard.vue'
 // Colors now use CSS custom properties (e.g. 'var(--lav-danger)') for theme responsiveness
 
 const router = useRouter()
+const { show: showToast } = useToast()
 const search = ref('')
 const results = ref([])
 const searched = ref(false)
@@ -228,5 +230,20 @@ async function loadWork() {
   }
 }
 
-onMounted(loadWork)
+onMounted(async () => {
+  // Role guard: Field Mode is manager/coordinator-only in pilot (also hidden from
+  // nav for staff). Block direct-URL access by non-admins.
+  let canManage = false
+  try {
+    canManage = !!(await call('lavanya_service.api.ui_settings.can_manage_lavanya_settings'))
+  } catch {
+    canManage = false
+  }
+  if (!canManage) {
+    showToast('Field Mode is not available for your role.', 'error')
+    router.replace('/')
+    return
+  }
+  loadWork()
+})
 </script>

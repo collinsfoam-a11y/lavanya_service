@@ -335,6 +335,12 @@
         <p class="font-body-md text-on-surface-variant -mt-2">Ticket age distribution by category</p>
       </div>
       <LavLoadingState v-if="loadingAging" :lines="6" />
+      <LavEmptyState
+        v-else-if="!hasAgingData"
+        icon="hourglass_disabled"
+        title="No aging data available"
+        message="Report not enabled in pilot. Aging data will appear once tickets accumulate."
+      />
       <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <LavCard v-for="cat in agingCategories" :key="cat.key">
           <h3 class="font-headline-md text-headline-md text-on-surface mb-3">{{ cat.label }}</h3>
@@ -659,6 +665,11 @@ function agingBarPct(count, catKey) {
   const max = Math.max(1, ...bucket.map(b => b.count))
   return `${Math.round((count / max) * 100)}%`
 }
+
+const hasAgingData = computed(() => {
+  if (!agingData.aging) return false
+  return Object.values(agingData.aging).some((bucket) => Array.isArray(bucket) && bucket.some((b) => b.count > 0))
+})
 
 // ── Penalty ──
 const penaltySummary = ref(null)
