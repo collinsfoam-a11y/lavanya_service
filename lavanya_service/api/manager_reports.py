@@ -599,9 +599,12 @@ def get_aging_data():
 		("15+ days", 16, 9999),
 	]
 
-	# By service flow type
+	# H4: Use stage-relative date for aging — COALESCE(last_followup_at,
+	# stage_due_at, creation) gives the most meaningful "time since last action"
+	# rather than always measuring from ticket creation.
 	flow_types = frappe.db.sql("""
-		SELECT service_flow_type, DATEDIFF(%s, creation) as age_days
+		SELECT service_flow_type,
+			DATEDIFF(%s, COALESCE(DATE(last_followup_at), DATE(stage_due_at), DATE(creation))) as age_days
 		FROM `tabHD Ticket`
 		WHERE status NOT IN ('Closed', 'Cancelled')
 	""", (today(),), as_dict=True)
@@ -641,7 +644,7 @@ def get_aging_data():
 
 	# Also count waiting on part
 	part_aging = frappe.db.sql(f"""
-		SELECT DATEDIFF(%s, creation) as age_days
+		SELECT DATEDIFF(%s, COALESCE(DATE(last_followup_at), DATE(stage_due_at), DATE(creation))) as age_days
 		FROM `tabHD Ticket`
 		WHERE status NOT IN ('Closed', 'Cancelled')
 		AND status = 'Waiting on Part / Approval'

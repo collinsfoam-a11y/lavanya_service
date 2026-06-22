@@ -376,6 +376,59 @@ def _assert_closure_gates(doc):
 				"Verify with customer and record satisfaction before closure."
 			).format(stage))
 
+	# CVG-05: Supplier Payment Block — active block for brand blocks closure
+	if frappe.db.exists("DocType", "Supplier Payment Block"):
+		ticket_brand = doc.get("brand")
+		if ticket_brand:
+			blocks = frappe.db.get_all(
+				"Supplier Payment Block",
+				filters={"brand": ticket_brand, "block_status": ("in", ["Active", "Pending Review"])},
+				fields=["name", "block_status", "block_reason"],
+				limit=1,
+			)
+			if blocks:
+				b = blocks[0]
+				frappe.throw(_(
+					"Ticket cannot be closed. Supplier Payment Block {0} is {1} for brand '{2}'. "
+					"Release the block before closure. Reason: {3}"
+				).format(b.name, b.block_status, ticket_brand, b.block_reason or "Not specified"))
+
+	# CVG-06: Paid service requires customer approved amount > 0
+	if doc.get("service_charge_type") in (
+		"Customer Paid Local Service", "Customer Pays Technician Directly",
+		"Customer Pays Lavanya",
+	):
+		amt = float(doc.get("customer_approved_amount") or 0)
+		if amt <= 0:
+			frappe.throw(_(
+				"Ticket cannot be closed. Paid service requires customer approved amount > 0 "
+				"(current: {0}). Record customer approval before closure."
+			).format(amt))
+
+	# CVG-07: Customer must be informed before close.
+	ci = doc.get("customer_informed")
+	if ci not in ("Yes", "Not Required"):
+		frappe.throw(_(
+			"Ticket cannot be closed. Customer must be marked as informed ('Yes' or 'Not Required'). "
+			"Current: {0}. Inform customer before closure."
+		).format(ci or "Not Set"))
+
+	# CVG-09: No overdue follow-ups before close.
+	if doc.get("overdue_status") in ("Overdue", "Breached"):
+		frappe.throw(_(
+			"Ticket cannot be closed with overdue follow-ups (status: {0}). "
+			"Resolve pending follow-ups before closure."
+		).format(doc.get("overdue_status")))
+
+	# CVG-10: Repeat complaint — previous ticket must be closed.
+	if doc.get("is_repeated_complaint") == "Yes" and doc.get("previous_ticket_link"):
+		prev_status = frappe.db.get_value("HD Ticket", doc.previous_ticket_link, "status")
+		if prev_status not in ("Closed", "Cancelled"):
+			frappe.throw(_(
+				"Ticket cannot be closed. Previous ticket {0} is still '{1}'. "
+				"Close the linked ticket first."
+			).format(doc.previous_ticket_link, prev_status))
+
 	# Satisfaction gate: satisfaction must be documented.
 	satisfaction = doc.customer_satisfaction_status
 	if satisfaction not in ("Satisfied", "Not Required"):
@@ -665,6 +718,16 @@ def create_product_receipt(
 
 	receipt.insert()
 
+	# H3: Sync followup_stage and current_service_stage for the Product at Store
+	# flow so that the receipt creation is captured in both stage trackers.
+	doc.current_service_stage = "Product Received at Store"
+	doc.followup_stage = "sc_followup_done"
+	_append_followup_log(doc, "sc_followup_done", "Product Receipt Created")
+	entry = "[Store Service] Product received at store — Receipt: {0}".format(receipt.name)
+	_set_last_followup(doc, entry)
+	doc.add_comment("Comment", entry)
+	_save_ticket(doc)
+
 	# Link the receipt back to the ticket using a conditional UPDATE so that
 	# if a concurrent request already linked a different receipt, we never
 	# silently overwrite it (race-condition guard). ``service_product_receipt``
@@ -722,6 +785,28 @@ def _set_last_followup(doc, summary):
 	"""Update the last-followup summary and timestamp."""
 	doc.last_followup_summary = summary[:280] if summary else summary
 	doc.last_followup_at = now_datetime()
+
+
+def _create_comm_log(ticket_name, comm_type, direction, summary, notes=None, next_action=None):
+	"""H3: Create a Customer Communication Log entry for the ticket.
+	Silently skipped if the doctype is not installed."""
+	if not frappe.db.exists("DocType", "Customer Communication Log"):
+		return
+	try:
+		entry = frappe.new_doc("Customer Communication Log")
+		entry.ticket = ticket_name
+		entry.communication_date = now_datetime()
+		entry.communication_type = comm_type
+		entry.direction = direction
+		entry.agent = _acting_user()
+		entry.summary = summary[:280] if summary else summary
+		if notes:
+			entry.notes = notes
+		if next_action:
+			entry.next_action = next_action[:140] if next_action else next_action
+		entry.insert(ignore_permissions=True)
+	except Exception:
+		frappe.log_error(title="Lavanya Comm Log creation failed", message=frappe.get_traceback())
 
 
 def verify_technician_called(ticket_name, technician_name=None, notes=None):
@@ -786,6 +871,16 @@ def record_sc_followup(ticket_name, follow_up_result=None, next_follow_up_date=N
 	if next_follow_up_date:
 		doc.next_follow_up_date = next_follow_up_date
 
+	# H3: Create Customer Communication Log entry
+	comm_summary = "SC Follow-up — Result: {0} · Customer: {1}".format(
+		follow_up_result, customer_informed_status)
+	_create_comm_log(
+		ticket_name, "Call",
+		"Outbound" if customer_informed_status != "Not Required" else "Inbound",
+		comm_summary, notes=notes,
+		next_action="Follow-up on {0}".format(next_follow_up_date) if next_follow_up_date else None,
+	)
+
 	entry = "[Follow-up] Service Center Follow-up — Result: {0}".format(follow_up_result)
 	if next_follow_up_date:
 		entry += " · Next: {0}".format(next_follow_up_date)
@@ -808,6 +903,16 @@ def inform_customer(ticket_name, message=None, channel=None, notes=None):
 	doc.followup_stage = "customer_informed"
 	_append_followup_log(doc, "customer_informed", "Customer Informed", notes=notes)
 	_sync_customer_informed(doc, channel)
+
+	# H3: Create Customer Communication Log entry
+	comm_summary = "Customer informed via {0}".format(channel)
+	if message:
+		comm_summary += " — {0}".format(message[:200])
+	_create_comm_log(
+		ticket_name, "Call" if channel == "Phone" else channel,
+		"Outbound", comm_summary, notes=notes,
+		next_action=doc.get("next_action"),
+	)
 
 	entry = "[Follow-up] Inform Customer — Channel: {0}".format(channel)
 	if message:
