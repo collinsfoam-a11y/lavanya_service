@@ -6,7 +6,7 @@
 <template>
   <AppShell>
     <div class="mb-gutter">
-      <LavSectionHeader title="WhatsApp" icon="chat" />
+      <LavSectionHeader title="WhatsApp Drafts" icon="chat" />
       <p class="font-body-md text-on-surface-variant -mt-2">Read-only inbound messages &amp; draft-only outbound queue</p>
     </div>
 

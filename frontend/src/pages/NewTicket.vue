@@ -42,8 +42,11 @@
         </label>
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface-variant">Mobile <span class="text-error">*</span></span>
-            <input v-model="form.mobile" type="tel" class="lav-input" placeholder="10-digit mobile" @blur="lookupCustomer" />
-          <span v-if="lookupHint" class="font-label-md text-label-md" :style="{ color: lookupHint.color || 'var(--lav-success)' }">{{ lookupHint.text }}</span>
+            <input v-model="form.mobile" type="tel" inputmode="numeric" maxlength="10" class="lav-input"
+              :class="mobileError ? '!border-error' : ''" placeholder="10-digit mobile"
+              aria-describedby="mobile-error" @blur="lookupCustomer" />
+          <span v-if="mobileError" id="mobile-error" class="font-label-md text-label-md text-error" role="alert">{{ mobileError }}</span>
+          <span v-else-if="lookupHint.text" class="font-label-md text-label-md" :style="{ color: lookupHint.color || 'var(--lav-success)' }">{{ lookupHint.text }}</span>
           <!-- H5B: previous customer products for quick intake -->
           <div v-if="customerProducts.length" class="mt-2 rounded-lg border border-outline-variant bg-surface-container-low p-3">
             <div class="font-label-md text-label-md text-on-surface-variant mb-2">Previous products ({{ customerProducts.length }})</div>
@@ -199,8 +202,19 @@ const blank = () => ({
 })
 const form = reactive(blank())
 
+// Indian mobile: exactly 10 digits, starting 6–9.
+const mobileDigits = computed(() => (form.mobile || '').replace(/\D/g, ''))
+const mobileValid = computed(() => /^[6-9]\d{9}$/.test(mobileDigits.value))
+const mobileError = computed(() => {
+  const m = mobileDigits.value
+  if (!m) return ''
+  if (m.length !== 10) return `Mobile must be 10 digits (${m.length} entered).`
+  if (!/^[6-9]/.test(m)) return 'Indian mobile numbers start with 6, 7, 8, or 9.'
+  return ''
+})
+
 const canSubmit = computed(() =>
-  form.customer_name.trim() && form.mobile.trim() && form.brand && form.product_type && form.complaint_details.trim(),
+  form.customer_name.trim() && mobileValid.value && form.brand && form.product_type && form.complaint_details.trim(),
 )
 
 const selectedBrandMeta = computed(() => {

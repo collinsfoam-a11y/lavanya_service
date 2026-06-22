@@ -1,7 +1,7 @@
 <!--
   ActionScreen — Engine-driven outcome capture screen.
-  Shows the primary action for a ticket with outcome-specific buttons.
-  Replaces manual form filling with verb-specific outcome capture.
+  Shows the primary action for a ticket with its configured form fields.
+  Uses the same action definitions as OUTCOME_MAP / ACTION_REGISTRY.
 -->
 <template>
   <Teleport to="body">
@@ -16,11 +16,15 @@
               </button>
               <div>
                 <h2 class="font-headline-md text-headline-md text-on-surface">{{ ticket?.name }}</h2>
-                <p class="font-body-sm text-on-surface-variant">{{ ticket?.customer_name }} · {{ ticket?.brand }}</p>
+                <p class="font-body-sm text-on-surface-variant">{{ ticket?.customer_name }} · {{ ticket?.product?.brand || '' }}</p>
               </div>
             </div>
             <div class="lav-action-header__right">
-              <SlaBadge :ticket="ticket" />
+              <SlaBadge
+                :agreement-status="ticket?.sla?.agreement_status"
+                :response-by="ticket?.sla?.response_by"
+                :resolution-by="ticket?.sla?.resolution_by"
+              />
             </div>
           </div>
 
@@ -28,19 +32,19 @@
           <div class="lav-action-summary">
             <div class="lav-summary-row">
               <span class="font-label-md text-on-surface-variant">Product</span>
-              <span class="font-body-md text-on-surface">{{ ticket?.product_type || 'N/A' }}</span>
+              <span class="font-body-md text-on-surface">{{ ticket?.product?.item || ticket?.product?.type || 'N/A' }}</span>
             </div>
             <div class="lav-summary-row">
               <span class="font-label-md text-on-surface-variant">Stage</span>
-              <span class="font-body-md text-on-surface">{{ ticket?.current_service_stage || 'N/A' }}</span>
+              <span class="font-body-md text-on-surface">{{ ticket?.stage?.current_service_stage || 'N/A' }}</span>
             </div>
             <div class="lav-summary-row">
               <span class="font-label-md text-on-surface-variant">Flow</span>
-              <span class="font-body-md text-on-surface">{{ ticket?.service_flow_type || 'N/A' }}</span>
+              <span class="font-body-md text-on-surface">{{ ticket?.stage?.service_flow_type || 'N/A' }}</span>
             </div>
           </div>
 
-          <!-- Primary Action Section -->
+          <!-- Primary Action Section — form-based -->
           <div v-if="primaryAction" class="lav-action-section">
             <div class="lav-action-section__header">
               <span class="material-symbols-outlined" :style="{ color: primaryActionColor }">
@@ -50,53 +54,57 @@
                 {{ primaryActionLabel }}
               </h3>
             </div>
-            
-            <!-- Outcome Buttons -->
-            <div class="lav-outcome-buttons">
+
+            <!-- Action fields form -->
+            <form class="space-y-3" @submit.prevent="submitAction">
+              <div v-for="f in actionFields" :key="f.key" class="space-y-1">
+                <label class="text-label-md font-label-md text-on-surface-variant block">
+                  {{ f.label }} <span v-if="isRequiredField(f)" class="text-error">*</span>
+                </label>
+                <select
+                  v-if="f.type === 'select'"
+                  v-model="actionForm[f.key]"
+                  class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow"
+                >
+                  <option value="" disabled>Select...</option>
+                  <option v-for="o in f.options" :key="o" :value="o">{{ o }}</option>
+                </select>
+                <textarea
+                  v-else-if="f.type === 'textarea'"
+                  v-model="actionForm[f.key]"
+                  rows="3"
+                  :placeholder="f.placeholder || ''"
+                  class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow resize-none"
+                ></textarea>
+                <input
+                  v-else
+                  v-model="actionForm[f.key]"
+                  :type="f.type || 'text'"
+                  :placeholder="f.placeholder || ''"
+                  class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow"
+                />
+                <p v-if="f.hint" class="text-label-md font-label-md text-on-surface-variant">{{ f.hint }}</p>
+              </div>
               <button
-                v-for="outcome in primaryAction.outcomes"
-                :key="outcome.value"
-                class="lav-outcome-btn"
-                :class="{
-                  'lav-outcome-btn--success': outcome.value === 'success',
-                  'lav-outcome-btn--partial': outcome.value === 'partial',
-                  'lav-outcome-btn--failed': outcome.value === 'failed',
-                  'lav-outcome-btn--parked': outcome.value === 'parked',
-                }"
-                @click="handleOutcome(outcome)"
-                :disabled="submitting"
+                type="submit"
+                :disabled="submitting || !actionValid"
+                class="w-full px-4 py-3 rounded-xl font-label-md bg-primary text-on-primary hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 font-bold"
               >
-                <span class="material-symbols-outlined">{{ outcome.icon }}</span>
-                <span class="font-label-lg text-label-lg">{{ outcome.label }}</span>
+                {{ primaryActionLabel }}
               </button>
-            </div>
+            </form>
           </div>
 
-          <!-- Successor Actions (shown after submission) -->
-          <div v-if="successorActions.length" class="lav-action-section lav-successor-section">
-            <div class="lav-action-section__header">
-              <span class="material-symbols-outlined" style="color: var(--lav-primary)">arrow_forward</span>
-              <h3 class="font-headline-sm text-headline-sm text-on-surface">
-                Successor Actions
-              </h3>
-            </div>
-            <div class="lav-successor-list">
-              <div
-                v-for="(action, idx) in successorActions"
-                :key="idx"
-                class="lav-successor-item"
-              >
-                <span class="material-symbols-outlined" :style="{ color: getActionColor(action) }">
-                  {{ getActionIcon(action) }}
-                </span>
-                <div class="lav-successor-item__text">
-                  <span class="font-body-md text-on-surface">{{ getActionLabel(action) }}</span>
-                  <span v-if="action.due_in_days" class="font-body-sm text-on-surface-variant">
-                    Due in {{ action.due_in_days }} days
-                  </span>
-                </div>
-              </div>
-            </div>
+          <!-- No action available -->
+          <div v-else class="lav-action-section text-center py-6">
+            <span class="material-symbols-outlined text-on-surface-variant" style="font-size:32px">check_circle</span>
+            <p class="font-body-md text-on-surface-variant mt-2">No action required for this ticket.</p>
+          </div>
+
+          <!-- Error message -->
+          <div v-if="actionError" class="rounded-lg bg-error-container text-on-error-container p-3 font-body-md flex items-center gap-2">
+            <span class="material-symbols-outlined" style="font-size:18px">error</span>
+            {{ actionError }}
           </div>
 
           <!-- Loading State -->
@@ -117,10 +125,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { call } from '@/api'
 import SlaBadge from '@/components/SlaBadge.vue'
-import { resolveActions as resolveEngineActions, getPrimaryAction, ACTION_REGISTRY as ENGINE_REGISTRY } from '@/config/outcome-map.js'
+import { getPrimaryAction, ACTION_REGISTRY as ENGINE_REGISTRY } from '@/config/outcome-map.js'
+import { useToast } from '@/utils/toast'
+
+const { show: showToast } = useToast()
 
 const props = defineProps({
   ticketId: { type: String, required: true },
@@ -132,74 +143,78 @@ const ticket = ref(null)
 const visible = ref(false)
 const submitting = ref(false)
 const submitted = ref(false)
-const successorActions = ref([])
+const actionError = ref('')
 
 const primaryAction = computed(() => ticket.value ? getPrimaryAction(ticket.value) : null)
-const primaryActionLabel = computed(() => primaryAction.value ? (ENGINE_REGISTRY[primaryAction.value.action]?.label || primaryAction.value.action) : '')
-const primaryActionIcon = computed(() => primaryAction.value ? (ENGINE_REGISTRY[primaryAction.value.action]?.icon || 'touch_app') : 'touch_app')
-const primaryActionColor = computed(() => primaryAction.value ? (ENGINE_REGISTRY[primaryAction.value.action]?.color || 'var(--lav-primary)') : 'var(--lav-primary)')
+const primaryActionLabel = computed(() => primaryAction.value?.label || primaryAction.value?.key || '')
+const primaryActionIcon = computed(() => primaryAction.value?.icon || 'touch_app')
+const primaryActionColor = computed(() => {
+  const c = primaryAction.value?.color
+  if (!c) return 'var(--lav-primary)'
+  if (c.startsWith('var(') || c.startsWith('#') || c.startsWith('rgb')) return c
+  return `var(--lav-${c})`
+})
 
-function getActionLabel(action) {
-  return ENGINE_REGISTRY[action.action]?.label || action.action
+const actionForm = reactive({})
+const actionFields = computed(() => primaryAction.value?.fields || [])
+
+watch(primaryAction, (action) => {
+  Object.keys(actionForm).forEach(k => delete actionForm[k])
+  if (action?.fields) {
+    for (const f of action.fields) actionForm[f.key] = ''
+  }
+}, { immediate: true })
+
+function isRequiredField(f) {
+  return typeof f.required === 'function' ? f.required(actionForm) : !!f.required
 }
 
-function getActionIcon(action) {
-  return ENGINE_REGISTRY[action.action]?.icon || 'touch_app'
-}
-
-function getActionColor(action) {
-  return ENGINE_REGISTRY[action.action]?.color || 'var(--lav-primary)'
-}
+const actionValid = computed(() => {
+  const action = primaryAction.value
+  if (!action) return false
+  return (action.fields || []).every(f => !isRequiredField(f) || String(actionForm[f.key] ?? '').trim() !== '')
+})
 
 async function loadTicket() {
   try {
     const result = await call('lavanya_service.api.stitch_console.get_ticket_detail', {
-      name: props.ticketId,
+      ticket_id: props.ticketId,
     })
     ticket.value = result
     visible.value = true
   } catch (e) {
     console.error('Failed to load ticket:', e)
+    showToast('Failed to load ticket', 'error')
     emit('close')
   }
 }
 
-async function handleOutcome(outcome) {
-  if (submitting.value || !primaryAction.value) return
-  
+async function submitAction() {
+  if (!actionValid.value || !primaryAction.value) return
+
   submitting.value = true
+  actionError.value = ''
   try {
-    const actionDef = ENGINE_REGISTRY[primaryAction.value.action]
-    if (!actionDef || !actionDef.endpoint) {
-      throw new Error('No endpoint defined for action: ' + primaryAction.value.action)
+    const endpoint = primaryAction.value.endpoint
+    if (!endpoint) {
+      throw new Error('No endpoint defined for action: ' + primaryAction.value.key)
     }
 
-    // Build payload from outcome data
-    const payload = {
-      name: props.ticketId,
-      action_type: primaryAction.value.action,
-      outcome: outcome.value,
-      ...outcome.payload,
+    const payload = { ticket_name: props.ticketId }
+    for (const f of primaryAction.value.fields || []) {
+      const v = String(actionForm[f.key] ?? '').trim()
+      if (v) payload[f.key] = v
     }
 
-    // Call the backend endpoint
-    await call(actionDef.endpoint, payload)
-    
+    await call(endpoint, payload)
     submitted.value = true
-    
-    // Reload ticket to get successor actions
-    await loadTicket()
-    
-    // Emit refresh to update the parent
+    showToast('Outcome recorded successfully')
     emit('refresh')
-    
-    // Auto-close after 2 seconds
-    setTimeout(() => {
-      emit('close')
-    }, 2000)
+
+    setTimeout(() => emit('close'), 2000)
   } catch (e) {
-    console.error('Failed to record outcome:', e)
-    // TODO: Show error toast
+    actionError.value = e.message || 'Action failed'
+    showToast(e.message || 'Action failed', 'error')
   } finally {
     submitting.value = false
   }
@@ -210,7 +225,7 @@ onMounted(loadTicket)
 watch(() => props.ticketId, (newId) => {
   if (newId) {
     submitted.value = false
-    successorActions.value = []
+    actionError.value = ''
     loadTicket()
   }
 })
@@ -302,103 +317,6 @@ watch(() => props.ticketId, (newId) => {
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
-}
-
-.lav-outcome-buttons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.lav-outcome-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 16px 8px;
-  border-radius: 12px;
-  border: 2px solid var(--lav-outline);
-  background: var(--lav-surface);
-  color: var(--lav-on-surface);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.lav-outcome-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.lav-outcome-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.lav-outcome-btn--success {
-  border-color: var(--lav-success);
-  color: var(--lav-success);
-}
-
-.lav-outcome-btn--success:hover:not(:disabled) {
-  background: var(--lav-success);
-  color: white;
-}
-
-.lav-outcome-btn--partial {
-  border-color: var(--lav-warning);
-  color: var(--lav-warning);
-}
-
-.lav-outcome-btn--partial:hover:not(:disabled) {
-  background: var(--lav-warning);
-  color: white;
-}
-
-.lav-outcome-btn--failed {
-  border-color: var(--lav-danger);
-  color: var(--lav-danger);
-}
-
-.lav-outcome-btn--failed:hover:not(:disabled) {
-  background: var(--lav-danger);
-  color: white;
-}
-
-.lav-outcome-btn--parked {
-  border-color: var(--lav-on-surface-variant);
-  color: var(--lav-on-surface-variant);
-}
-
-.lav-outcome-btn--parked:hover:not(:disabled) {
-  background: var(--lav-on-surface-variant);
-  color: white;
-}
-
-.lav-successor-section {
-  background: var(--lav-surface-variant);
-  border-radius: 12px;
-  padding: 12px;
-  border-top: none;
-}
-
-.lav-successor-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.lav-successor-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
-  background: var(--lav-surface);
-  border-radius: 8px;
-}
-
-.lav-successor-item__text {
-  display: flex;
-  flex-direction: column;
 }
 
 .lav-action-loading {

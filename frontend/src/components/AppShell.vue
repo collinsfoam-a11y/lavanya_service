@@ -144,7 +144,7 @@ const navItems = [
   { label: 'Tickets', mobileLabel: 'Tickets', icon: 'confirmation_number', to: '/tickets', subtitle: 'Search, filters, and ticket detail drawer' },
   { label: 'Reports', mobileLabel: 'Reports', icon: 'assessment', to: '/reports', subtitle: 'Manager reports and safety previews' },
   { label: 'Field Mode', mobileLabel: 'Field', icon: 'phone_iphone', to: '/field', subtitle: 'Counter-friendly phone lookup and quick work' },
-  { label: 'WhatsApp', mobileLabel: 'Chat', icon: 'chat', to: '/whatsapp', subtitle: 'Read-only inbox and draft outbound queue' },
+  { label: 'WhatsApp Drafts', mobileLabel: 'Drafts', icon: 'chat', to: '/whatsapp', subtitle: 'Read-only inbox and draft outbound queue (no live send)' },
   { label: 'Customer 360', mobileLabel: 'Customer', icon: 'person_search', to: '/customer-360', subtitle: 'Customer profile, products, tickets, and CRM context' },
   { label: 'New Ticket', mobileLabel: 'New', icon: 'add_box', to: '/new-ticket', subtitle: 'Register a customer complaint' },
   { label: 'Settings', mobileLabel: 'Settings', icon: 'settings', to: '/settings', subtitle: 'Theme, safety locks, and feature flags' },
@@ -159,15 +159,13 @@ async function confirmLogout() {
   }
 }
 
-const headerTitle = computed(() => {
-  const active = navItems.find((i) => !i.external && i.to === route.path)
-  return active ? active.label : 'Service Console'
-})
+const activeItem = computed(() => navItems.find((i) => isActive(i)))
 
-const headerSubtitle = computed(() => {
-  const active = navItems.find((i) => !i.external && i.to === route.path)
-  return active?.subtitle || 'Lavanya service follow-up command system'
-})
+const headerTitle = computed(() => activeItem.value?.label || 'Service Console')
+
+const headerSubtitle = computed(
+  () => activeItem.value?.subtitle || 'Lavanya service follow-up command system'
+)
 
 const today = new Date().toLocaleDateString(undefined, {
   weekday: 'short',
@@ -177,6 +175,9 @@ const today = new Date().toLocaleDateString(undefined, {
 
 function isActive(item) {
   if (item.external) return false
-  return route.path === item.to
+  // Root is exact-only; everything else also matches its nested detail routes
+  // (e.g. "/tickets" stays highlighted on "/tickets/0846").
+  if (item.to === '/') return route.path === '/'
+  return route.path === item.to || route.path.startsWith(item.to + '/')
 }
 </script>

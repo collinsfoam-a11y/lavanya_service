@@ -63,7 +63,7 @@
                   class="px-6 py-3 rounded-xl font-label-md flex items-center gap-2 bg-surface-container border border-outline-variant text-on-surface hover:bg-surface-container-low active:scale-[0.97] transition-all">
                   <span class="material-symbols-outlined" style="font-size:20px">chat</span> Inform Customer
                 </button>
-                <button v-if="doThisNow.canReverify" @click="openAction('set_reverification')"
+                <button v-if="doThisNow.canReverify" @click="openAction('set_reverification_date')"
                   class="px-6 py-3 rounded-xl font-label-md flex items-center gap-2 bg-surface-container border border-outline-variant text-on-surface hover:bg-surface-container-low active:scale-[0.97] transition-all">
                   <span class="material-symbols-outlined" style="font-size:20px">refresh</span> Set Reverification
                 </button>
@@ -79,20 +79,34 @@
                 <span class="text-label-md text-on-surface-variant italic">Choose a manual workflow move</span>
               </div>
               
-              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                <button 
-                  v-for="(def, key) in ACTIONS" 
-                  :key="key" 
-                  @click="openAction(key)"
-                  class="flex flex-col items-center justify-center p-3 rounded-xl border border-outline-variant bg-surface-container hover:border-primary hover:bg-primary-container/20 transition-all group active:scale-[0.98]"
+              <div class="flex flex-col gap-3">
+                <details
+                  v-for="g in groupedActions"
+                  :key="g.key"
+                  open
+                  class="rounded-xl border border-outline-variant bg-surface-container/40 overflow-hidden"
                 >
-                  <span class="material-symbols-outlined mb-2 text-on-surface-variant group-hover:text-primary transition-colors" style="font-size: 24px">
-                    {{ def.icon }}
-                  </span>
-                  <span class="text-xs font-label-md text-center leading-tight text-on-surface-variant group-hover:text-on-surface">
-                    {{ def.title }}
-                  </span>
-                </button>
+                  <summary class="flex items-center gap-2 px-4 py-2.5 cursor-pointer select-none font-label-md font-semibold text-on-surface hover:bg-surface-container-low">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px">{{ g.icon }}</span>
+                    {{ g.label }}
+                    <span class="ml-auto text-xs font-label-md text-on-surface-variant px-2 py-0.5 rounded-full bg-surface-container-high">{{ g.items.length }}</span>
+                  </summary>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-3 pt-1">
+                    <button
+                      v-for="item in g.items"
+                      :key="item.key"
+                      @click="openAction(item.key)"
+                      class="flex flex-col items-center justify-center p-3 rounded-xl border border-outline-variant bg-surface-container hover:border-primary hover:bg-primary-container/20 transition-all group active:scale-[0.98]"
+                    >
+                      <span class="material-symbols-outlined mb-2 text-on-surface-variant group-hover:text-primary transition-colors" style="font-size: 24px">
+                        {{ item.def.icon }}
+                      </span>
+                      <span class="text-xs font-label-md text-center leading-tight text-on-surface-variant group-hover:text-on-surface">
+                        {{ item.def.title }}
+                      </span>
+                    </button>
+                  </div>
+                </details>
               </div>
 
               <!-- Special Closure Action (Prominent) -->
@@ -105,7 +119,7 @@
               <div v-else class="mt-6 pt-6 border-t border-outline-variant flex justify-center">
                 <div class="px-4 py-2 rounded-lg bg-error-container text-error border border-error flex items-center gap-2 text-xs font-label-md">
                   <span class="material-symbols-outlined" style="font-size: 16px">lock</span>
-                  <span>Closure Blocked: {{ closureGuard.reason }}</span>
+                  <span>To close, resolve: {{ closureGuard.reason }}</span>
                 </div>
               </div>
             </section>
@@ -233,7 +247,7 @@
             <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
               <div><span class="block text-label-md text-outline">Service Flow</span> {{ ticket.stage.service_flow_type || '—' }}</div>
               <div><span class="block text-label-md text-outline">Current Service Step</span> {{ ticket.stage.current_service_stage || '—' }}</div>
-              <div><span class="block text-label-md text-outline">Next Action</span> {{ ticket.stage.next_action || '—' }}</div>
+              <div><span class="block text-label-md text-outline">Recorded Next Action</span> {{ ticket.stage.next_action || '—' }}</div>
               <div><span class="block text-label-md text-outline">Owner</span> {{ ticket.stage.next_action_owner || ticket.stage.next_action_role || '—' }}</div>
               <div><span class="block text-label-md text-outline">Next Follow-up</span> {{ ticket.stage.next_follow_up_date || '—' }}</div>
               <div><span class="block text-label-md text-outline">Stage Due</span> {{ ticket.stage.stage_due_at?.substring(0,16) || '—' }}</div>
@@ -242,7 +256,6 @@
                 <span class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="dueChip(ticket.stage.overdue_status)">{{ ticket.stage.overdue_status || '—' }}</span>
               </div>
               <div><span class="block text-label-md text-outline">Escalation</span> {{ ticket.stage.escalation_level && ticket.stage.escalation_level !== 'None' ? ticket.stage.escalation_level : '—' }}</div>
-              <div><span class="block text-label-md text-outline">Customer Updated?</span> {{ ticket.stage.customer_informed || '—' }}</div>
               <div><span class="block text-label-md text-outline">Promised Update</span> {{ ticket.stage.customer_promised_update_at?.substring(0,16) || '—' }}</div>
               <div>
                 <span class="block text-label-md text-outline">Promise</span>
@@ -254,38 +267,22 @@
 
           <!-- Reminder Intelligence (Step 5) — read-only, blank-safe -->
           <section id="sec-reminder" v-if="ticket.reminder && Object.keys(ticket.reminder).length">
-            <h3 class="font-headline-md text-headline-md text-primary mb-3">Reminder Intelligence</h3>
+            <!-- D2/D3: trimmed to the engine's UNIQUE computed projections. The raw
+                 Due Status / Escalation / Promise / Next Follow-up / Stage Due /
+                 Promised Update live in the Service Stage panel above — not repeated here. -->
+            <h3 class="font-headline-md text-headline-md text-primary mb-3 flex items-center gap-2">
+              <span class="material-symbols-outlined" style="font-size:20px">smart_toy</span>
+              Computed Reminders <span class="font-label-md text-label-md text-outline">(engine — see Service Stage for live values)</span>
+            </h3>
             <div class="grid grid-cols-2 gap-4 font-body-md text-on-surface-variant bg-surface-container p-4 rounded-xl">
-              <div>
-                <span class="block text-label-md text-outline">Due Status</span>
-                <span v-if="ticket.reminder.overdue_status" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="dueChip(ticket.reminder.overdue_status)">{{ ticket.reminder.overdue_status }}</span>
-                <template v-else>—</template>
-              </div>
-              <div>
-                <span class="block text-label-md text-outline">Escalation</span>
-                <span v-if="reminderEsc !== 'None'" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="escChip(reminderEsc)">{{ reminderEsc }}</span>
-                <template v-else>—</template>
-              </div>
-              <div>
-                <span class="block text-label-md text-outline">Customer Promise</span>
-                <span v-if="ticket.reminder.customer_promise_status && ticket.reminder.customer_promise_status !== 'None'" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="promiseChip(ticket.reminder.customer_promise_status)">{{ ticket.reminder.customer_promise_status }}</span>
-                <template v-else>—</template>
-              </div>
               <div>
                 <span class="block text-label-md text-outline">Customer Update Due</span>
                 <span v-if="ticket.reminder.customer_update_due" class="px-2 py-0.5 rounded-full font-label-md text-label-md" :style="{ color: 'var(--lav-warning)', background: `color-mix(in srgb, var(--lav-warning) 12%, transparent)` }">Due now</span>
                 <template v-else>No</template>
               </div>
               <div><span class="block text-label-md text-outline">Reminder Rule</span> {{ ticket.reminder.reminder_rule_applied || 'No rule (fallback)' }}</div>
-              <div>
-                <span class="block text-label-md text-outline">Next Follow-up</span>
-                {{ fmtDT(ticket.reminder.next_follow_up_date) }}
-                <span v-if="ticket.reminder.manual_followup" class="ml-1 px-1.5 py-0.5 rounded font-label-md text-label-md" :style="{ color: 'var(--lav-secondary)', background: `color-mix(in srgb, var(--lav-secondary) 12%, transparent)` }">manual</span>
-              </div>
               <div><span class="block text-label-md text-outline">Due Soon At</span> {{ fmtDT(ticket.reminder.computed_due_soon_at) }}</div>
-              <div><span class="block text-label-md text-outline">Stage Due At</span> {{ fmtDT(ticket.reminder.computed_stage_due_at) }}</div>
               <div v-if="reminderShowComputed"><span class="block text-label-md text-outline">Computed Follow-up</span> {{ fmtDT(ticket.reminder.computed_next_followup_at) }}</div>
-              <div><span class="block text-label-md text-outline">Promised Update At</span> {{ fmtDT(ticket.reminder.customer_promised_update_at) }}</div>
               <div v-if="ticket.reminder.promise_breach_reason" class="col-span-2">
                 <span class="block text-label-md text-outline">Promise Breach Reason</span>
                 <span :style="{ color: 'var(--lav-danger)' }">{{ ticket.reminder.promise_breach_reason }}</span>
@@ -305,7 +302,7 @@
                 <span v-if="ticket.ai.advisory_source" class="font-label-md text-outline">{{ ticket.ai.advisory_source }}</span>
               </div>
               <div v-if="ticket.ai.suggested_next_action">
-                <span class="block text-label-md text-outline">Suggested Next Action</span>
+                <span class="block text-label-md text-outline">AI Suggestion (advisory — see “Do This Now” for the action to take)</span>
                 <p class="font-body-md text-on-surface mt-0.5">{{ ticket.ai.suggested_next_action }}</p>
               </div>
               <div v-if="ticket.ai.risk_reason">
@@ -1097,7 +1094,7 @@ const doThisNow = computed(() => {
   return {
     instruction: s.next_action || t.next_action || 'Review ticket details',
     reason: s.pending_reason || t.pending_reason || 'Routine follow-up required to ensure service progression.',
-    primaryAction: (nextActions.value?.primary || []).shift(),
+    primaryAction: (nextActions.value?.primary || [])[0] || null,
     canReverify: s.followup_stage === 'customer_confirmation_pending' || s.current_service_stage?.includes('Verification'),
   }
 })
@@ -1421,39 +1418,9 @@ const followupBanner = computed(() => {
 	return { ..._c('var(--lav-primary)', 0.08), icon: 'support_agent', title: 'Follow-up in Progress', sub: 'Ticket is actively being followed up.' }
 })
 
-// ── Workflow Timeline Stages ──
-const WORKFLOW_STAGES = [
-  { key: 'complaint_registered', label: 'Complaint', icon: 'fiber_new', order: 1, check: (s) => true },
-  { key: 'brand_registered', label: 'Brand Reg', icon: 'verified', order: 2, check: (s) => !!s.brand_ticket_number },
-  { key: 'technician_called', label: 'Tech Called', icon: 'phone_in_talk', order: 3, check: (s) => s.followup_stage === 'technician_called' },
-  { key: 'technician_visited', label: 'Tech Visited', icon: 'handyman', order: 4, check: (s) => s.followup_stage === 'technician_visited' },
-  { key: 'part_pending', label: 'Part', icon: 'build', order: 5, check: (s) => s.followup_stage === 'part_pending' || s.status === 'Waiting on Part / Approval' },
-  { key: 'customer_informed', label: 'Informed', icon: 'campaign', order: 6, check: (s) => s.customer_informed_status && s.customer_informed_status !== 'Pending' },
-  { key: 'satisfied', label: 'Satisfied', icon: 'sentiment_satisfied', order: 7, check: (s) => s.customer_satisfaction_status === 'Satisfied' || s.customer_satisfaction_status === 'Not Required' },
-  { key: 'closed', label: 'Closed', icon: 'task_alt', order: 8, check: (s) => s.status === 'Closed' || s.status === 'Resolved' },
-]
-
-const workflowTimeline = computed(() => {
-  const s = ticket.value?.stage || {}
-  const ts = ticket.value?.status || ''
-  const closed = ts === 'Closed' || ts === 'Resolved'
-  let foundCurrent = false
-  return WORKFLOW_STAGES.map(stage => {
-    const done = stage.check({ ...s, status: ts, closed })
-    let status = 'pending'
-    if (done && !foundCurrent) {
-      status = closed ? 'completed' : 'completed'
-      // last completed before a non-completed stage
-    }
-    if (!done && !foundCurrent && !closed) {
-      foundCurrent = true
-      status = 'current'
-    } else if (!done) {
-      status = 'pending'
-    }
-    return { ...stage, status }
-  })
-})
+// Task 9: the manual WORKFLOW_STAGES / workflowTimeline computed was dead code —
+// the visual timeline is now rendered solely by the log-driven <LavWorkflowTimeline>
+// component (see template). Removed to eliminate the duplicate timeline source.
 
 async function loadRepeat() {
   repeatCandidates.value = []
@@ -1953,8 +1920,53 @@ const ACTIONS = {
   },
 }
 
+// Task 5: group the Action Library into labelled, collapsible sections instead of
+// one flat 24-button grid. The grouping is a key→category map; a catch-all bucket
+// guarantees no action is ever dropped, and `close_ticket` stays as the separate
+// prominent closure button below the grid.
+const ACTION_GROUPS = [
+  { key: 'brand_sc', label: 'Brand / Service Center', icon: 'verified',
+    keys: ['brand_complaint', 'follow_up_sc', 'record_sc_followup', 'mark_no_update', 'set_reverification_date'] },
+  { key: 'customer', label: 'Customer Communication', icon: 'campaign',
+    keys: ['inform_customer', 'set_promise', 'record_satisfaction', 'verify_customer_after_visit'] },
+  { key: 'tech_appt', label: 'Technician / Appointment', icon: 'handyman',
+    keys: ['schedule_appointment', 'confirm_appointment', 'mark_appointment_missed', 'verify_tech_called', 'verify_tech_visit', 'mark_technician_visited'] },
+  { key: 'part_product', label: 'Part / Product', icon: 'build',
+    keys: ['record_part_required', 'update_part_eta', 'waiting_part', 'sent_to_sc', 'returned_from_sc', 'delivered'] },
+  { key: 'closure_mgr', label: 'Closure / Manager', icon: 'gavel',
+    keys: ['customer_confirmed', 'escalate_case', 'record_approval', 'reopen'] },
+]
+
+const groupedActions = computed(() => {
+  const assigned = new Set()
+  const groups = ACTION_GROUPS.map((g) => {
+    const items = g.keys.filter((k) => ACTIONS[k]).map((k) => { assigned.add(k); return { key: k, def: ACTIONS[k] } })
+    return { ...g, items }
+  })
+  // Catch-all: any action not explicitly grouped (close_ticket is rendered separately).
+  const leftover = Object.keys(ACTIONS)
+    .filter((k) => !assigned.has(k) && k !== 'close_ticket')
+    .map((k) => ({ key: k, def: ACTIONS[k] }))
+  if (leftover.length) groups.push({ key: 'other', label: 'Other Actions', icon: 'more_horiz', items: leftover })
+  return groups.filter((g) => g.items.length)
+})
+
 const actionKey = ref(null)
-const actionDef = computed(() => (actionKey.value ? ACTIONS[actionKey.value] : null))
+const actionDef = computed(() => {
+  if (!actionKey.value) return null
+  const localDef = ACTIONS[actionKey.value]
+  const engineDef = ENGINE_REGISTRY[actionKey.value]
+  if (localDef) return localDef
+  if (engineDef) return {
+    title: engineDef.label || actionKey.value,
+    icon: engineDef.icon || 'touch_app',
+    submitLabel: engineDef.label || actionKey.value,
+    danger: false,
+    endpoint: engineDef.endpoint,
+    fields: engineDef.fields || [],
+  }
+  return null
+})
 const actionForm = reactive({}); watch(actionForm, () => { if (actionError.value) actionError.value = '' })
 
 function isRequired(f) {
@@ -1969,7 +1981,14 @@ const actionValid = computed(() => {
 function openAction(key) {
   actionError.value = ''
   Object.keys(actionForm).forEach((k) => delete actionForm[k])
-  for (const f of ACTIONS[key].fields) actionForm[f.key] = ''
+  const localDef = ACTIONS[key]
+  const engineDef = ENGINE_REGISTRY[key]
+  const fields = localDef?.fields || engineDef?.fields || []
+  if (!localDef && !engineDef) {
+    actionError.value = `Unknown action: ${key}`
+    return
+  }
+  for (const f of fields) actionForm[f.key] = ''
   actionKey.value = key
 }
 function closeAction() {

@@ -4,13 +4,21 @@
       <LavSectionHeader title="Settings" icon="settings" class="mb-6" />
 
       <LavLoadingState v-if="loading" layout="card-list" />
-      <LavEmptyState
-        v-else-if="error"
-        icon="error"
-        :title="error"
-        message="Could not load settings from the server."
-        tone="error"
-      />
+      <div v-else-if="error" class="text-center py-8">
+        <LavEmptyState
+          icon="error"
+          title="Could not load settings"
+          :message="error"
+          tone="error"
+        />
+        <button
+          @click="loadSettings"
+          class="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-on-primary font-label-md hover:opacity-90"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+          Retry
+        </button>
+      </div>
       <template v-else>
         <LavConfirm />
         <LavCard class="mb-6" padding="compact">
@@ -221,7 +229,9 @@ const saveStatusClass = computed(() => {
 
 const dirty = computed(() => JSON.stringify(draft.value || {}) !== JSON.stringify(buildDraft(settings.value || {})))
 
-onMounted(async () => {
+async function loadSettings() {
+  loading.value = true
+  error.value = null
   try {
     const [fetched, manage] = await Promise.all([
       call('lavanya_service.api.ui_settings.get_lavanya_service_settings'),
@@ -235,7 +245,9 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(loadSettings)
 
 function buildDraft(src) {
   const out = {}

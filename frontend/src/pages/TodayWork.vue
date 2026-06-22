@@ -81,7 +81,17 @@
           Filters
         </button>
         <button v-if="anyFilter" @click="clearFilters" class="lav-chip">Clear filters</button>
-        <span class="font-label-md text-label-md text-on-surface-variant ml-auto">{{ filteredCount }} shown</span>
+        <div class="ml-auto flex items-center gap-3">
+          <span class="font-label-md text-label-md text-on-surface-variant">
+            {{ totalRows === 0 ? '0' : rangeStart + '–' + rangeEnd }} of {{ totalRows }}
+          </span>
+          <label class="flex items-center gap-1.5 font-label-md text-label-md text-on-surface-variant">
+            Per page
+            <select v-model.number="pageSize" class="lav-input" style="width:auto;height:32px;padding:0 8px">
+              <option v-for="n in PAGE_SIZES" :key="n" :value="n">{{ n }}</option>
+            </select>
+          </label>
+        </div>
       </div>
       <div v-show="showFilters" class="flex flex-wrap items-center gap-2 mb-gutter">
         <select v-model="filters.flow" class="lav-input" style="width:auto;min-width:150px;height:36px">
@@ -126,7 +136,7 @@
         <span class="material-symbols-outlined">checklist</span> Action Queue
       </div>
       <div
-        v-for="group in enrichedFilteredGroups"
+        v-for="group in pagedGroups"
         :key="group.key"
         :id="'bucket-' + group.key"
         class="lav-bucket"
@@ -159,6 +169,17 @@
         </ul>
       </div>
       </div>
+
+      <!-- Pagination controls (Task 6) -->
+      <nav v-if="totalPages > 1" class="flex items-center justify-center gap-3 mt-gutter" aria-label="Action queue pagination">
+        <button class="lav-chip flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed" :disabled="page <= 1" @click="goToPage(page - 1)" aria-label="Previous page">
+          <span class="material-symbols-outlined" style="font-size:16px">chevron_left</span> Prev
+        </button>
+        <span class="font-label-md text-label-md text-on-surface-variant">Page {{ page }} of {{ totalPages }}</span>
+        <button class="lav-chip flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed" :disabled="page >= totalPages" @click="goToPage(page + 1)" aria-label="Next page">
+          Next <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span>
+        </button>
+      </nav>
     </template>
 
     <!-- Ticket Detail Drawer -->
@@ -175,7 +196,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { call } from '@/api'
 import AppShell from '@/components/AppShell.vue'
 import TicketDetail from '@/components/TicketDetail.vue'
@@ -440,6 +461,45 @@ const enrichedFilteredGroups = computed(() => {
     return { ...g, tickets, count: tickets.length }
   })
 })
+
+// ── Pagination (UX-STABILIZE Task 6) ──────────────────────────────────────────
+// The action queue can hold hundreds of rows; render an explicit page at a time.
+// We flatten across buckets in display order, slice the page, then re-group the
+// visible slice so bucket headers stay intact and badges keep their FULL counts.
+const PAGE_SIZES = [25, 50, 100]
+const pageSize = ref(25)
+const page = ref(1)
+
+const flatRows = computed(() => {
+  const rows = []
+  for (const g of enrichedFilteredGroups.value) {
+    for (const t of (g.tickets || [])) rows.push({ group: g, ticket: t })
+  }
+  return rows
+})
+const totalRows = computed(() => flatRows.value.length)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalRows.value / pageSize.value)))
+const pageStart = computed(() => (page.value - 1) * pageSize.value)
+const pagedRows = computed(() => flatRows.value.slice(pageStart.value, pageStart.value + pageSize.value))
+const rangeStart = computed(() => (totalRows.value === 0 ? 0 : pageStart.value + 1))
+const rangeEnd = computed(() => Math.min(pageStart.value + pageSize.value, totalRows.value))
+
+// Re-group the visible slice; group.count remains the full bucket count.
+const pagedGroups = computed(() => {
+  const map = new Map()
+  const order = []
+  for (const { group, ticket } of pagedRows.value) {
+    if (!map.has(group.key)) { map.set(group.key, { ...group, tickets: [] }); order.push(group.key) }
+    map.get(group.key).tickets.push(ticket)
+  }
+  return order.map((k) => map.get(k))
+})
+
+function goToPage(n) {
+  page.value = Math.min(Math.max(1, n), totalPages.value)
+}
+// Reset to page 1 whenever the result set or page size changes.
+watch([filteredCount, pageSize], () => { page.value = 1 })
 
 </script>
 

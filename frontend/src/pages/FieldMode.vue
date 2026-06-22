@@ -88,20 +88,23 @@
           <span class="material-symbols-outlined" aria-hidden="true">add_box</span>
           New Ticket
         </button>
-        <button type="button" class="field-action" @click="callCustomer">
+        <button type="button" class="field-action opacity-50 cursor-not-allowed" disabled
+          title="Open a ticket and use Call from the ticket drawer">
           <span class="material-symbols-outlined" aria-hidden="true">phone_in_talk</span>
           Call Customer
         </button>
-        <button type="button" class="field-action" @click="verifyVisit">
+        <button type="button" class="field-action opacity-50 cursor-not-allowed" disabled
+          title="Open a ticket and use Verify Technician Visit from the ticket drawer">
           <span class="material-symbols-outlined" aria-hidden="true">fact_check</span>
           Verify Visit
         </button>
-        <button type="button" class="field-action" @click="openFirstResult">
+        <button type="button" class="field-action opacity-50 cursor-not-allowed" disabled
+          title="Open a ticket and use WhatsApp Draft from the ticket drawer">
           <span class="material-symbols-outlined" aria-hidden="true">chat</span>
           WhatsApp Draft
         </button>
       </div>
-      <p class="mt-2 font-label-md text-label-md text-on-surface-variant text-center">Safe mode: live WhatsApp/SMS/ERP/payment actions are disabled. Use ticket drawer for dry-run actions only.</p>
+      <p class="mt-2 font-label-md text-label-md text-on-surface-variant text-center">Open a ticket below to call, verify a visit, or draft WhatsApp — those run inside the ticket drawer with their safety gates. Live WhatsApp/SMS/ERP/payment actions remain disabled.</p>
     </LavCard>
 
     <TicketDetail :ticketId="selectedTicket" @close="selectedTicket = null" @refresh="loadWork" />
