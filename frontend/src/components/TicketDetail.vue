@@ -833,41 +833,7 @@
           </template>
 
           <!-- Follow-up history (structured, from tagged log entries) -->
-          <section id="sec-followup" v-if="followUpLog.length" class="border-t border-outline-variant pt-4 mt-4">
-            <h3 class="font-headline-md text-headline-md text-on-surface mb-3 flex items-center gap-2">
-              <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px">timeline</span>
-              Follow-up history
-              <span class="font-body-md text-on-surface-variant font-normal">· {{ followUpLog.length }} attempt{{ followUpLog.length > 1 ? 's' : '' }}</span>
-            </h3>
-            <div class="relative">
-              <!-- Timeline vertical line -->
-              <div class="absolute left-[19px] top-3 bottom-3 w-0.5 bg-outline-variant rounded-full"></div>
-              <ul class="flex flex-col">
-                <li v-for="ev in followUpLog" :key="ev.id" class="flex items-start gap-4 pl-0 pb-5 relative">
-                  <!-- Timeline dot + icon -->
-                  <div class="relative z-10 flex items-center justify-center w-[38px] h-[38px] rounded-full shrink-0"
-                    :style="{ background: followupActionBg(ev.text), color: followupActionFg(ev.text) }">
-                    <span class="material-symbols-outlined" style="font-size:18px">{{ followupActionIcon(ev.text) }}</span>
-                  </div>
-                  <!-- Content -->
-                  <div class="flex-1 min-w-0 pt-1">
-                    <div class="text-on-surface font-body-md break-words">{{ ev.text.replace('[Follow-up] ', '') }}</div>
-                    <div class="font-label-md text-label-md text-on-surface-variant mt-1 flex items-center gap-2">
-                      <span class="inline-flex items-center gap-1">
-                        <span class="material-symbols-outlined" style="font-size:14px">person</span>
-                        {{ ev.by }}
-                      </span>
-                      <span class="text-outline">·</span>
-                      <span class="inline-flex items-center gap-1">
-                        <span class="material-symbols-outlined" style="font-size:14px">schedule</span>
-                        {{ relTime(ev.on) }}
-                      </span>
-                    </div>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </section>
+          <!-- Duplicate follow-up timeline removed (Task 9). LavWorkflowTimeline shows log-driven status progression. -->
 
           <!-- Activity timeline + add note -->
           <section id="sec-activity" class="border-t border-outline-variant pt-4 mt-4">
@@ -1213,7 +1179,6 @@ const SECTIONS = [
   { id: 'sec-appointment', label: 'Appointment' },
   { id: 'sec-linked-records', label: 'Records' },
   { id: 'sec-proof', label: 'Proof' },
-  { id: 'sec-followup', label: 'Follow-ups' },
   { id: 'sec-activity', label: 'Activity' },
   { id: 'sec-actions', label: 'Actions' },
 ]
@@ -1937,15 +1902,40 @@ const ACTION_GROUPS = [
     keys: ['customer_confirmed', 'escalate_case', 'record_approval', 'reopen'] },
 ]
 
+// Stage-progression rule: a one-time stage action disappears once its stage is
+// passed (it must not be done again). Driven by followup_stage/status (the engine
+// source of truth). Recurring actions (inform, follow-up, escalate, set-reverify,
+// no-update) have NO entry here, so they always stay available.
+const _fs = () => ticket.value?.stage?.followup_stage || ticket.value?.followup_stage || ''
+const _afterCall = ['technician_called', 'technician_visit_pending', 'technician_visited', 'sc_followup_done', 'customer_informed', 'part_pending', 'customer_confirmation_pending', 'customer_satisfied', 'customer_not_satisfied']
+const _afterVisit = ['technician_visited', 'customer_confirmation_pending', 'customer_satisfied', 'customer_not_satisfied']
+const ACTION_DONE = {
+  // Register Brand Complaint: done once the brand is registered (followup_stage set, or status advanced past intake).
+  brand_complaint: () => !!_fs() || !['New', 'Open', 'Registration Pending', ''].includes(ticket.value?.status || ''),
+  // Technician-call verification: done once the call/visit is recorded.
+  verify_tech_called: () => _afterCall.includes(_fs()),
+  // Technician-visit verification: done once a visit is recorded.
+  verify_tech_visit: () => _afterVisit.includes(_fs()),
+  mark_technician_visited: () => _afterVisit.includes(_fs()),
+  // Record Part Required: done once a part is already logged (use Update Part ETA instead).
+  record_part_required: () => !!ticket.value?.stage?.part_required,
+}
+function isActionDone(key) {
+  const fn = ACTION_DONE[key]
+  try { return fn ? !!fn() : false } catch { return false }
+}
+
 const groupedActions = computed(() => {
   const assigned = new Set()
   const groups = ACTION_GROUPS.map((g) => {
-    const items = g.keys.filter((k) => ACTIONS[k]).map((k) => { assigned.add(k); return { key: k, def: ACTIONS[k] } })
+    const items = g.keys
+      .filter((k) => ACTIONS[k] && !isActionDone(k))
+      .map((k) => { assigned.add(k); return { key: k, def: ACTIONS[k] } })
     return { ...g, items }
   })
   // Catch-all: any action not explicitly grouped (close_ticket is rendered separately).
   const leftover = Object.keys(ACTIONS)
-    .filter((k) => !assigned.has(k) && k !== 'close_ticket')
+    .filter((k) => !assigned.has(k) && k !== 'close_ticket' && !isActionDone(k))
     .map((k) => ({ key: k, def: ACTIONS[k] }))
   if (leftover.length) groups.push({ key: 'other', label: 'Other Actions', icon: 'more_horiz', items: leftover })
   return groups.filter((g) => g.items.length)
