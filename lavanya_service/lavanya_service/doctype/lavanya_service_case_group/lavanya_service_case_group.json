@@ -1,0 +1,241 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "SCG-.YYYY.-.#####",
+  "creation": "2026-06-25 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "basic_info_section",
+    "title",
+    "customer",
+    "primary_contact",
+    "primary_mobile",
+    "col基本信息",
+    "ticket_type",
+    "status",
+    "source_ticket",
+    "details_section",
+    "complaint_type",
+    "product_category",
+    "product_sub_category",
+    "product_items",
+    "resolution_section",
+    "resolution_type",
+    "sla_status",
+    "next_action",
+    "next_action_date",
+    "dates_section",
+    "resolution_date",
+    "closed_date",
+    "closure_verified_by",
+    "closure_verified_date",
+    "notes_section",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "basic_info_section",
+      "label": "Basic Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "title",
+      "label": "Title",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "customer",
+      "label": "Customer",
+      "fieldtype": "Link",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "primary_contact",
+      "label": "Primary Contact",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "primary_mobile",
+      "label": "Primary Mobile",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "ticket_type",
+      "label": "Ticket Type",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Complaint\nService\nInstallation\nFeedback",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Active\nIn Progress\nAll Closed\nCancelled",
+      "default": "Active",
+      "in_list_view": 1,
+      "in_filter": 1
+    },
+    {
+      "fieldname": "source_ticket",
+      "label": "Source Ticket",
+      "fieldtype": "Link",
+      "options": "HD Ticket"
+    },
+    {
+      "fieldname": "details_section",
+      "label": "Details",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "complaint_type",
+      "label": "Complaint Type",
+      "fieldtype": "Select",
+      "options": "Pre-Sales\nPost-Sales\nNo Complaint\nSpare Parts\nOthers"
+    },
+    {
+      "fieldname": "product_category",
+      "label": "Product Category",
+      "fieldtype": "Select",
+      "options": "AC\nCooler\nWashing Machine\nGeyser\nMicrowave\nOven\nRefrigerator\nChimney\nWater Purifier\nOther",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "product_sub_category",
+      "label": "Product Sub Category",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "product_items",
+      "label": "Product Items",
+      "fieldtype": "Table",
+      "options": "Lavanya Accessory Item"
+    },
+    {
+      "fieldname": "resolution_section",
+      "label": "Resolution",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "resolution_type",
+      "label": "Resolution Type",
+      "fieldtype": "Select",
+      "options": "Pending\nReplacement\nRepair\nCredit Note\nReturn\nWrite-Off\nNo Action Required",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "sla_status",
+      "label": "SLA Status",
+      "fieldtype": "Select",
+      "options": "Started\nWithin Time\nBreached"
+    },
+    {
+      "fieldname": "next_action",
+      "label": "Next Action",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "next_action_date",
+      "label": "Next Action Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "dates_section",
+      "label": "Dates",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "resolution_date",
+      "label": "Resolution Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "closed_date",
+      "label": "Closed Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "closure_verified_by",
+      "label": "Closure Verified By",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "closure_verified_date",
+      "label": "Closure Verified Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "notes_section",
+      "label": "Notes",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-25 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Service Case Group",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Front Desk",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "title",
+  "track_changes": 1
+}

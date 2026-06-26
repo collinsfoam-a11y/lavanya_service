@@ -1,0 +1,11 @@
+.claude/
+.claude-flow/
+.mcp.json
+CLAUDE.md
+node_modules/
+lavanya_service.egg-info/
+__pycache__/
+*.pyc
+public/js/node_modules/
+public/js/dist/
+graphify-out/

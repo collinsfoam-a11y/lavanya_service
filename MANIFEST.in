@@ -1,0 +1,4 @@
+include lavanya_service/templates/*.html
+recursive-include lavanya_service/public *
+recursive-include lavanya_service/templates *
+recursive-include lavanya_service/www *

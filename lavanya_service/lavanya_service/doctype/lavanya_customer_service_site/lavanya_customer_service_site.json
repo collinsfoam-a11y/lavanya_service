@@ -1,0 +1,174 @@
+{
+  "actions": [],
+  "creation": "2026-06-25 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "site_section",
+    "site_name",
+    "customer",
+    "address",
+    "pin_code",
+    "col_基本信息",
+    "city",
+    "state",
+    "landmark",
+    "contact_section",
+    "site_contact_number",
+    "site_contact_person",
+    "location_section",
+    "location_type",
+    "gps_coordinates",
+    "status_section",
+    "is_active",
+    "access_instructions"
+  ],
+  "fields": [
+    {
+      "fieldname": "site_section",
+      "label": "Site Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "site_name",
+      "label": "Site Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "customer",
+      "label": "Customer",
+      "fieldtype": "Link",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "address",
+      "label": "Address",
+      "fieldtype": "Small Text",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "pin_code",
+      "label": "PIN Code",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "city",
+      "label": "City",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "state",
+      "label": "State",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "landmark",
+      "label": "Landmark",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "contact_section",
+      "label": "Contact",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "site_contact_number",
+      "label": "Site Contact Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "site_contact_person",
+      "label": "Site Contact Person",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "location_section",
+      "label": "Location",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "location_type",
+      "label": "Location Type",
+      "fieldtype": "Select",
+      "options": "Home\nOffice\nFactory\nWarehouse\nOther"
+    },
+    {
+      "fieldname": "gps_coordinates",
+      "label": "GPS Coordinates",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "status_section",
+      "label": "Status",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "is_active",
+      "label": "Is Active",
+      "fieldtype": "Check",
+      "default": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "access_instructions",
+      "label": "Access Instructions",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-25 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Customer Service Site",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Front Desk",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "site_name",
+  "track_changes": 1
+}

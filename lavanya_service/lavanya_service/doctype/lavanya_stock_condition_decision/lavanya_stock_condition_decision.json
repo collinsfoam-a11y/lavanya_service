@@ -1,0 +1,209 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "SCND-.YYYY.-.#####",
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "basic_section",
+    "stock_complaint",
+    "replacement_recovery",
+    "supplier_claim",
+    "status",
+    "col_基本信息",
+    "decision_date",
+    "decision_type",
+    "item_section",
+    "item_code",
+    "item_name",
+    "serial_no",
+    "current_warehouse",
+    "target_warehouse",
+    "approval_section",
+    "approval_required",
+    "approved_by",
+    "approval_date",
+    "approval_remarks",
+    "stock_entry_section",
+    "stock_entry",
+    "notes_section",
+    "internal_notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "basic_section",
+      "label": "Basic Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "stock_complaint",
+      "label": "Stock Complaint",
+      "fieldtype": "Link",
+      "options": "Lavanya Stock Complaint"
+    },
+    {
+      "fieldname": "replacement_recovery",
+      "label": "Replacement Recovery",
+      "fieldtype": "Link",
+      "options": "Lavanya Replacement Recovery"
+    },
+    {
+      "fieldname": "supplier_claim",
+      "label": "Supplier Claim",
+      "fieldtype": "Link",
+      "options": "Lavanya Supplier Claim"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Pending\nApproved\nRejected\nImplemented\nCancelled",
+      "default": "Pending",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "decision_date",
+      "label": "Decision Date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "decision_type",
+      "label": "Decision Type",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Return to Saleable Stock\nMove to Refurbished Stock\nMove to Display Stock\nDiscount Sale\nSupplier Return\nWrite Off\nScrap\nHold for Review",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "item_section",
+      "label": "Item Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "item_code",
+      "label": "Item Code",
+      "fieldtype": "Link",
+      "options": "Item",
+      "reqd": 1
+    },
+    {
+      "fieldname": "item_name",
+      "label": "Item Name",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "serial_no",
+      "label": "Serial Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "current_warehouse",
+      "label": "Current Warehouse",
+      "fieldtype": "Link",
+      "options": "Warehouse",
+      "reqd": 1
+    },
+    {
+      "fieldname": "target_warehouse",
+      "label": "Target Warehouse",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    },
+    {
+      "fieldname": "approval_section",
+      "label": "Approval",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "approval_required",
+      "label": "Approval Required",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "approved_by",
+      "label": "Approved By",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "approval_date",
+      "label": "Approval Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "approval_remarks",
+      "label": "Approval Remarks",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "stock_entry_section",
+      "label": "Stock Entry",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "stock_entry",
+      "label": "Stock Entry",
+      "fieldtype": "Link",
+      "options": "Stock Entry"
+    },
+    {
+      "fieldname": "notes_section",
+      "label": "Notes",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "internal_notes",
+      "label": "Internal Notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Stock Condition Decision",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

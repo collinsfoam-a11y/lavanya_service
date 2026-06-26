@@ -1,0 +1,146 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "LAV-SC-.#####",
+  "creation": "2026-06-25 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "service_center_name",
+    "brand",
+    "is_active",
+    "location_&_contact_section",
+    "area_coverage",
+    "contact_person",
+    "col_wjlq",
+    "phone",
+    "escalation_contact",
+    "email",
+    "sla_&_performance_section",
+    "sla_days",
+    "avg_closure_days",
+    "performance_pct"
+  ],
+  "fields": [
+    {
+      "fieldname": "service_center_name",
+      "label": "Service Center Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "brand",
+      "label": "Brand",
+      "fieldtype": "Link",
+      "options": "Lavanya Brand Master",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_active",
+      "label": "Active",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "location_&_contact_section",
+      "label": "Location & Contact",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "area_coverage",
+      "label": "Area Coverage",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "contact_person",
+      "label": "Contact Person",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "col_wjlq",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "phone",
+      "label": "Phone",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "escalation_contact",
+      "label": "Escalation Contact",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "email",
+      "label": "Email",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "sla_&_performance_section",
+      "label": "SLA & Performance",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "sla_days",
+      "label": "SLA (days)",
+      "fieldtype": "Int",
+      "default": 2,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "avg_closure_days",
+      "label": "Avg Closure Days",
+      "fieldtype": "Float",
+      "read_only": 1
+    },
+    {
+      "fieldname": "performance_pct",
+      "label": "On-time %",
+      "fieldtype": "Float",
+      "read_only": 1
+    }
+  ],
+  "in_create": 0,
+  "is_single": 0,
+  "is_submittable": 0,
+  "modified": "2026-06-25 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Lavanya Service",
+  "name": "Lavanya Service Center",
+  "naming_rule": "Expression (old style)",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "service_center_name",
+  "track_changes": 1,
+  "track_seen": 1
+}

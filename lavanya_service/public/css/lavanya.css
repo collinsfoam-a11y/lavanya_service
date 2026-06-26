@@ -1,0 +1,206 @@
+
+/* Lavanya Service — global design system loaded by hooks.py app_include_css */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+
+:root {
+  /* Brand */
+  --lav-teal:        #0D9488;
+  --lav-teal-light:  #F0FDFA;
+  --lav-teal-dark:   #0F766E;
+  --lav-teal-border: #CCFBF1;
+
+  /* Status */
+  --lav-red:         #E11D48;
+  --lav-red-light:   #FFF1F3;
+  --lav-red-border:  #FCE7EA;
+  --lav-red-dark:    #9F1239;
+  --lav-amber:       #D97706;
+  --lav-amber-light: #FFF7ED;
+  --lav-amber-border:#FCEFD6;
+  --lav-amber-dark:  #9A3412;
+  --lav-indigo:      #4F46E5;
+  --lav-indigo-light:#EEF2FF;
+  --lav-violet:      #7C3AED;
+  --lav-violet-light:#F5F3FF;
+  --lav-green:       #059669;
+  --lav-green-light: #ECFDF5;
+  --lav-yellow:      #A16207;
+  --lav-yellow-light:#FEF9C3;
+
+  /* Surfaces */
+  --lav-surface:     #F6F6F3;
+  --lav-surface-2:   #FBFBFA;
+  --lav-border:      #ECECE8;
+  --lav-border-soft: #F0F0EC;
+  --lav-card:        #ffffff;
+  --lav-ink:         #1C1C1E;
+  --lav-ink-2:       #3F3F46;
+  --lav-muted:       #8B8B85;
+  --lav-muted-2:     #A1A19B;
+  --lav-faint:       #BDBDB6;
+
+  /* Dark surfaces (next-action bar, modals overlays) */
+  --lav-dark:        #1C1C1E;
+  --lav-dark-2:      #0F172A;
+  --lav-dark-soft:   rgba(255,255,255,0.08);
+
+  /* Typography */
+  --lav-font:        'Plus Jakarta Sans', sans-serif;
+  --lav-mono:        'JetBrains Mono', monospace;
+
+  /* Shadows (from mockup) */
+  --lav-shadow-xs:   0 1px 2px rgba(17,17,26,0.04);
+  --lav-shadow-sm:   0 2px 8px -2px rgba(17,17,26,0.08);
+  --lav-shadow-md:   0 4px 20px -6px rgba(17,17,26,0.12);
+  --lav-shadow-lg:   0 12px 40px -12px rgba(17,17,26,0.16);
+  --lav-shadow-teal: 0 2px 8px -2px rgba(13,148,136,0.5);
+  --lav-shadow-teal-lg: 0 3px 10px -3px rgba(13,148,136,0.6);
+
+  /* Radii */
+  --lav-r-sm:  9px;
+  --lav-r-md:  12px;
+  --lav-r-lg:  14px;
+  --lav-r-xl:  16px;
+  --lav-r-2xl: 18px;
+}
+
+.lav-page-root {
+  font-family: var(--lav-font);
+  color: var(--lav-ink);
+  background: var(--lav-surface);
+  min-height: calc(100vh - 64px);
+}
+
+.lav-dry-run-banner {
+  background: var(--lav-dark);
+  color: #9CA3AF;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lav-dry-run-banner strong { color: #EF4444; }
+
+.lav-no-access {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  gap: 12px;
+  font-size: 18px;
+  color: #9A9A93;
+}
+.lav-no-access span { font-size: 48px; }
+
+/* Frappe page body padding reset */
+.page-body { padding: 0 !important; }
+
+/* Material Symbols — global base */
+.ms {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Shared utility classes (used across all pages) */
+.lav-card {
+  background: var(--lav-card);
+  border: 1px solid var(--lav-border);
+  border-radius: var(--lav-r-xl);
+  box-shadow: var(--lav-shadow-xs);
+}
+.lav-card-pad { padding: 20px; }
+
+.lav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: var(--lav-r-md);
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+}
+.lav-btn:disabled { opacity: .5; cursor: not-allowed; }
+.lav-btn--dark   { background: var(--lav-dark); color: #fff; }
+.lav-btn--teal   { background: var(--lav-teal); color: #fff; box-shadow: var(--lav-shadow-teal); }
+.lav-btn--outline{ background: #fff; border: 1px solid var(--lav-border); color: var(--lav-ink-2); }
+.lav-btn--ghost  { background: var(--lav-dark-soft); color: #E4E4E7; }
+.lav-btn--danger { background: rgba(244,63,94,0.14); color: #FCA5A5; }
+
+.lav-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.lav-badge--gray   { background: #F4F4F1; color: #52525B; }
+.lav-badge--teal   { background: var(--lav-teal-light); color: var(--lav-teal); }
+.lav-badge--red    { background: var(--lav-red-light); color: var(--lav-red); }
+.lav-badge--amber  { background: var(--lav-amber-light); color: var(--lav-amber); }
+.lav-badge--indigo { background: var(--lav-indigo-light); color: var(--lav-indigo); }
+.lav-badge--violet { background: var(--lav-violet-light); color: var(--lav-violet); }
+.lav-badge--green  { background: var(--lav-green-light); color: var(--lav-green); }
+
+.lav-mini-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.lav-mini-chip .ms { font-size: 11px; }
+
+.lav-stat-tile {
+  background: #FAFAF8;
+  border: 1px solid var(--lav-border-soft);
+  border-radius: 11px;
+  padding: 11px 13px;
+}
+.lav-stat-tile-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--lav-muted-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.lav-stat-tile-val {
+  font-family: var(--lav-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--lav-ink);
+  margin-top: 3px;
+}
+
+@keyframes lav-spin { to { transform: rotate(360deg); } }
+.lav-spin { display: inline-block; animation: lav-spin 1s linear infinite; }
+
+@keyframes lav-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(225,29,72,0.4); }
+  50%     { box-shadow: 0 0 0 6px rgba(225,29,72,0); }
+}
+@keyframes lav-tick {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.45; }
+}

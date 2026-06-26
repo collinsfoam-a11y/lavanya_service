@@ -1,0 +1,200 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "BSP-.YYYY.-.#####",
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "brand_section",
+    "brand",
+    "toll_free_number",
+    "col_基本信息",
+    "whatsapp_contact",
+    "email",
+    "asm_section",
+    "asm_name",
+    "asm_contact",
+    "col_asm",
+    "doa_period_days",
+    "warranty_period_months",
+    "sla_section",
+    "average_sla_days",
+    "installation_required_categories",
+    "claim_document_requirement",
+    "escalation_section",
+    "escalation_path",
+    "col_escalation",
+    "pickup_cooperation",
+    "credit_note_reliability",
+    "notes_section",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "brand_section",
+      "label": "Brand Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "brand",
+      "label": "Brand",
+      "fieldtype": "Link",
+      "options": "Supplier",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "toll_free_number",
+      "label": "Toll Free Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "whatsapp_contact",
+      "label": "WhatsApp Contact",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "email",
+      "label": "Email",
+      "fieldtype": "Data",
+      "options": "Email"
+    },
+    {
+      "fieldname": "asm_section",
+      "label": "ASM / Escalation Contact",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "asm_name",
+      "label": "ASM Name",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "asm_contact",
+      "label": "ASM Contact",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "col_asm",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "doa_period_days",
+      "label": "DOA Period (Days)",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "default": "7"
+    },
+    {
+      "fieldname": "warranty_period_months",
+      "label": "Warranty Period (Months)",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "sla_section",
+      "label": "SLA & Policy",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "average_sla_days",
+      "label": "Average SLA (Days)",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "installation_required_categories",
+      "label": "Installation Required Categories",
+      "fieldtype": "Small Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "claim_document_requirement",
+      "label": "Claim Document Requirements",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "escalation_section",
+      "label": "Escalation Path",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "escalation_path",
+      "label": "Escalation Path (L1 → L2 → L3)",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "col_escalation",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "pickup_cooperation",
+      "label": "Pickup Cooperation",
+      "fieldtype": "Select",
+      "options": "\nGood\nAverage\nPoor"
+    },
+    {
+      "fieldname": "credit_note_reliability",
+      "label": "Credit Note Reliability",
+      "fieldtype": "Select",
+      "options": "\nGood\nAverage\nPoor"
+    },
+    {
+      "fieldname": "notes_section",
+      "label": "Notes",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Text"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Brand Service Policy",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

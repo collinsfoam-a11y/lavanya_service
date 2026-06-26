@@ -1,0 +1,155 @@
+{
+  "actions": [],
+  "creation": "2026-06-25 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "contact_section",
+    "customer",
+    "contact_name",
+    "mobile_number",
+    "email",
+    "col_基本信息",
+    "role",
+    "is_primary",
+    "notification_section",
+    "receives_whatsapp",
+    "receives_sms",
+    "authority_section",
+    "authority_level",
+    "designation",
+    "department"
+  ],
+  "fields": [
+    {
+      "fieldname": "contact_section",
+      "label": "Contact Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer",
+      "label": "Customer",
+      "fieldtype": "Link",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "contact_name",
+      "label": "Contact Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "mobile_number",
+      "label": "Mobile Number",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "email",
+      "label": "Email",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "role",
+      "label": "Role",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Decision Maker\nInfluencer\nEnd User\nFinance\nProcurement",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_primary",
+      "label": "Is Primary",
+      "fieldtype": "Check",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "notification_section",
+      "label": "Notification Preferences",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "receives_whatsapp",
+      "label": "Receives WhatsApp",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "receives_sms",
+      "label": "Receives SMS",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "authority_section",
+      "label": "Authority",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "authority_level",
+      "label": "Authority Level",
+      "fieldtype": "Select",
+      "options": "High\nMedium\nLow"
+    },
+    {
+      "fieldname": "designation",
+      "label": "Designation",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "department",
+      "label": "Department",
+      "fieldtype": "Data"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-25 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Customer Contact Point",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Front Desk",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "contact_name",
+  "track_changes": 1
+}

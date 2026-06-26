@@ -1,0 +1,302 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "INST-.YYYY.-.#####",
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "basic_section",
+    "customer",
+    "ticket",
+    "service_case_group",
+    "col_基本信息",
+    "installation_type",
+    "status",
+    "product_section",
+    "product_name",
+    "product_category",
+    "serial_no",
+    "brand",
+    "col_产品",
+    "product_service_policy",
+    "brand_service_policy",
+    "schedule_section",
+    "scheduled_date",
+    "scheduled_time",
+    "technician",
+    "service_team",
+    "col_安排",
+    "site_readiness_status",
+    "site_readiness_notes",
+    "site_section",
+    "installation_address",
+    "installation_pin",
+    "access_instructions",
+    "completion_section",
+    "completion_date",
+    "visit_status",
+    "customer_confirmation",
+    "col_完成",
+    "proof_photos",
+    "closure_verification",
+    "payment_section",
+    "payment_amount",
+    "payment_received"
+  ],
+  "fields": [
+    {
+      "fieldname": "basic_section",
+      "label": "Basic Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer",
+      "label": "Customer",
+      "fieldtype": "Link",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "ticket",
+      "label": "Ticket",
+      "fieldtype": "Link",
+      "options": "HD Ticket"
+    },
+    {
+      "fieldname": "service_case_group",
+      "label": "Service Case Group",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Case Group"
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "installation_type",
+      "label": "Installation Type",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "\nPaid\nFree\nAMCClose",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "\nDraft\nPending Assignment\nAssigned\nCustomer Contacted\nVisit Scheduled\nVisit Completed\nFailed Visit\nCustomer Confirmed\nClosed\nCancelled",
+      "default": "Draft",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "product_section",
+      "label": "Product Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "product_name",
+      "label": "Product Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "product_category",
+      "label": "Product Category",
+      "fieldtype": "Select",
+      "options": "\nTV\nRefrigerator\nWashing Machine\nAC\nCooler\nGeyser\nMicrowave\nOven\nChimney\nWater Purifier\nMixer\nInduction Cooker\nOther"
+    },
+    {
+      "fieldname": "serial_no",
+      "label": "Serial Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "brand",
+      "label": "Brand",
+      "fieldtype": "Link",
+      "options": "Supplier"
+    },
+    {
+      "fieldname": "col_产品",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "product_service_policy",
+      "label": "Product Service Policy",
+      "fieldtype": "Link",
+      "options": "Lavanya Product Service Policy"
+    },
+    {
+      "fieldname": "brand_service_policy",
+      "label": "Brand Service Policy",
+      "fieldtype": "Link",
+      "options": "Lavanya Brand Service Policy"
+    },
+    {
+      "fieldname": "schedule_section",
+      "label": "Schedule & Assignment",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "scheduled_date",
+      "label": "Scheduled Date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "scheduled_time",
+      "label": "Scheduled Time",
+      "fieldtype": "Time"
+    },
+    {
+      "fieldname": "technician",
+      "label": "Technician",
+      "fieldtype": "Link",
+      "options": "Lavanya Technician"
+    },
+    {
+      "fieldname": "service_team",
+      "label": "Service Team",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Center"
+    },
+    {
+      "fieldname": "col_安排",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "site_readiness_status",
+      "label": "Site Readiness Status",
+      "fieldtype": "Select",
+      "options": "\nPending\nReady\nNot Ready\nPostponed"
+    },
+    {
+      "fieldname": "site_readiness_notes",
+      "label": "Site Readiness Notes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "site_section",
+      "label": "Installation Site",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "installation_address",
+      "label": "Installation Address",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "installation_pin",
+      "label": "PIN Code",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "access_instructions",
+      "label": "Access Instructions",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "completion_section",
+      "label": "Completion",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "completion_date",
+      "label": "Completion Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "visit_status",
+      "label": "Visit Status",
+      "fieldtype": "Select",
+      "options": "\nSuccessful\nFailed\nPartial"
+    },
+    {
+      "fieldname": "customer_confirmation",
+      "label": "Customer Confirmation",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "col_完成",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "proof_photos",
+      "label": "Proof Photos",
+      "fieldtype": "Table",
+      "options": "Lavanya Photo Log"
+    },
+    {
+      "fieldname": "closure_verification",
+      "label": "Closure Verification",
+      "fieldtype": "Link",
+      "options": "Lavanya Closure Verification"
+    },
+    {
+      "fieldname": "payment_section",
+      "label": "Payment",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "payment_amount",
+      "label": "Payment Amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldname": "payment_received",
+      "label": "Payment Received",
+      "fieldtype": "Check"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Installation Job",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Front Desk",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

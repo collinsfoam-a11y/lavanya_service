@@ -1,0 +1,169 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "LAV-TECH-.#####",
+  "creation": "2026-06-25 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "technician_name",
+    "phone",
+    "is_active",
+    "is_available",
+    "skills_&_coverage_section",
+    "skill_categories",
+    "area_coverage",
+    "col_mhho",
+    "brand_expertise",
+    "charges_section",
+    "visit_charge",
+    "commission_pct",
+    "payment_mode",
+    "performance_section",
+    "rating",
+    "total_jobs",
+    "open_jobs"
+  ],
+  "fields": [
+    {
+      "fieldname": "technician_name",
+      "label": "Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "phone",
+      "label": "Phone",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_active",
+      "label": "Active",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "is_available",
+      "label": "Available",
+      "fieldtype": "Check",
+      "default": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "skills_&_coverage_section",
+      "label": "Skills & Coverage",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "skill_categories",
+      "label": "Skill Categories",
+      "fieldtype": "Small Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "area_coverage",
+      "label": "Area Coverage",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_mhho",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "brand_expertise",
+      "label": "Brand Expertise",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "charges_section",
+      "label": "Charges",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "visit_charge",
+      "label": "Visit Charge (₹)",
+      "fieldtype": "Currency",
+      "default": 300
+    },
+    {
+      "fieldname": "commission_pct",
+      "label": "Commission %",
+      "fieldtype": "Percent"
+    },
+    {
+      "fieldname": "payment_mode",
+      "label": "Payment Mode",
+      "fieldtype": "Select",
+      "options": "Cash\nBank Transfer\nUPI"
+    },
+    {
+      "fieldname": "performance_section",
+      "label": "Performance",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "rating",
+      "label": "Rating",
+      "fieldtype": "Float",
+      "read_only": 1,
+      "default": 0
+    },
+    {
+      "fieldname": "total_jobs",
+      "label": "Total Jobs",
+      "fieldtype": "Int",
+      "read_only": 1,
+      "default": 0
+    },
+    {
+      "fieldname": "open_jobs",
+      "label": "Open Jobs",
+      "fieldtype": "Int",
+      "read_only": 1,
+      "default": 0
+    }
+  ],
+  "in_create": 0,
+  "is_single": 0,
+  "is_submittable": 0,
+  "modified": "2026-06-25 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Lavanya Service",
+  "name": "Lavanya Technician",
+  "naming_rule": "Expression (old style)",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "technician_name",
+  "track_changes": 1,
+  "track_seen": 1
+}

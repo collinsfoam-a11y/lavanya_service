@@ -1,0 +1,164 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "LAV-FUP-.YYYY.-.#####",
+  "creation": "2026-06-25 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "ticket",
+    "action_type",
+    "detail",
+    "col_g9s3",
+    "channel",
+    "contacted_person",
+    "staff",
+    "customer_informed_section",
+    "customer_informed",
+    "customer_informed_reason",
+    "col_h8nz",
+    "next_followup_date",
+    "audit_section",
+    "source",
+    "is_correction",
+    "original_value"
+  ],
+  "fields": [
+    {
+      "fieldname": "ticket",
+      "label": "Ticket",
+      "fieldtype": "Link",
+      "options": "Lavanya Ticket",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "action_type",
+      "label": "Action Type",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "in_list_view": 1,
+      "options": "Complaint Registered\nBrand Ticket Added\nService Center Called\nTechnician Call Verified\nTechnician Visit Verified\nCustomer Informed\nPart Pending Recorded\nAppointment Scheduled\nEscalation\nWhatsApp Draft Generated\nWhatsApp Reply Received\nCRM Opportunity Created\nCustomer Satisfied\nCustomer Not Satisfied\nTicket Reopened\nTicket Closed\nCorrection Entry\nOther"
+    },
+    {
+      "fieldname": "detail",
+      "label": "Detail",
+      "fieldtype": "Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "col_g9s3",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "channel",
+      "label": "Channel",
+      "fieldtype": "Select",
+      "options": "Manual\nWhatsApp\nPhone\nEmail\nCRM\nSystem",
+      "default": "Manual"
+    },
+    {
+      "fieldname": "contacted_person",
+      "label": "Contacted Person",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "staff",
+      "label": "Staff",
+      "fieldtype": "Link",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "customer_informed_section",
+      "label": "Customer Informed",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer_informed",
+      "label": "Customer Informed",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Yes\nNo\nNot Required",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "customer_informed_reason",
+      "label": "Reason (if Not Required)",
+      "fieldtype": "Data",
+      "depends_on": "eval:doc.customer_informed=='Not Required'"
+    },
+    {
+      "fieldname": "col_h8nz",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "next_followup_date",
+      "label": "Next Follow-up Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "audit_section",
+      "label": "Audit",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "source",
+      "label": "Source",
+      "fieldtype": "Select",
+      "options": "Manual\nWhatsApp Bot\nCRM\nSystem\nScheduler",
+      "default": "Manual",
+      "read_only": 1
+    },
+    {
+      "fieldname": "is_correction",
+      "label": "Correction Entry",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "original_value",
+      "label": "Original Value",
+      "fieldtype": "Text",
+      "read_only": 1,
+      "depends_on": "eval:doc.is_correction"
+    }
+  ],
+  "in_create": 0,
+  "is_single": 0,
+  "is_submittable": 0,
+  "modified": "2026-06-25 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Lavanya Service",
+  "name": "Lavanya Followup Log",
+  "naming_rule": "Expression (old style)",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 0,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "",
+  "track_changes": 1,
+  "track_seen": 1
+}

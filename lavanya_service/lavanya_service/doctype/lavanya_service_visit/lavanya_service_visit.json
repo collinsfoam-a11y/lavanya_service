@@ -1,0 +1,318 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "VSIT-.YYYY.-.#####",
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "basic_section",
+    "customer",
+    "ticket",
+    "service_case_group",
+    "installation_job",
+    "col_基本信息",
+    "visit_type",
+    "status",
+    "product_section",
+    "product_name",
+    "product_category",
+    "serial_no",
+    "brand",
+    "col_产品",
+    "assigned_party",
+    "service_team",
+    "schedule_section",
+    "scheduled_date",
+    "check_in_time",
+    "check_out_time",
+    "col_安排",
+    "visit_result",
+    "work_done_section",
+    "work_done",
+    "spare_used",
+    "spare_used_table",
+    "next_action_section",
+    "next_action",
+    "next_follow_up_date",
+    "col_下一步",
+    "failed_reason",
+    "proof_section",
+    "before_photo",
+    "after_photo",
+    "customer_otp",
+    "customer_signature",
+    "feedback_section",
+    "customer_feedback",
+    "customer_rating",
+    "internal_notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "basic_section",
+      "label": "Basic Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer",
+      "label": "Customer",
+      "fieldtype": "Link",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "ticket",
+      "label": "Ticket",
+      "fieldtype": "Link",
+      "options": "HD Ticket"
+    },
+    {
+      "fieldname": "service_case_group",
+      "label": "Service Case Group",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Case Group"
+    },
+    {
+      "fieldname": "installation_job",
+      "label": "Installation Job",
+      "fieldtype": "Link",
+      "options": "Lavanya Installation Job"
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "visit_type",
+      "label": "Visit Type",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "\nPreventive\nCorrective\nFollow-Up\nInstallation Check\nDemo\nRepair\nInspection",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "\nScheduled\nIn Progress\nVisit Completed\nFailed Visit\nCancelled",
+      "default": "Scheduled",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "product_section",
+      "label": "Product Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "product_name",
+      "label": "Product Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "product_category",
+      "label": "Product Category",
+      "fieldtype": "Select",
+      "options": "\nTV\nRefrigerator\nWashing Machine\nAC\nCooler\nGeyser\nMicrowave\nOven\nChimney\nWater Purifier\nMixer\nInduction Cooker\nOther"
+    },
+    {
+      "fieldname": "serial_no",
+      "label": "Serial Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "brand",
+      "label": "Brand",
+      "fieldtype": "Link",
+      "options": "Supplier"
+    },
+    {
+      "fieldname": "col_产品",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "assigned_party",
+      "label": "Assigned Party",
+      "fieldtype": "Link",
+      "options": "Lavanya Technician"
+    },
+    {
+      "fieldname": "service_team",
+      "label": "Service Team",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Center"
+    },
+    {
+      "fieldname": "schedule_section",
+      "label": "Schedule & Time",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "scheduled_date",
+      "label": "Scheduled Date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "check_in_time",
+      "label": "Check-in Time",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "check_out_time",
+      "label": "Check-out Time",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "col_安排",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "visit_result",
+      "label": "Visit Result",
+      "fieldtype": "Select",
+      "options": "\nSuccessful\nPartial\nFailed\nCustomer Postponed"
+    },
+    {
+      "fieldname": "work_done_section",
+      "label": "Work Done",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "work_done",
+      "label": "Work Done",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "spare_used",
+      "label": "Spare Used",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "spare_used_table",
+      "label": "Spare Items Used",
+      "fieldtype": "Table",
+      "options": "Lavanya Spare Request Item"
+    },
+    {
+      "fieldname": "next_action_section",
+      "label": "Next Action",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "next_action",
+      "label": "Next Action",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "next_follow_up_date",
+      "label": "Next Follow-up Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "col_下一步",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "failed_reason",
+      "label": "Failed Reason",
+      "fieldtype": "Select",
+      "options": "\nCustomer Unavailable\nWrong Address\nSite Not Ready\nProduct Not Delivered\nBrand Technician Delayed\nMaterial Missing\nPayment Pending\nCustomer Postponed\nOther"
+    },
+    {
+      "fieldname": "proof_section",
+      "label": "Proof & Confirmation",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "before_photo",
+      "label": "Before Photo",
+      "fieldtype": "Attach"
+    },
+    {
+      "fieldname": "after_photo",
+      "label": "After Photo",
+      "fieldtype": "Attach"
+    },
+    {
+      "fieldname": "customer_otp",
+      "label": "Customer OTP",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "customer_signature",
+      "label": "Customer Signature",
+      "fieldtype": "Attach"
+    },
+    {
+      "fieldname": "feedback_section",
+      "label": "Feedback & Notes",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer_feedback",
+      "label": "Customer Feedback",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "customer_rating",
+      "label": "Customer Rating (1-5)",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "internal_notes",
+      "label": "Internal Notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Service Visit",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Front Desk",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

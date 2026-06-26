@@ -1,0 +1,646 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "LAV-TKT-.YYYY.-.#####",
+  "creation": "2026-06-25 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "ticket_information_section",
+    "subject",
+    "col_r2qx",
+    "status",
+    "follow_up_stage",
+    "priority",
+    "service_path",
+    "service_case_group",
+    "customer_section",
+    "customer",
+    "customer_name",
+    "col_7eok",
+    "customer_phone",
+    "alt_phone",
+    "whatsapp_optin",
+    "preferred_language",
+    "product_section",
+    "brand",
+    "product_category",
+    "col_4at6",
+    "product_model",
+    "serial_number",
+    "invoice_number",
+    "purchase_date",
+    "warranty_status",
+    "warranty_end_date",
+    "installation_date",
+    "complaint_section",
+    "complaint_type",
+    "description",
+    "brand_/_service_center_section",
+    "service_center",
+    "brand_ticket_number",
+    "expected_call_date",
+    "col_jshr",
+    "technician",
+    "appointment_date",
+    "appointment_time_slot",
+    "follow-up_status_section",
+    "next_followup_date",
+    "last_followup_date",
+    "customer_informed",
+    "followup_overdue",
+    "col_l1dn",
+    "technician_called",
+    "technician_visited",
+    "brand_says_completed",
+    "customer_satisfied",
+    "customer_dissatisfied",
+    "quality_&_escalation_section",
+    "quality_badge",
+    "next_action",
+    "col_tvpg",
+    "escalation_level",
+    "days_open",
+    "whatsapp_pending",
+    "sla_section",
+    "sla_due_date",
+    "sla_breached",
+    "col_sh4t",
+    "promise_breach_count",
+    "part_pending_section",
+    "part_pending",
+    "part_name",
+    "part_expected_date",
+    "col_cw1w",
+    "part_received",
+    "part_received_date",
+    "part_fitted_date",
+    "closure_section",
+    "closed_on",
+    "closed_by",
+    "closure_type",
+    "col_pfo7",
+    "closure_remarks",
+    "customer_satisfaction",
+    "non_response_attempt_count",
+    "showroom_receiving_section",
+    "received_condition",
+    "accessories_received",
+    "col_75tn",
+    "rack_bin_location",
+    "handover_otp",
+    "handover_otp_verified",
+    "staff_&_assignment_section",
+    "service_staff",
+    "assigned_on"
+  ],
+  "fields": [
+    {
+      "fieldname": "ticket_information_section",
+      "label": "Ticket Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "subject",
+      "label": "Subject",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_r2qx",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_filter": 1,
+      "options": "New\nRegistered\nIn Follow-up\nWaiting\nResolved by Brand\nCustomer Confirmation Pending\nClosed\nReopened\nCancelled",
+      "default": "New"
+    },
+    {
+      "fieldname": "follow_up_stage",
+      "label": "Follow-up Stage",
+      "fieldtype": "Select",
+      "options": "Complaint Received\nRegistered / Assigned\nTechnician Call Pending\nTechnician Visit Pending\nWork / Part Pending\nCustomer Update Required\nCustomer Confirmation Pending\nClosed / Reopened"
+    },
+    {
+      "fieldname": "priority",
+      "label": "Priority",
+      "fieldtype": "Select",
+      "options": "Low\nMedium\nHigh\nUrgent",
+      "default": "Medium",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "service_path",
+      "label": "Service Path",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Brand Warranty\nBrand Paid Service\nLocal Paid Service\nLavanya Goodwill Service\nDemo / Installation\nIn-Showroom Service\nStock Complaint",
+      "in_filter": 1
+    },
+    {
+      "fieldname": "service_case_group",
+      "label": "Service Case Group",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Case Group",
+      "in_list_view": 1,
+      "in_filter": 1
+    },
+    {
+      "fieldname": "customer_section",
+      "label": "Customer",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer",
+      "label": "Customer",
+      "fieldtype": "Link",
+      "options": "Lavanya Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "customer_name",
+      "label": "Customer Name",
+      "fieldtype": "Data",
+      "fetch_from": "customer.customer_name",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_7eok",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "customer_phone",
+      "label": "Phone",
+      "fieldtype": "Data",
+      "fetch_from": "customer.customer_phone",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "alt_phone",
+      "label": "Alternate Phone",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "whatsapp_optin",
+      "label": "WhatsApp Opt-in",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "preferred_language",
+      "label": "Preferred Language",
+      "fieldtype": "Select",
+      "options": "Malayalam\nEnglish\nHindi\nTamil",
+      "default": "Malayalam"
+    },
+    {
+      "fieldname": "product_section",
+      "label": "Product",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "brand",
+      "label": "Brand",
+      "fieldtype": "Link",
+      "options": "Lavanya Brand Master",
+      "in_list_view": 1,
+      "in_filter": 1
+    },
+    {
+      "fieldname": "product_category",
+      "label": "Product Category",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_4at6",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "product_model",
+      "label": "Model",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "serial_number",
+      "label": "Serial Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "invoice_number",
+      "label": "Invoice Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "purchase_date",
+      "label": "Purchase Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "warranty_status",
+      "label": "Warranty Status",
+      "fieldtype": "Select",
+      "options": "In Warranty\nOut of Warranty\nExtended Warranty\nAMC",
+      "in_filter": 1
+    },
+    {
+      "fieldname": "warranty_end_date",
+      "label": "Warranty End Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "installation_date",
+      "label": "Installation Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "complaint_section",
+      "label": "Complaint",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "complaint_type",
+      "label": "Complaint Type",
+      "fieldtype": "Select",
+      "options": "Not working\nIntermittent issue\nPhysical damage\nInstallation issue\nNo sound/display\nCooling not working\nRemote not working\nOther"
+    },
+    {
+      "fieldname": "description",
+      "label": "Description",
+      "fieldtype": "Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "brand_/_service_center_section",
+      "label": "Brand / Service Center",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "service_center",
+      "label": "Service Center",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Center"
+    },
+    {
+      "fieldname": "brand_ticket_number",
+      "label": "Brand Ticket Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "expected_call_date",
+      "label": "Expected Call Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "col_jshr",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "technician",
+      "label": "Technician",
+      "fieldtype": "Link",
+      "options": "Lavanya Technician"
+    },
+    {
+      "fieldname": "appointment_date",
+      "label": "Appointment Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "appointment_time_slot",
+      "label": "Time Slot",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "follow-up_status_section",
+      "label": "Follow-up Status",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "next_followup_date",
+      "label": "Next Follow-up Date",
+      "fieldtype": "Date",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "last_followup_date",
+      "label": "Last Follow-up Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "customer_informed",
+      "label": "Customer Informed",
+      "fieldtype": "Check",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "followup_overdue",
+      "label": "Follow-up Overdue",
+      "fieldtype": "Check",
+      "read_only": 1,
+      "in_list_view": 1,
+      "in_filter": 1
+    },
+    {
+      "fieldname": "col_l1dn",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "technician_called",
+      "label": "Technician Called",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "technician_visited",
+      "label": "Technician Visited",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "brand_says_completed",
+      "label": "Brand Says Completed",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "customer_satisfied",
+      "label": "Customer Satisfied",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "customer_dissatisfied",
+      "label": "Customer Dissatisfied",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "quality_&_escalation_section",
+      "label": "Quality & Escalation",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "quality_badge",
+      "label": "Quality Badge",
+      "fieldtype": "Select",
+      "options": "Good\nNeeds Update\nAt Risk\nCritical",
+      "read_only": 1,
+      "in_list_view": 1,
+      "in_filter": 1
+    },
+    {
+      "fieldname": "next_action",
+      "label": "Next Action",
+      "fieldtype": "Small Text",
+      "read_only": 1
+    },
+    {
+      "fieldname": "col_tvpg",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "escalation_level",
+      "label": "Escalation Level",
+      "fieldtype": "Select",
+      "options": "L1\nL2\nL3\nL4",
+      "default": "L1",
+      "in_filter": 1
+    },
+    {
+      "fieldname": "days_open",
+      "label": "Days Open",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "whatsapp_pending",
+      "label": "WhatsApp Reply Pending",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "sla_section",
+      "label": "SLA",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "sla_due_date",
+      "label": "SLA Due Date",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "sla_breached",
+      "label": "SLA Breached",
+      "fieldtype": "Check",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_sh4t",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "promise_breach_count",
+      "label": "Promise Breach Count",
+      "fieldtype": "Int",
+      "read_only": 1,
+      "default": 0
+    },
+    {
+      "fieldname": "part_pending_section",
+      "label": "Part Pending",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "part_pending",
+      "label": "Part Pending",
+      "fieldtype": "Check",
+      "in_filter": 1
+    },
+    {
+      "fieldname": "part_name",
+      "label": "Part Name",
+      "fieldtype": "Data",
+      "depends_on": "eval:doc.part_pending"
+    },
+    {
+      "fieldname": "part_expected_date",
+      "label": "Part Expected Date",
+      "fieldtype": "Date",
+      "depends_on": "eval:doc.part_pending"
+    },
+    {
+      "fieldname": "col_cw1w",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "part_received",
+      "label": "Part Received",
+      "fieldtype": "Check",
+      "depends_on": "eval:doc.part_pending"
+    },
+    {
+      "fieldname": "part_received_date",
+      "label": "Part Received Date",
+      "fieldtype": "Date",
+      "depends_on": "eval:doc.part_received"
+    },
+    {
+      "fieldname": "part_fitted_date",
+      "label": "Part Fitted Date",
+      "fieldtype": "Date",
+      "depends_on": "eval:doc.part_received"
+    },
+    {
+      "fieldname": "closure_section",
+      "label": "Closure",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "closed_on",
+      "label": "Closed On",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "closed_by",
+      "label": "Closed By",
+      "fieldtype": "Link",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "closure_type",
+      "label": "Closure Type",
+      "fieldtype": "Select",
+      "options": "Resolved\nNo Response After Attempts\nDuplicate\nTest\nOther"
+    },
+    {
+      "fieldname": "col_pfo7",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "closure_remarks",
+      "label": "Closure Remarks",
+      "fieldtype": "Text"
+    },
+    {
+      "fieldname": "customer_satisfaction",
+      "label": "Customer Satisfaction",
+      "fieldtype": "Select",
+      "options": "Satisfied\nNeutral\nDissatisfied"
+    },
+    {
+      "fieldname": "non_response_attempt_count",
+      "label": "Non-Response Attempt Count",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "showroom_receiving_section",
+      "label": "Showroom Receiving",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "received_condition",
+      "label": "Received Condition",
+      "fieldtype": "Select",
+      "options": "Good condition\nMinor damage noted\nMajor damage noted",
+      "depends_on": "eval:doc.service_path=='In-Showroom Service'"
+    },
+    {
+      "fieldname": "accessories_received",
+      "label": "Accessories Received",
+      "fieldtype": "Data",
+      "depends_on": "eval:doc.service_path=='In-Showroom Service'"
+    },
+    {
+      "fieldname": "col_75tn",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "rack_bin_location",
+      "label": "Rack / Bin Location",
+      "fieldtype": "Data",
+      "depends_on": "eval:doc.service_path=='In-Showroom Service'"
+    },
+    {
+      "fieldname": "handover_otp",
+      "label": "Handover OTP",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "handover_otp_verified",
+      "label": "OTP Verified",
+      "fieldtype": "Check",
+      "read_only": 1
+    },
+    {
+      "fieldname": "staff_&_assignment_section",
+      "label": "Staff & Assignment",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "service_staff",
+      "label": "Service Staff",
+      "fieldtype": "Link",
+      "options": "User",
+      "in_filter": 1
+    },
+    {
+      "fieldname": "assigned_on",
+      "label": "Assigned On",
+      "fieldtype": "Date",
+      "read_only": 1
+    }
+  ],
+  "in_create": 0,
+  "is_single": 0,
+  "is_submittable": 0,
+  "modified": "2026-06-25 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Lavanya Service",
+  "name": "Lavanya Ticket",
+  "naming_rule": "Expression (old style)",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Front Desk",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "subject",
+  "track_changes": 1,
+  "track_seen": 1
+}

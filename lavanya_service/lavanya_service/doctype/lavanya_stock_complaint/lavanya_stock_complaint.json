@@ -1,0 +1,342 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "SCMP-.YYYY.-.#####",
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "basic_section",
+    "customer",
+    "ticket",
+    "service_case_group",
+    "status",
+    "col_基本信息",
+    "complaint_date",
+    "discovered_by",
+    "damage_type",
+    "product_section",
+    "stock_item",
+    "item_code",
+    "item_name",
+    "serial_no",
+    "batch_no",
+    "warehouse",
+    "quarantine_warehouse",
+    "supplier_section",
+    "supplier",
+    "supplier_claim",
+    "purchase_invoice",
+    "stock_entry_section",
+    "stock_entry",
+    "condition_decision",
+    "lr_section",
+    "lr_number",
+    "transporter_name",
+    "transporter_contact",
+    "expected_delivery_date",
+    "description_section",
+    "description",
+    "photos",
+    "missing_accessory_details",
+    "value_section",
+    "estimated_value",
+    "actual_value",
+    "resolution_section",
+    "resolution_type",
+    "resolution_date",
+    "closure_section",
+    "manager_approval_required",
+    "manager_approved_by",
+    "manager_approved_date"
+  ],
+  "fields": [
+    {
+      "fieldname": "basic_section",
+      "label": "Basic Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer",
+      "label": "Customer",
+      "fieldtype": "Link",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "ticket",
+      "label": "Ticket",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Ticket Extension"
+    },
+    {
+      "fieldname": "service_case_group",
+      "label": "Service Case Group",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Case Group",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Draft\nIdentified\nQuarantined\nSupplier Informed\nClaim Registered\nPickup Pending\nSent to Supplier\nRepair Pending\nReplacement Pending\nCredit Note Pending\nReturned Repaired\nSaleable\nWritten Off\nClosed\nCancelled",
+      "default": "Draft",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "complaint_date",
+      "label": "Complaint Date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "discovered_by",
+      "label": "Discovered By",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "damage_type",
+      "label": "Damage Type",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Physical Damage\nTransit Damage\nDisplay Damage\nMissing Accessory\nSupplier Defective\nOther",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "product_section",
+      "label": "Product Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "stock_item",
+      "label": "Stock Item",
+      "fieldtype": "Link",
+      "options": "Item",
+      "reqd": 1
+    },
+    {
+      "fieldname": "item_code",
+      "label": "Item Code",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "item_name",
+      "label": "Item Name",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "serial_no",
+      "label": "Serial Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "batch_no",
+      "label": "Batch Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "warehouse",
+      "label": "Current Warehouse",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    },
+    {
+      "fieldname": "quarantine_warehouse",
+      "label": "Quarantine Warehouse",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    },
+    {
+      "fieldname": "supplier_section",
+      "label": "Supplier Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "supplier",
+      "label": "Supplier",
+      "fieldtype": "Link",
+      "options": "Supplier"
+    },
+    {
+      "fieldname": "supplier_claim",
+      "label": "Supplier Claim",
+      "fieldtype": "Link",
+      "options": "Lavanya Supplier Claim"
+    },
+    {
+      "fieldname": "purchase_invoice",
+      "label": "Purchase Invoice",
+      "fieldtype": "Link",
+      "options": "Purchase Invoice"
+    },
+    {
+      "fieldname": "stock_entry_section",
+      "label": "Stock Entry",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "stock_entry",
+      "label": "Stock Entry",
+      "fieldtype": "Link",
+      "options": "Stock Entry"
+    },
+    {
+      "fieldname": "condition_decision",
+      "label": "Stock Condition Decision",
+      "fieldtype": "Link",
+      "options": "Lavanya Stock Condition Decision"
+    },
+    {
+      "fieldname": "lr_section",
+      "label": "Transport Details",
+      "fieldtype": "Section Break",
+      "depends_on": "eval:doc.damage_type=='Transit Damage'"
+    },
+    {
+      "fieldname": "lr_number",
+      "label": "LR Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "transporter_name",
+      "label": "Transporter Name",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "transporter_contact",
+      "label": "Transporter Contact",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "expected_delivery_date",
+      "label": "Expected Delivery Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "description_section",
+      "label": "Description & Evidence",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "description",
+      "label": "Description",
+      "fieldtype": "Small Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "photos",
+      "label": "Photos",
+      "fieldtype": "Table",
+      "options": "Lavanya Photo Log"
+    },
+    {
+      "fieldname": "missing_accessory_details",
+      "label": "Missing Accessory Details",
+      "fieldtype": "Small Text",
+      "depends_on": "eval:doc.damage_type=='Missing Accessory'"
+    },
+    {
+      "fieldname": "value_section",
+      "label": "Value",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "estimated_value",
+      "label": "Estimated Value",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldname": "actual_value",
+      "label": "Actual Value",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldname": "resolution_section",
+      "label": "Resolution",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "resolution_type",
+      "label": "Resolution Type",
+      "fieldtype": "Select",
+      "options": "Pending\nReplacement\nRepair\nCredit Note\nReturn\nWrite-Off\nNo Action Required"
+    },
+    {
+      "fieldname": "resolution_date",
+      "label": "Resolution Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "closure_section",
+      "label": "Closure Approval",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "manager_approval_required",
+      "label": "Manager Approval Required",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "manager_approved_by",
+      "label": "Manager Approved By",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "manager_approved_date",
+      "label": "Manager Approved Date",
+      "fieldtype": "Date"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Stock Complaint",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

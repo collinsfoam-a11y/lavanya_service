@@ -1,0 +1,327 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "RECOV-.YYYY.-.#####",
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "basic_section",
+    "customer",
+    "ticket",
+    "service_case_group",
+    "status",
+    "col_基本信息",
+    "replacement_type",
+    "replacement_date",
+    "old_item_section",
+    "old_item",
+    "old_item_name",
+    "old_serial_no",
+    "old_condition",
+    "old_stock_entry",
+    "new_item_section",
+    "replacement_item",
+    "replacement_item_name",
+    "replacement_serial_no",
+    "replacement_stock_entry",
+    "replacement_sales_invoice",
+    "supplier_section",
+    "supplier_claim",
+    "credit_note",
+    "stock_complaint",
+    "financial_section",
+    "old_item_value",
+    "replacement_item_value",
+    "financial_difference",
+    "customer_closure",
+    "stock_closure",
+    "supplier_closure",
+    "accounting_closure",
+    "erpnext_link_section",
+    "stock_entry_return",
+    "stock_entry_replacement",
+    "journal_entry",
+    "closure_section",
+    "closure_date",
+    "closure_remarks",
+    "manager_override",
+    "manager_override_reason"
+  ],
+  "fields": [
+    {
+      "fieldname": "basic_section",
+      "label": "Basic Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer",
+      "label": "Customer",
+      "fieldtype": "Link",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "ticket",
+      "label": "Ticket",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Ticket Extension"
+    },
+    {
+      "fieldname": "service_case_group",
+      "label": "Service Case Group",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Case Group",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Draft\nReplacement Approved\nReplacement Given to Customer\nOld Item Received\nSupplier Claim Pending\nClaim Registered\nPickup Pending\nSent to Supplier\nReplacement Expected\nCredit Note Expected\nRepair Expected\nReturned Repaired\nReplacement Received\nConverted to Saleable\nWritten Off\nClosed\nCancelled",
+      "default": "Draft",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "replacement_type",
+      "label": "Replacement Type",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Same SKU\nCross SKU\nUpgrade\nDowngrade\nTemporary Loaner\nCredit Instead",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "replacement_date",
+      "label": "Replacement Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "old_item_section",
+      "label": "Old Item (Being Replaced)",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "old_item",
+      "label": "Old Item",
+      "fieldtype": "Link",
+      "options": "Item",
+      "reqd": 1
+    },
+    {
+      "fieldname": "old_item_name",
+      "label": "Old Item Name",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "old_serial_no",
+      "label": "Old Serial Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "old_condition",
+      "label": "Old Item Condition",
+      "fieldtype": "Select",
+      "options": "Good\nDamaged\nMissing\nNon-Functional\nOther"
+    },
+    {
+      "fieldname": "old_stock_entry",
+      "label": "Old Stock Entry",
+      "fieldtype": "Link",
+      "options": "Stock Entry"
+    },
+    {
+      "fieldname": "new_item_section",
+      "label": "New Item (Replacement)",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "replacement_item",
+      "label": "Replacement Item",
+      "fieldtype": "Link",
+      "options": "Item",
+      "reqd": 1
+    },
+    {
+      "fieldname": "replacement_item_name",
+      "label": "Replacement Item Name",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "replacement_serial_no",
+      "label": "Replacement Serial Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "replacement_stock_entry",
+      "label": "Replacement Stock Entry",
+      "fieldtype": "Link",
+      "options": "Stock Entry"
+    },
+    {
+      "fieldname": "replacement_sales_invoice",
+      "label": "Replacement Sales Invoice",
+      "fieldtype": "Link",
+      "options": "Sales Invoice"
+    },
+    {
+      "fieldname": "supplier_section",
+      "label": "Supplier & Financial Links",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "supplier_claim",
+      "label": "Supplier Claim",
+      "fieldtype": "Link",
+      "options": "Lavanya Supplier Claim"
+    },
+    {
+      "fieldname": "credit_note",
+      "label": "Credit Note",
+      "fieldtype": "Link",
+      "options": "Purchase Invoice"
+    },
+    {
+      "fieldname": "stock_complaint",
+      "label": "Stock Complaint",
+      "fieldtype": "Link",
+      "options": "Lavanya Stock Complaint"
+    },
+    {
+      "fieldname": "financial_section",
+      "label": "Financial Calculation",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "old_item_value",
+      "label": "Old Item Value",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldname": "replacement_item_value",
+      "label": "Replacement Item Value",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldname": "financial_difference",
+      "label": "Financial Difference",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldname": "customer_closure",
+      "label": "Customer Closure",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "stock_closure",
+      "label": "Stock Closure",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "supplier_closure",
+      "label": "Supplier Closure",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "accounting_closure",
+      "label": "Accounting Closure",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "erpnext_link_section",
+      "label": "ERPNext Document Links",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "stock_entry_return",
+      "label": "Stock Entry (Return)",
+      "fieldtype": "Link",
+      "options": "Stock Entry"
+    },
+    {
+      "fieldname": "stock_entry_replacement",
+      "label": "Stock Entry (Replacement)",
+      "fieldtype": "Link",
+      "options": "Stock Entry"
+    },
+    {
+      "fieldname": "journal_entry",
+      "label": "Journal Entry",
+      "fieldtype": "Link",
+      "options": "Journal Entry"
+    },
+    {
+      "fieldname": "closure_section",
+      "label": "Closure",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "closure_date",
+      "label": "Closure Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "closure_remarks",
+      "label": "Closure Remarks",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "manager_override",
+      "label": "Manager Override",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "manager_override_reason",
+      "label": "Manager Override Reason",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Replacement Recovery",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-06-26T01:51:17.859Z",
+  "projectRoot": "/Users/noufi1/frappe-bench-emart/apps/lavanya_service",
+  "structure": {
+    "hasPackageJson": false,
+    "hasTsConfig": false,
+    "hasClaudeConfig": true,
+    "hasClaudeFlow": true
+  },
+  "scannedAt": 1782438677859
+}

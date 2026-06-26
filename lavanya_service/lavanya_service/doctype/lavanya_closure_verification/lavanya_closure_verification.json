@@ -1,0 +1,200 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "CVER-.YYYY.-.#####",
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "basic_section",
+    "customer",
+    "ticket",
+    "service_case_group",
+    "verified_by",
+    "verified_date",
+    "verification_section",
+    "customer_satisfied",
+    "customer_feedback",
+    "stock_accounted",
+    "supplier_claim_handled",
+    "accounting_closed",
+    "documentation_section",
+    "warranty_documented",
+    "all_photos_uploaded",
+    "all_documents_attached",
+    "follow_up_section",
+    "follow_up_required",
+    "follow_up_date",
+    "follow_up_notes",
+    "status_section",
+    "status"
+  ],
+  "fields": [
+    {
+      "fieldname": "basic_section",
+      "label": "Basic Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer",
+      "label": "Customer",
+      "fieldtype": "Link",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "ticket",
+      "label": "Ticket",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Ticket Extension",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "service_case_group",
+      "label": "Service Case Group",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Case Group",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "verified_by",
+      "label": "Verified By",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1
+    },
+    {
+      "fieldname": "verified_date",
+      "label": "Verified Date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "verification_section",
+      "label": "Verification Checklist",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer_satisfied",
+      "label": "Customer Satisfied",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "customer_feedback",
+      "label": "Customer Feedback",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "stock_accounted",
+      "label": "Stock Accounted",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "supplier_claim_handled",
+      "label": "Supplier Claim Handled",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "accounting_closed",
+      "label": "Accounting Closed",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "documentation_section",
+      "label": "Documentation",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "warranty_documented",
+      "label": "Warranty Documented",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "all_photos_uploaded",
+      "label": "All Photos Uploaded",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "all_documents_attached",
+      "label": "All Documents Attached",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "follow_up_section",
+      "label": "Follow-up",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "follow_up_required",
+      "label": "Follow-up Required",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "follow_up_date",
+      "label": "Follow-up Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "follow_up_notes",
+      "label": "Follow-up Notes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "status_section",
+      "label": "Status",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Pending\nVerified\nRejected\nReopen Required\nClosed",
+      "default": "Pending",
+      "in_list_view": 1
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Closure Verification",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Front Desk",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

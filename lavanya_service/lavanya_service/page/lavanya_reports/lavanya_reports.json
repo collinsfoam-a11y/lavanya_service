@@ -1,0 +1,19 @@
+{
+  "doctype": "Page",
+  "module": "Lavanya Service",
+  "name": "lavanya-reports",
+  "page_name": "lavanya-reports",
+  "standard": "Yes",
+  "title": "Reports",
+  "roles": [
+    {
+      "role": "Service Staff"
+    },
+    {
+      "role": "Service Manager"
+    },
+    {
+      "role": "Lavanya Owner"
+    }
+  ]
+}

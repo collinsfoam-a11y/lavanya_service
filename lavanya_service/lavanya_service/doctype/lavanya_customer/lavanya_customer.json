@@ -1,0 +1,149 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "LAV-CUST-.YYYY.-.#####",
+  "creation": "2026-06-25 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "customer_name",
+    "customer_phone",
+    "col_fztm",
+    "alt_phone",
+    "address",
+    "customer_type",
+    "preferred_language",
+    "preferred_channel",
+    "whatsapp_optin",
+    "is_vip",
+    "is_sensitive",
+    "repeat_complaint_count",
+    "crm_link_section",
+    "crm_contact"
+  ],
+  "fields": [
+    {
+      "fieldname": "customer_name",
+      "label": "Customer Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "customer_phone",
+      "label": "Phone",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_fztm",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "alt_phone",
+      "label": "Alternate Phone",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "address",
+      "label": "Address",
+      "fieldtype": "Text"
+    },
+    {
+      "fieldname": "customer_type",
+      "label": "Customer Type",
+      "fieldtype": "Select",
+      "options": "Regular\nVIP\nB2B\nSensitive",
+      "default": "Regular"
+    },
+    {
+      "fieldname": "preferred_language",
+      "label": "Preferred Language",
+      "fieldtype": "Select",
+      "options": "Malayalam\nEnglish\nHindi\nTamil",
+      "default": "Malayalam"
+    },
+    {
+      "fieldname": "preferred_channel",
+      "label": "Preferred Channel",
+      "fieldtype": "Select",
+      "options": "WhatsApp\nCall\nSMS",
+      "default": "WhatsApp"
+    },
+    {
+      "fieldname": "whatsapp_optin",
+      "label": "WhatsApp Opt-in",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "is_vip",
+      "label": "VIP Customer",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "is_sensitive",
+      "label": "Sensitive Customer",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "repeat_complaint_count",
+      "label": "Repeat Complaints",
+      "fieldtype": "Int",
+      "read_only": 1,
+      "default": 0
+    },
+    {
+      "fieldname": "crm_link_section",
+      "label": "CRM Link",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "crm_contact",
+      "label": "CRM Contact",
+      "fieldtype": "Link",
+      "options": "CRM Contacts"
+    }
+  ],
+  "in_create": 0,
+  "is_single": 0,
+  "is_submittable": 0,
+  "modified": "2026-06-25 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Lavanya Service",
+  "name": "Lavanya Customer",
+  "naming_rule": "Expression (old style)",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "customer_name",
+  "track_changes": 1,
+  "track_seen": 1
+}

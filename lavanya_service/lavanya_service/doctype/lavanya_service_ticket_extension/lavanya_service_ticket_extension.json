@@ -1,0 +1,413 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "TKT-.YYYY.-.#####",
+  "creation": "2026-06-25 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "basic_section",
+    "lavanya_service_case_group",
+    "customer_name",
+    "customer_number",
+    "customer_contact_person",
+    "col_基本信息",
+    "status",
+    "customer_site_pin",
+    "customer_site_address",
+    "customer_site_landmark",
+    "customer_site_contact_number",
+    "product_section",
+    "complaint_type",
+    "product_category",
+    "product_sub_category",
+    "product_items",
+    "serial_no",
+    "product_purchase_date",
+    "product_warranty_type",
+    "installation_type",
+    "resolution_section",
+    "resolution_type",
+    "resolution_summary",
+    "complaint_received_from",
+    "complaint_received_from_remarks",
+    "assignment_section",
+    "service_team",
+    "technician",
+    "token_section",
+    "token_issued",
+    "token_number",
+    "payment_section",
+    "payment_received",
+    "payment_amount",
+    "payment_reference",
+    "communication_section",
+    "photo_section",
+    "photo_log",
+    "handover_section",
+    "handover_accessories",
+    "handover_accessories_list",
+    "closure_section",
+    "closure_verification",
+    "tracking_section",
+    "next_action",
+    "next_action_date",
+    "resolution_date",
+    "resolution_days",
+    "resolution_hours",
+    "internal_notes",
+    "hold_section",
+    "status_before_hold",
+    "hold_reason",
+    "hold_date"
+  ],
+  "fields": [
+    {
+      "fieldname": "basic_section",
+      "label": "Basic Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "lavanya_service_case_group",
+      "label": "Service Case Group",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Case Group",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "customer_name",
+      "label": "Customer Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "customer_number",
+      "label": "Customer Number",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "customer_contact_person",
+      "label": "Customer Contact Person",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "\nNew\nIn Progress\nOn Hold\nResolved\nClosed",
+      "default": "New",
+      "reqd": 1,
+      "in_list_view": 1,
+      "in_filter": 1
+    },
+    {
+      "fieldname": "customer_site_pin",
+      "label": "Customer Site PIN",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "customer_site_address",
+      "label": "Customer Site Address",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "customer_site_landmark",
+      "label": "Customer Site Landmark",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "customer_site_contact_number",
+      "label": "Customer Site Contact Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "product_section",
+      "label": "Product Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "complaint_type",
+      "label": "Complaint Type",
+      "fieldtype": "Select",
+      "options": "Pre-Sales\nPost-Sales\nNo Complaint\nSpare Parts\nOthers",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "product_category",
+      "label": "Product Category",
+      "fieldtype": "Select",
+      "options": "AC\nCooler\nWashing Machine\nGeyser\nMicrowave\nOven\nRefrigerator\nChimney\nWater Purifier\nOther",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "product_sub_category",
+      "label": "Product Sub Category",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "product_items",
+      "label": "Product Items",
+      "fieldtype": "Table",
+      "options": "Lavanya Accessory Item"
+    },
+    {
+      "fieldname": "serial_no",
+      "label": "Serial Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "product_purchase_date",
+      "label": "Product Purchase Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "product_warranty_type",
+      "label": "Product Warranty Type",
+      "fieldtype": "Select",
+      "options": "Manufacturer\nSeller\nNone"
+    },
+    {
+      "fieldname": "installation_type",
+      "label": "Installation Type",
+      "fieldtype": "Select",
+      "options": "Paid\nFree\nAMCClose"
+    },
+    {
+      "fieldname": "resolution_section",
+      "label": "Resolution",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "resolution_type",
+      "label": "Resolution Type",
+      "fieldtype": "Select",
+      "options": "Pending\nReplacement\nRepair\nCredit Note\nReturn\nWrite-Off\nNo Action Required",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "resolution_summary",
+      "label": "Resolution Summary",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "complaint_received_from",
+      "label": "Complaint Received From",
+      "fieldtype": "Select",
+      "options": "Customer\nService Partner\nDirect\nOthers"
+    },
+    {
+      "fieldname": "complaint_received_from_remarks",
+      "label": "Complaint Received From Remarks",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "assignment_section",
+      "label": "Assignment",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "service_team",
+      "label": "Service Team",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Center"
+    },
+    {
+      "fieldname": "technician",
+      "label": "Technician",
+      "fieldtype": "Link",
+      "options": "Lavanya Technician"
+    },
+    {
+      "fieldname": "token_section",
+      "label": "Token",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "token_issued",
+      "label": "Token Issued",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "token_number",
+      "label": "Token Number",
+      "fieldtype": "Link",
+      "options": "Lavanya Showroom Handover Token"
+    },
+    {
+      "fieldname": "payment_section",
+      "label": "Payment",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "payment_received",
+      "label": "Payment Received",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "payment_amount",
+      "label": "Payment Amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldname": "payment_reference",
+      "label": "Payment Reference",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "communication_section",
+      "label": "Communication",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "photo_section",
+      "label": "Photos",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "photo_log",
+      "label": "Photo Log",
+      "fieldtype": "Table",
+      "options": "Lavanya Photo Log"
+    },
+    {
+      "fieldname": "handover_section",
+      "label": "Handover",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "handover_accessories",
+      "label": "Handover Accessories",
+      "fieldtype": "Table",
+      "options": "Lavanya Accessory Item"
+    },
+    {
+      "fieldname": "handover_accessories_list",
+      "label": "Handover Accessories List",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "closure_section",
+      "label": "Closure",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "closure_verification",
+      "label": "Closure Verification",
+      "fieldtype": "Link",
+      "options": "Lavanya Closure Verification"
+    },
+    {
+      "fieldname": "tracking_section",
+      "label": "Tracking",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "next_action",
+      "label": "Next Action",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "next_action_date",
+      "label": "Next Action Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "resolution_date",
+      "label": "Resolution Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "resolution_days",
+      "label": "Resolution Days",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "resolution_hours",
+      "label": "Resolution Hours",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "internal_notes",
+      "label": "Internal Notes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "hold_section",
+      "label": "Hold",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "status_before_hold",
+      "label": "Status Before Hold",
+      "fieldtype": "Select",
+      "options": "New\nIn Progress\nOn Hold\nResolved\nClosed"
+    },
+    {
+      "fieldname": "hold_reason",
+      "label": "Hold Reason",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "hold_date",
+      "label": "Hold Date",
+      "fieldtype": "Datetime"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-25 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Service Ticket Extension",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Front Desk",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "customer_name",
+  "track_changes": 1
+}

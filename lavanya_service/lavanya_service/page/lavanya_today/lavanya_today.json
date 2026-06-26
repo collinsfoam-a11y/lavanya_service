@@ -1,0 +1,26 @@
+{
+  "creation": "2026-06-25 00:00:00.000000",
+  "docstatus": 0,
+  "doctype": "Page",
+  "modified": "2026-06-25 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "lavanya-today",
+  "page_name": "lavanya-today",
+  "restrict_to_domain": "",
+  "roles": [
+    {
+      "role": "Service Staff"
+    },
+    {
+      "role": "Front Desk"
+    },
+    {
+      "role": "Service Manager"
+    },
+    {
+      "role": "Lavanya Owner"
+    }
+  ],
+  "standard": "Yes",
+  "title": "Today's Work"
+}

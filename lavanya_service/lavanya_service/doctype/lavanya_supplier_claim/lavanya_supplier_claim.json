@@ -1,0 +1,326 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "SCLM-.YYYY.-.#####",
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "basic_section",
+    "supplier",
+    "customer",
+    "ticket",
+    "service_case_group",
+    "col_基本信息",
+    "brand",
+    "claim_type",
+    "status",
+    "claim_section",
+    "item_code",
+    "item_name",
+    "serial_no",
+    "purchase_invoice",
+    "claim_date",
+    "claim_reference_no",
+    "manager_override_reason",
+    "claim_amount",
+    "settlement_section",
+    "settlement_type",
+    "expected_credit_note_amount",
+    "expected_replacement_item",
+    "expected_repair_date",
+    "supplier_response",
+    "supplier_response_date",
+    "supplier_response_amount",
+    "supplier_response_remarks",
+    "erpnext_link_section",
+    "stock_entry",
+    "credit_note",
+    "debit_note",
+    "purchase_return",
+    "follow_up_section",
+    "follow_up_date",
+    "follow_up_count",
+    "last_follow_up_date",
+    "closure_section",
+    "supplier_closure_date",
+    "closure_remarks",
+    "notes_section",
+    "internal_notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "basic_section",
+      "label": "Basic Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "supplier",
+      "label": "Supplier",
+      "fieldtype": "Link",
+      "options": "Supplier",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "customer",
+      "label": "Customer",
+      "fieldtype": "Link",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "ticket",
+      "label": "Ticket",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Ticket Extension"
+    },
+    {
+      "fieldname": "service_case_group",
+      "label": "Service Case Group",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Case Group",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "brand",
+      "label": "Brand",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "claim_type",
+      "label": "Claim Type",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Defective Product\nDamage in Transit\nWarranty Claim\nReturn\nOther",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Draft\nClaim Registered\nDocument Pending\nPickup Pending\nSent to Supplier\nUnder Review\nReplacement Expected\nCredit Note Expected\nRepair Expected\nRejected\nSettled\nCancelled",
+      "default": "Draft",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "claim_section",
+      "label": "Claim Details",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "item_code",
+      "label": "Item Code",
+      "fieldtype": "Link",
+      "options": "Item"
+    },
+    {
+      "fieldname": "item_name",
+      "label": "Item Name",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "serial_no",
+      "label": "Serial Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "purchase_invoice",
+      "label": "Purchase Invoice",
+      "fieldtype": "Link",
+      "options": "Purchase Invoice"
+    },
+    {
+      "fieldname": "claim_date",
+      "label": "Claim Date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "claim_reference_no",
+      "label": "Claim Reference No",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "manager_override_reason",
+      "label": "Manager Override Reason",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "claim_amount",
+      "label": "Claim Amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldname": "settlement_section",
+      "label": "Settlement",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "settlement_type",
+      "label": "Settlement Type",
+      "fieldtype": "Select",
+      "options": "\nCredit Note\nReplacement\nRepair\nReturn\nWrite Off\nOther",
+      "default": ""
+    },
+    {
+      "fieldname": "expected_credit_note_amount",
+      "label": "Expected Credit Note Amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldname": "expected_replacement_item",
+      "label": "Expected Replacement Item",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "expected_repair_date",
+      "label": "Expected Repair Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "supplier_response",
+      "label": "Supplier Response",
+      "fieldtype": "Select",
+      "options": "Pending\nAccepted\nRejected\nPartial"
+    },
+    {
+      "fieldname": "supplier_response_date",
+      "label": "Supplier Response Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "supplier_response_amount",
+      "label": "Supplier Response Amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldname": "supplier_response_remarks",
+      "label": "Supplier Response Remarks",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "erpnext_link_section",
+      "label": "ERPNext Document Links",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "stock_entry",
+      "label": "Stock Entry",
+      "fieldtype": "Link",
+      "options": "Stock Entry"
+    },
+    {
+      "fieldname": "credit_note",
+      "label": "Credit Note",
+      "fieldtype": "Link",
+      "options": "Purchase Invoice"
+    },
+    {
+      "fieldname": "debit_note",
+      "label": "Debit Note",
+      "fieldtype": "Link",
+      "options": "Purchase Invoice"
+    },
+    {
+      "fieldname": "purchase_return",
+      "label": "Purchase Return",
+      "fieldtype": "Link",
+      "options": "Purchase Invoice"
+    },
+    {
+      "fieldname": "follow_up_section",
+      "label": "Follow-up",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "follow_up_date",
+      "label": "Next Follow-up Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "follow_up_count",
+      "label": "Follow-up Count",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "last_follow_up_date",
+      "label": "Last Follow-up Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "closure_section",
+      "label": "Closure",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "supplier_closure_date",
+      "label": "Supplier Closure Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "closure_remarks",
+      "label": "Closure Remarks",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "notes_section",
+      "label": "Notes",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "internal_notes",
+      "label": "Internal Notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Supplier Claim",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

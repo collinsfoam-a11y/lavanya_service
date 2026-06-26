@@ -1,0 +1,250 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "SPRQ-.YYYY.-.#####",
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "basic_section",
+    "requestor",
+    "service_team",
+    "ticket",
+    "service_case_group",
+    "col_基本信息",
+    "urgency",
+    "status",
+    "spare_section",
+    "spare_items",
+    "reason_section",
+    "reason",
+    "required_by_date",
+    "col_原因",
+    "chargeable",
+    "customer_payable_amount",
+    "approval_section",
+    "approved_by",
+    "approval_date",
+    "col_审批",
+    "stock_section",
+    "source_warehouse",
+    "issued_quantity",
+    "returned_quantity",
+    "used_quantity",
+    "stock_entry",
+    "col_库存",
+    "delivery_date",
+    "received_date",
+    "notes_section",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "basic_section",
+      "label": "Basic Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "requestor",
+      "label": "Requestor",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "service_team",
+      "label": "Service Team",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Center"
+    },
+    {
+      "fieldname": "ticket",
+      "label": "Ticket",
+      "fieldtype": "Link",
+      "options": "HD Ticket"
+    },
+    {
+      "fieldname": "service_case_group",
+      "label": "Service Case Group",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Case Group"
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "urgency",
+      "label": "Urgency",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "\nLow\nMedium\nHigh\nCritical",
+      "default": "Medium",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "\nDraft\nRequested\nApproved\nIssued\nPartially Used\nUsed\nReturned\nCancelled\nClosed",
+      "default": "Draft",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "spare_section",
+      "label": "Spare Items",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "spare_items",
+      "label": "Spare Items",
+      "fieldtype": "Table",
+      "options": "Lavanya Spare Request Item",
+      "reqd": 1
+    },
+    {
+      "fieldname": "reason_section",
+      "label": "Reason & Schedule",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "reason",
+      "label": "Reason for Request",
+      "fieldtype": "Small Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "required_by_date",
+      "label": "Required By Date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "col_原因",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "chargeable",
+      "label": "Chargeable",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "customer_payable_amount",
+      "label": "Customer Payable Amount",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldname": "approval_section",
+      "label": "Approval",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "approved_by",
+      "label": "Approved By",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "approval_date",
+      "label": "Approval Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "col_审批",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "stock_section",
+      "label": "Stock Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "source_warehouse",
+      "label": "Source Warehouse",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    },
+    {
+      "fieldname": "issued_quantity",
+      "label": "Issued Quantity",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "returned_quantity",
+      "label": "Returned Quantity",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "used_quantity",
+      "label": "Used Quantity",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "stock_entry",
+      "label": "Stock Entry",
+      "fieldtype": "Link",
+      "options": "Stock Entry"
+    },
+    {
+      "fieldname": "col_库存",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "delivery_date",
+      "label": "Delivery Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "received_date",
+      "label": "Received Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "notes_section",
+      "label": "Notes",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Spare Request",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

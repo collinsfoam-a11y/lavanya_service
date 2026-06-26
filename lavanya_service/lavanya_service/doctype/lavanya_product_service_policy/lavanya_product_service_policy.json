@@ -1,0 +1,187 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "PSP-.YYYY.-.#####",
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "product_category",
+    "serial_required",
+    "installation_required",
+    "col_基本信息",
+    "demo_required",
+    "showroom_intake_allowed",
+    "can_repair_locally",
+    "warranty_section",
+    "default_warranty_months",
+    "doa_period_days",
+    "col_保修",
+    "min_complaint_photos",
+    "photo_requirements",
+    "physical_section",
+    "weight_kg",
+    "dimensions",
+    "col_物理",
+    "accessory_checklist",
+    "special_instructions"
+  ],
+  "fields": [
+    {
+      "fieldname": "product_category",
+      "label": "Product Category",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "unique": 1,
+      "options": "\nTV\nRefrigerator\nWashing Machine\nAC\nCooler\nGeyser\nMicrowave\nOven\nChimney\nWater Purifier\nMixer\nInduction Cooker\nOther",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "serial_required",
+      "label": "Serial Required",
+      "fieldtype": "Check",
+      "reqd": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "installation_required",
+      "label": "Installation Required",
+      "fieldtype": "Check",
+      "reqd": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "demo_required",
+      "label": "Demo Required",
+      "fieldtype": "Check",
+      "reqd": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "showroom_intake_allowed",
+      "label": "Showroom Intake Allowed",
+      "fieldtype": "Check",
+      "reqd": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "can_repair_locally",
+      "label": "Can Repair Locally",
+      "fieldtype": "Check",
+      "reqd": 1,
+      "default": "1"
+    },
+    {
+      "fieldname": "warranty_section",
+      "label": "Warranty & DOA",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "default_warranty_months",
+      "label": "Default Warranty (Months)",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "default": "12"
+    },
+    {
+      "fieldname": "doa_period_days",
+      "label": "DOA Period (Days)",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "default": "7"
+    },
+    {
+      "fieldname": "col_保修",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "min_complaint_photos",
+      "label": "Minimum Complaint Photos",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "default": "2"
+    },
+    {
+      "fieldname": "photo_requirements",
+      "label": "Photo Requirements",
+      "fieldtype": "Small Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "physical_section",
+      "label": "Physical Properties",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "weight_kg",
+      "label": "Weight (KG)",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "dimensions",
+      "label": "Dimensions (L x W x H)",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "col_物理",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "accessory_checklist",
+      "label": "Default Accessory Checklist",
+      "fieldtype": "Table",
+      "options": "Lavanya Accessory Template Item"
+    },
+    {
+      "fieldname": "special_instructions",
+      "label": "Special Instructions",
+      "fieldtype": "Text"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Product Service Policy",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

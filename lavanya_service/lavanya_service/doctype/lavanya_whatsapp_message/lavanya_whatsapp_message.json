@@ -1,0 +1,155 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "LAV-WA-.YYYY.-.#####",
+  "creation": "2026-06-25 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "phone",
+    "direction",
+    "message_text",
+    "received_at",
+    "matching_section",
+    "matched_customer",
+    "matched_ticket",
+    "col_h5mk",
+    "bot_intent",
+    "intent_confidence",
+    "review_section",
+    "reviewed",
+    "reviewed_by",
+    "reviewed_at",
+    "staff_note"
+  ],
+  "fields": [
+    {
+      "fieldname": "phone",
+      "label": "Phone",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "direction",
+      "label": "Direction",
+      "fieldtype": "Select",
+      "options": "in\nout",
+      "default": "in",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "message_text",
+      "label": "Message Text",
+      "fieldtype": "Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "received_at",
+      "label": "Received At",
+      "fieldtype": "Datetime",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "matching_section",
+      "label": "Matching",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "matched_customer",
+      "label": "Matched Customer",
+      "fieldtype": "Link",
+      "options": "Lavanya Customer"
+    },
+    {
+      "fieldname": "matched_ticket",
+      "label": "Matched Ticket",
+      "fieldtype": "Link",
+      "options": "Lavanya Ticket"
+    },
+    {
+      "fieldname": "col_h5mk",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "bot_intent",
+      "label": "Bot Intent",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "intent_confidence",
+      "label": "Confidence (%)",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "review_section",
+      "label": "Review",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "reviewed",
+      "label": "Reviewed",
+      "fieldtype": "Check",
+      "default": 0,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "reviewed_by",
+      "label": "Reviewed By",
+      "fieldtype": "Link",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "reviewed_at",
+      "label": "Reviewed At",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "staff_note",
+      "label": "Staff Note",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "in_create": 0,
+  "is_single": 0,
+  "is_submittable": 0,
+  "modified": "2026-06-25 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Lavanya Service",
+  "name": "Lavanya Whatsapp Message",
+  "naming_rule": "Expression (old style)",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "received_at",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "",
+  "track_changes": 1,
+  "track_seen": 1
+}

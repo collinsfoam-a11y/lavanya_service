@@ -1,0 +1,199 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "",
+  "creation": "2026-06-25 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Other",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "safety_locks_section",
+    "closure_guard_enabled",
+    "customer_confirmation_required",
+    "col_qtca",
+    "live_whatsapp_enabled",
+    "erp_posting_enabled",
+    "penalty_enabled",
+    "auto_closure_enabled",
+    "whatsapp_bot_section",
+    "whatsapp_bot_mode",
+    "wa_webhook_url",
+    "wa_api_token",
+    "sla_rules_section",
+    "brand_sla_days",
+    "part_pending_sla_days",
+    "confirmation_sla_days",
+    "auto_escalate_after_days",
+    "non_response_min_attempts",
+    "integrations_section",
+    "frappe_crm_enabled",
+    "erpnext_enabled",
+    "business_hours_start",
+    "business_hours_end"
+  ],
+  "fields": [
+    {
+      "fieldname": "safety_locks_section",
+      "label": "Safety Locks",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "closure_guard_enabled",
+      "label": "Closure Guard Enabled",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "customer_confirmation_required",
+      "label": "Customer Confirmation Required",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "col_qtca",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "live_whatsapp_enabled",
+      "label": "Live WhatsApp Sending",
+      "fieldtype": "Check",
+      "default": 0
+    },
+    {
+      "fieldname": "erp_posting_enabled",
+      "label": "ERP Auto-posting",
+      "fieldtype": "Check",
+      "default": 0
+    },
+    {
+      "fieldname": "penalty_enabled",
+      "label": "Penalty Application",
+      "fieldtype": "Check",
+      "default": 0
+    },
+    {
+      "fieldname": "auto_closure_enabled",
+      "label": "Automatic Ticket Closure",
+      "fieldtype": "Check",
+      "default": 0
+    },
+    {
+      "fieldname": "whatsapp_bot_section",
+      "label": "WhatsApp Bot",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "whatsapp_bot_mode",
+      "label": "Bot Mode",
+      "fieldtype": "Select",
+      "options": "disabled\ndry_run\nstaff_approved\ncontrolled_auto",
+      "default": "dry_run"
+    },
+    {
+      "fieldname": "wa_webhook_url",
+      "label": "Webhook URL",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "wa_api_token",
+      "label": "API Token",
+      "fieldtype": "Password"
+    },
+    {
+      "fieldname": "sla_rules_section",
+      "label": "SLA Rules",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "brand_sla_days",
+      "label": "Brand SLA (days)",
+      "fieldtype": "Int",
+      "default": 2
+    },
+    {
+      "fieldname": "part_pending_sla_days",
+      "label": "Part Pending Follow-up (days)",
+      "fieldtype": "Int",
+      "default": 2
+    },
+    {
+      "fieldname": "confirmation_sla_days",
+      "label": "Customer Confirmation SLA (days)",
+      "fieldtype": "Int",
+      "default": 1
+    },
+    {
+      "fieldname": "auto_escalate_after_days",
+      "label": "Auto-escalate After (days)",
+      "fieldtype": "Int",
+      "default": 3
+    },
+    {
+      "fieldname": "non_response_min_attempts",
+      "label": "Min Attempts (No-response closure)",
+      "fieldtype": "Int",
+      "default": 3
+    },
+    {
+      "fieldname": "integrations_section",
+      "label": "Integrations",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "frappe_crm_enabled",
+      "label": "Frappe CRM Integration",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "erpnext_enabled",
+      "label": "ERPNext Integration",
+      "fieldtype": "Check",
+      "default": 0
+    },
+    {
+      "fieldname": "business_hours_start",
+      "label": "Business Hours Start",
+      "fieldtype": "Time",
+      "default": "09:00:00"
+    },
+    {
+      "fieldname": "business_hours_end",
+      "label": "Business Hours End",
+      "fieldtype": "Time",
+      "default": "21:00:00"
+    }
+  ],
+  "in_create": 0,
+  "is_single": 1,
+  "is_submittable": 0,
+  "modified": "2026-06-25 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Lavanya Service",
+  "name": "Lavanya Settings",
+  "naming_rule": "Expression (old style)",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 0,
+      "delete": 0
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 0,
+      "delete": 0
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "",
+  "track_changes": 1,
+  "track_seen": 1
+}

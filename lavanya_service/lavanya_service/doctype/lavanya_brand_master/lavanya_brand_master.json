@@ -1,0 +1,173 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "field:brand_name",
+  "creation": "2026-06-25 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "brand_name",
+    "logo_emoji",
+    "is_active",
+    "contact_section",
+    "toll_free_number",
+    "whatsapp_number",
+    "col_eq2f",
+    "escalation_email",
+    "product_categories",
+    "auto-registration_section",
+    "auto_email_enabled",
+    "email_reg_address",
+    "email_reg_subject_template",
+    "col_vwrz",
+    "auto_wa_enabled",
+    "wa_reg_number",
+    "sla_section",
+    "default_sla_days",
+    "followup_cadence_days"
+  ],
+  "fields": [
+    {
+      "fieldname": "brand_name",
+      "label": "Brand Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "logo_emoji",
+      "label": "Logo / Emoji",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "is_active",
+      "label": "Active",
+      "fieldtype": "Check",
+      "default": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "contact_section",
+      "label": "Contact",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "toll_free_number",
+      "label": "Toll-free Number",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "whatsapp_number",
+      "label": "WhatsApp Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "col_eq2f",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "escalation_email",
+      "label": "Escalation Email",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "product_categories",
+      "label": "Product Categories",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "auto-registration_section",
+      "label": "Auto-Registration",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "auto_email_enabled",
+      "label": "Email Auto-Reg",
+      "fieldtype": "Check",
+      "default": 0
+    },
+    {
+      "fieldname": "email_reg_address",
+      "label": "Registration Email Address",
+      "fieldtype": "Data",
+      "depends_on": "eval:doc.auto_email_enabled"
+    },
+    {
+      "fieldname": "email_reg_subject_template",
+      "label": "Email Subject Template",
+      "fieldtype": "Data",
+      "depends_on": "eval:doc.auto_email_enabled"
+    },
+    {
+      "fieldname": "col_vwrz",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "auto_wa_enabled",
+      "label": "WhatsApp Auto-Reg",
+      "fieldtype": "Check",
+      "default": 0
+    },
+    {
+      "fieldname": "wa_reg_number",
+      "label": "WhatsApp Reg Number",
+      "fieldtype": "Data",
+      "depends_on": "eval:doc.auto_wa_enabled"
+    },
+    {
+      "fieldname": "sla_section",
+      "label": "SLA",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "default_sla_days",
+      "label": "Default SLA (days)",
+      "fieldtype": "Int",
+      "default": 2
+    },
+    {
+      "fieldname": "followup_cadence_days",
+      "label": "Follow-up Cadence (days)",
+      "fieldtype": "Int",
+      "default": 2
+    }
+  ],
+  "in_create": 0,
+  "is_single": 0,
+  "is_submittable": 0,
+  "modified": "2026-06-25 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Lavanya Service",
+  "name": "Lavanya Brand Master",
+  "naming_rule": "By fieldname",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Service Staff",
+      "read": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "brand_name",
+  "track_changes": 1,
+  "track_seen": 1
+}

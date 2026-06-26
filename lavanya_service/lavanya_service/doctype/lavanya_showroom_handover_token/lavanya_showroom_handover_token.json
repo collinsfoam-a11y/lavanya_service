@@ -1,0 +1,277 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "TOKEN-.YYYY.-.#####",
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "basic_section",
+    "customer",
+    "ticket",
+    "service_case_group",
+    "customer_name",
+    "col_基本信息",
+    "product_name",
+    "product_category",
+    "serial_no",
+    "product_section",
+    "accessories_handed_over",
+    "accessory_items",
+    "condition_section",
+    "product_condition_out",
+    "product_condition_notes",
+    "photos_taken",
+    "handover_section",
+    "handover_to_name",
+    "handover_to_mobile",
+    "handover_to_relation",
+    "showroom_staff",
+    "showroom_location",
+    "otp_section",
+    "otp_sent",
+    "otp_verified",
+    "otp_code",
+    "otp_sent_at",
+    "signature_section",
+    "customer_signature",
+    "handover_date",
+    "handover_time",
+    "status_section",
+    "status"
+  ],
+  "fields": [
+    {
+      "fieldname": "basic_section",
+      "label": "Basic Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer",
+      "label": "Customer",
+      "fieldtype": "Link",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "ticket",
+      "label": "Ticket",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Ticket Extension"
+    },
+    {
+      "fieldname": "service_case_group",
+      "label": "Service Case Group",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Case Group",
+      "reqd": 1
+    },
+    {
+      "fieldname": "customer_name",
+      "label": "Customer Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "product_name",
+      "label": "Product Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "product_category",
+      "label": "Product Category",
+      "fieldtype": "Select",
+      "options": "AC\nCooler\nWashing Machine\nGeyser\nMicrowave\nOven\nRefrigerator\nChimney\nWater Purifier\nOther"
+    },
+    {
+      "fieldname": "serial_no",
+      "label": "Serial Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "product_section",
+      "label": "Accessories",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "accessories_handed_over",
+      "label": "Accessories Handed Over",
+      "fieldtype": "Table",
+      "options": "Lavanya Accessory Item",
+      "reqd": 1
+    },
+    {
+      "fieldname": "accessory_items",
+      "label": "Accessory Items",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "condition_section",
+      "label": "Product Condition",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "product_condition_out",
+      "label": "Product Condition",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Good\nDamaged\nMinor Scratches\nMissing Parts\nOther",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "product_condition_notes",
+      "label": "Condition Notes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "photos_taken",
+      "label": "Photos Taken",
+      "fieldtype": "Table",
+      "options": "Lavanya Photo Log"
+    },
+    {
+      "fieldname": "handover_section",
+      "label": "Handover Details",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "handover_to_name",
+      "label": "Handover To Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "handover_to_mobile",
+      "label": "Handover To Mobile",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "handover_to_relation",
+      "label": "Handover To Relation",
+      "fieldtype": "Select",
+      "options": "Self\nFamily\nStaff\nOther"
+    },
+    {
+      "fieldname": "showroom_staff",
+      "label": "Showroom Staff",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "showroom_location",
+      "label": "Showroom Location",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "otp_section",
+      "label": "OTP Verification",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "otp_sent",
+      "label": "OTP Sent",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "otp_verified",
+      "label": "OTP Verified",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "otp_code",
+      "label": "OTP Code",
+      "fieldtype": "Data",
+      "hidden": 1
+    },
+    {
+      "fieldname": "otp_sent_at",
+      "label": "OTP Sent At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "signature_section",
+      "label": "Signature & Completion",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer_signature",
+      "label": "Customer Signature",
+      "fieldtype": "Attach"
+    },
+    {
+      "fieldname": "handover_date",
+      "label": "Handover Date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "handover_time",
+      "label": "Handover Time",
+      "fieldtype": "Time"
+    },
+    {
+      "fieldname": "status_section",
+      "label": "Status",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Draft\nOTP Sent\nVerified\nCompleted\nCancelled",
+      "default": "Draft",
+      "in_list_view": 1
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Showroom Handover Token",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Front Desk",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "customer_name",
+  "track_changes": 1
+}

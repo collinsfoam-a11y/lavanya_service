@@ -1,0 +1,207 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "COMM-.YYYY.-.#####",
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "basic_section",
+    "customer",
+    "ticket",
+    "service_case_group",
+    "col_基本信息",
+    "communication_type",
+    "direction",
+    "communicated_at",
+    "communication_section",
+    "summary",
+    "communicated_by",
+    "recipient_mobile",
+    "tracking_section",
+    "whatsapp_message_id",
+    "call_duration",
+    "attachment",
+    "promise_section",
+    "promise_date",
+    "promise_fulfilled",
+    "follow_up_section",
+    "follow_up_required",
+    "follow_up_date",
+    "follow_up_notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "basic_section",
+      "label": "Basic Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer",
+      "label": "Customer",
+      "fieldtype": "Link",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "ticket",
+      "label": "Ticket",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Ticket Extension",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "service_case_group",
+      "label": "Service Case Group",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Case Group",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "communication_type",
+      "label": "Communication Type",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Call\nWhatsApp\nSMS\nEmail\nIn Person\nStore Visit\nTechnician Update\nBrand Update\nSupplier Update",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "direction",
+      "label": "Direction",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Inbound\nOutbound",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "communicated_at",
+      "label": "Communicated At",
+      "fieldtype": "Datetime",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "communication_section",
+      "label": "Communication Details",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "summary",
+      "label": "Summary",
+      "fieldtype": "Small Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "communicated_by",
+      "label": "Communicated By",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "recipient_mobile",
+      "label": "Recipient Mobile",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "tracking_section",
+      "label": "Tracking",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "whatsapp_message_id",
+      "label": "WhatsApp Message ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "call_duration",
+      "label": "Call Duration (seconds)",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "attachment",
+      "label": "Attachment",
+      "fieldtype": "Attach"
+    },
+    {
+      "fieldname": "promise_section",
+      "label": "Promise Tracking",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "promise_date",
+      "label": "Promise Date",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "promise_fulfilled",
+      "label": "Promise Fulfilled",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "follow_up_section",
+      "label": "Follow-up",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "follow_up_required",
+      "label": "Follow-up Required",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "follow_up_date",
+      "label": "Follow-up Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "follow_up_notes",
+      "label": "Follow-up Notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Customer Communication Log",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Front Desk",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "summary",
+  "track_changes": 1
+}

@@ -1,0 +1,16 @@
+{
+  "doctype": "Page",
+  "module": "Lavanya Service",
+  "name": "lavanya-settings",
+  "page_name": "lavanya-settings",
+  "standard": "Yes",
+  "title": "Settings",
+  "roles": [
+    {
+      "role": "Service Manager"
+    },
+    {
+      "role": "Lavanya Owner"
+    }
+  ]
+}

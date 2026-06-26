@@ -1,0 +1,339 @@
+{
+  "actions": [],
+  "creation": "2026-06-25 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "automation_section",
+    "auto_close_days",
+    "auto_close_enabled",
+    "escalation_days",
+    "escalation_enabled",
+    "warranty_section",
+    "warranty_lookup_url",
+    "enable_warranty_lookup",
+    "whatsapp_section",
+    "whatsapp_api_url",
+    "whatsapp_api_token",
+    "whatsapp_enabled",
+    "payment_section",
+    "payment_gateway_url",
+    "payment_enabled",
+    "defaults_section",
+    "default_service_team",
+    "allow_reopen_days",
+    "tabs_section",
+    "show_warranty_tab",
+    "show_financials_tab",
+    "show_parts_tab",
+    "show_history_tab",
+    "show_photos_tab",
+    "show_notes_tab",
+    "show_all_products",
+    "show_serial_history",
+    "show_service_history",
+    "show_linked_items",
+    "show_complaint_type",
+    "show_escalation_level",
+    "show_problem_found",
+    "show_action_taken",
+    "show_part_return",
+    "show_status",
+    "warehouse_section",
+    "warehouse_damaged_stock",
+    "warehouse_supplier_claim_hold",
+    "warehouse_repair_in_progress",
+    "warehouse_refurbished",
+    "warehouse_scrap",
+    "warehouse_transit",
+    "warehouse_installation",
+    "warehouse_service_parts",
+    "warehouse_accessories"
+  ],
+  "fields": [
+    {
+      "fieldname": "automation_section",
+      "label": "Automation",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "auto_close_days",
+      "label": "Auto Close Days",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "default": 3
+    },
+    {
+      "fieldname": "auto_close_enabled",
+      "label": "Auto Close Enabled",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "escalation_days",
+      "label": "Escalation Days",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "default": 7
+    },
+    {
+      "fieldname": "escalation_enabled",
+      "label": "Escalation Enabled",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "warranty_section",
+      "label": "Warranty",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "warranty_lookup_url",
+      "label": "Warranty Lookup URL",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "enable_warranty_lookup",
+      "label": "Enable Warranty Lookup",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "whatsapp_section",
+      "label": "WhatsApp",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "whatsapp_api_url",
+      "label": "WhatsApp API URL",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "whatsapp_api_token",
+      "label": "WhatsApp API Token",
+      "fieldtype": "Password"
+    },
+    {
+      "fieldname": "whatsapp_enabled",
+      "label": "WhatsApp Enabled",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "payment_section",
+      "label": "Payment",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "payment_gateway_url",
+      "label": "Payment Gateway URL",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "payment_enabled",
+      "label": "Payment Enabled",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "defaults_section",
+      "label": "Defaults",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "default_service_team",
+      "label": "Default Service Team",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Center"
+    },
+    {
+      "fieldname": "allow_reopen_days",
+      "label": "Allow Reopen Days",
+      "fieldtype": "Int",
+      "default": 7
+    },
+    {
+      "fieldname": "tabs_section",
+      "label": "Tab Visibility",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "show_warranty_tab",
+      "label": "Show Warranty Tab",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_financials_tab",
+      "label": "Show Financials Tab",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_parts_tab",
+      "label": "Show Parts Tab",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_history_tab",
+      "label": "Show History Tab",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_photos_tab",
+      "label": "Show Photos Tab",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_notes_tab",
+      "label": "Show Notes Tab",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_all_products",
+      "label": "Show All Products",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_serial_history",
+      "label": "Show Serial History",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_service_history",
+      "label": "Show Service History",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_linked_items",
+      "label": "Show Linked Items",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_complaint_type",
+      "label": "Show Complaint Type",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_escalation_level",
+      "label": "Show Escalation Level",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_problem_found",
+      "label": "Show Problem Found",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_action_taken",
+      "label": "Show Action Taken",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_part_return",
+      "label": "Show Part Return",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "show_status",
+      "label": "Show Status",
+      "fieldtype": "Check",
+      "default": 1
+    },
+    {
+      "fieldname": "warehouse_section",
+      "label": "Warehouses",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "warehouse_damaged_stock",
+      "label": "Damaged Stock Quarantine",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    },
+    {
+      "fieldname": "warehouse_supplier_claim_hold",
+      "label": "Supplier Claim Hold",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    },
+    {
+      "fieldname": "warehouse_repair_in_progress",
+      "label": "Repair In Progress",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    },
+    {
+      "fieldname": "warehouse_refurbished",
+      "label": "Refurbished",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    },
+    {
+      "fieldname": "warehouse_scrap",
+      "label": "Scrap",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    },
+    {
+      "fieldname": "warehouse_transit",
+      "label": "Transit",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    },
+    {
+      "fieldname": "warehouse_installation",
+      "label": "Installation",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    },
+    {
+      "fieldname": "warehouse_service_parts",
+      "label": "Service Parts",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    },
+    {
+      "fieldname": "warehouse_accessories",
+      "label": "Accessories",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "issingle": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-25 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Service Settings",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

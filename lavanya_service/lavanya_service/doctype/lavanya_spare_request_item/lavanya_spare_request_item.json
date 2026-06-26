@@ -1,0 +1,51 @@
+{
+  "actions": [],
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "engine": "InnoDB",
+  "field_order": [
+    "spare_item",
+    "quantity",
+    "uom",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "spare_item",
+      "label": "Spare Item",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "quantity",
+      "label": "Quantity",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "uom",
+      "label": "UOM",
+      "fieldtype": "Data",
+      "default": "Nos"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Data"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "istable": 1,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Spare Request Item",
+  "owner": "Administrator",
+  "permissions": [],
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}

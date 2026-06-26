@@ -1,0 +1,246 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "autoname": "PROD-.YYYY.-.#####",
+  "creation": "2026-06-26 00:00:00.000000",
+  "doctype": "DocType",
+  "document_type": "Document",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "product_section",
+    "customer",
+    "product_name",
+    "product_brand",
+    "col_基本信息",
+    "product_sub_category",
+    "product_variant",
+    "serial_no",
+    "purchase_section",
+    "purchase_date",
+    "warranty_type",
+    "warranty_expiry",
+    "amc_status",
+    "amc_expiry",
+    "installation_section",
+    "installation_date",
+    "installation_type",
+    "service_team",
+    "technician",
+    "tracking_section",
+    "ticket_count",
+    "last_ticket_date",
+    "last_ticket_status",
+    "active_ticket",
+    "active_complaint",
+    "active_replacement",
+    "status_section",
+    "is_active"
+  ],
+  "fields": [
+    {
+      "fieldname": "product_section",
+      "label": "Product Information",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "customer",
+      "label": "Customer",
+      "fieldtype": "Link",
+      "options": "Customer",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "product_name",
+      "label": "Product Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "product_brand",
+      "label": "Product Brand",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "col_基本信息",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "product_sub_category",
+      "label": "Product Sub Category",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "product_variant",
+      "label": "Product Variant",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "serial_no",
+      "label": "Serial Number",
+      "fieldtype": "Data",
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "purchase_section",
+      "label": "Purchase & Warranty",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "purchase_date",
+      "label": "Purchase Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "warranty_type",
+      "label": "Warranty Type",
+      "fieldtype": "Select",
+      "options": "Manufacturer\nSeller\nNone"
+    },
+    {
+      "fieldname": "warranty_expiry",
+      "label": "Warranty Expiry",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "amc_status",
+      "label": "AMC Status",
+      "fieldtype": "Select",
+      "options": "Active\nExpired\nNone"
+    },
+    {
+      "fieldname": "amc_expiry",
+      "label": "AMC Expiry",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "installation_section",
+      "label": "Installation",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "installation_date",
+      "label": "Installation Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "installation_type",
+      "label": "Installation Type",
+      "fieldtype": "Select",
+      "options": "Paid\nFree\nAMCClose"
+    },
+    {
+      "fieldname": "service_team",
+      "label": "Service Team",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Center"
+    },
+    {
+      "fieldname": "technician",
+      "label": "Technician",
+      "fieldtype": "Link",
+      "options": "Lavanya Technician"
+    },
+    {
+      "fieldname": "tracking_section",
+      "label": "Ticket Tracking",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "ticket_count",
+      "label": "Ticket Count",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "last_ticket_date",
+      "label": "Last Ticket Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "last_ticket_status",
+      "label": "Last Ticket Status",
+      "fieldtype": "Select",
+      "options": "New\nIn Progress\nOn Hold\nResolved\nClosed"
+    },
+    {
+      "fieldname": "active_ticket",
+      "label": "Active Ticket",
+      "fieldtype": "Link",
+      "options": "Lavanya Service Ticket Extension"
+    },
+    {
+      "fieldname": "active_complaint",
+      "label": "Active Complaint",
+      "fieldtype": "Link",
+      "options": "Lavanya Stock Complaint"
+    },
+    {
+      "fieldname": "active_replacement",
+      "label": "Active Replacement",
+      "fieldtype": "Link",
+      "options": "Lavanya Replacement Recovery"
+    },
+    {
+      "fieldname": "status_section",
+      "label": "Status",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "is_active",
+      "label": "Is Active",
+      "fieldtype": "Check",
+      "default": 1,
+      "in_list_view": 1
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 0,
+  "links": [],
+  "modified": "2026-06-26 00:00:00.000000",
+  "module": "Lavanya Service",
+  "name": "Lavanya Customer Product",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "role": "Service Staff",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Service Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Front Desk",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "CRM Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Lavanya Owner",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "product_name",
+  "track_changes": 1
+}
