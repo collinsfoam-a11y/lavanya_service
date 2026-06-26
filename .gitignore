@@ -18,6 +18,9 @@ public/js/dist/
 .claude-flow/daemon.log
 .claude/memory.db
 .claude/memory.db-*
+.swarm/
+ruvector.db
+ruvector.db-*
 
 # Graphify regenerable output (kept ignored — rebuild with `graphify update .`)
 graphify-out/cache/
